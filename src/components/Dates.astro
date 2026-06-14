@@ -1,0 +1,239 @@
+---
+import { siteConfig } from '../data/site';
+
+type DateStatus = 'available' | 'soldout';
+
+type DateSlot = {
+  day: number;
+  status: DateStatus;
+};
+
+type DatePage = {
+  year: number;
+  month: number;
+  slots: DateSlot[];
+};
+
+const datePages: DatePage[] = [
+  {
+    year: 2026,
+    month: 6,
+    slots: [
+      { day: 6, status: 'available' },
+      { day: 7, status: 'soldout' },
+      { day: 13, status: 'available' },
+      { day: 14, status: 'soldout' },
+      { day: 20, status: 'soldout' },
+      { day: 21, status: 'soldout' },
+      { day: 27, status: 'soldout' },
+      { day: 28, status: 'soldout' },
+    ],
+  },
+  {
+    year: 2026,
+    month: 7,
+    slots: [
+      { day: 4, status: 'available' },
+      { day: 5, status: 'available' },
+      { day: 11, status: 'available' },
+      { day: 12, status: 'available' },
+      { day: 18, status: 'available' },
+      { day: 19, status: 'available' },
+      { day: 25, status: 'available' },
+      { day: 26, status: 'available' },
+    ],
+  },
+  {
+  year: 2026,
+  month: 8,
+  slots: [
+    { day: 1, status: 'available' },
+    { day: 2, status: 'available' },
+    { day: 8, status: 'available' },
+    { day: 9, status: 'available'},
+    { day: 15, status: 'available' },
+    { day: 16, status: 'available' },
+    { day: 22, status: 'available' },
+    { day: 23, status: 'available' },
+    { day: 29, status: 'available' },
+    { day: 30, status: 'available' },
+  ],
+},
+];
+
+const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+
+const getCalendarDays = (year: number, month: number) => {
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const mondayBasedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+  const totalDays = new Date(year, month, 0).getDate();
+
+  return [
+    ...Array.from({ length: mondayBasedFirstDay }, () => null),
+    ...Array.from({ length: totalDays }, (_, index) => index + 1),
+  ];
+};
+
+const getWeekdayLabel = (year: number, month: number, day: number) => {
+  const weekdayIndex = new Date(year, month - 1, day).getDay();
+  const labels = ['日', '一', '二', '三', '四', '五', '六'];
+
+  return labels[weekdayIndex];
+};
+
+const formatSlot = (page: DatePage, slot: DateSlot) => {
+  return `${page.month}/${slot.day}`;
+};
+---
+
+<section class="section dates-section" id="dates" aria-labelledby="dates-title" data-dates-carousel>
+  <div class="container">
+    <div class="section-heading section-heading--row dates-heading">
+      <div>
+        <p class="eyebrow">AVAILABLE DATES</p>
+        <h2 id="dates-title">開放檔期</h2>
+      </div>
+
+      <div class="dates-nav" aria-label="切換月份">
+        <button class="dates-nav__button" type="button" aria-label="上一個月份" data-dates-prev>
+          ‹
+        </button>
+
+        <button class="dates-nav__button" type="button" aria-label="下一個月份" data-dates-next>
+          ›
+        </button>
+      </div>
+    </div>
+
+    <div class="dates-carousel">
+      <div class="dates-track" data-dates-track>
+        {
+          datePages.map((page, pageIndex) => {
+            const calendarDays = getCalendarDays(page.year, page.month);
+            const slotByDay = new Map(page.slots.map((slot) => [slot.day, slot]));
+            const availableSlots = page.slots.filter((slot) => slot.status === 'available');
+            const soldoutSlots = page.slots.filter((slot) => slot.status === 'soldout');
+
+            return (
+              <article class="dates-page" aria-hidden={pageIndex === 0 ? 'false' : 'true'}>
+                <div class="dates-layout">
+                  <div class="calendar-card">
+                    <h3>{page.year} / {page.month} 月</h3>
+
+                    <div class="calendar-grid calendar-grid--weekdays" aria-hidden="true">
+                      {weekdays.map((weekday) => <span>{weekday}</span>)}
+                    </div>
+
+                    <div class="calendar-grid">
+                      {
+                        calendarDays.map((day) => {
+                          if (!day) {
+                            return <span class="calendar-day calendar-day--empty"></span>;
+                          }
+
+                          const slot = slotByDay.get(day);
+                          const statusClass = slot ? `is-${slot.status}` : '';
+
+                          return (
+                            <span class={`calendar-day ${statusClass}`}>
+                              {day}
+                            </span>
+                          );
+                        })
+                      }
+                    </div>
+                  </div>
+
+                  <div class="date-list-card">
+                    <h3>可預約日期</h3>
+
+                    <div class="date-group">
+                      <p class="date-group__title">可預約</p>
+                      <div class="date-chip-list">
+                        {
+                          availableSlots.length ? (
+                            availableSlots.map((slot) => (
+                              <span class="date-chip is-available">{formatSlot(page, slot)}</span>
+                            ))
+                          ) : (
+                            <span class="date-chip is-empty">本月暫無可預約日期</span>
+                          )
+                        }
+                      </div>
+                    </div>
+
+                    <div class="date-group">
+                      <p class="date-group__title">已完售</p>
+                      <div class="date-chip-list">
+                        {
+                          soldoutSlots.length ? (
+                            soldoutSlots.map((slot) => (
+                              <span class="date-chip is-soldout">{formatSlot(page, slot)}</span>
+                            ))
+                          ) : (
+                            <span class="date-chip is-empty">尚無完售日期</span>
+                          )
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cta-card">
+                    <h3>一天只拍攝一場</h3>
+                    <p>
+                      六、日為主要開放檔期，為了確保每一組作品的品質與溝通時間，
+                      當日額滿後即不再追加。
+                    </p>
+
+                    <a
+                      class="button button--primary"
+                      href={siteConfig.googleFormUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      填寫合作意向
+                    </a>
+
+                    <small>提交後我會儘快確認檔期</small>
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const datesSection = document.querySelector('[data-dates-carousel]');
+
+  if (datesSection) {
+    const track = datesSection.querySelector('[data-dates-track]');
+    const pages = Array.from(datesSection.querySelectorAll('.dates-page'));
+    const prevButton = datesSection.querySelector('[data-dates-prev]');
+    const nextButton = datesSection.querySelector('[data-dates-next]');
+
+    let currentIndex = 0;
+
+    const goToDatePage = (index) => {
+      if (!track || !pages.length) return;
+
+      currentIndex = (index + pages.length) % pages.length;
+      track.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+      pages.forEach((page, pageIndex) => {
+        page.setAttribute('aria-hidden', String(pageIndex !== currentIndex));
+      });
+    };
+
+    prevButton?.addEventListener('click', () => {
+      goToDatePage(currentIndex - 1);
+    });
+
+    nextButton?.addEventListener('click', () => {
+      goToDatePage(currentIndex + 1);
+    });
+  }
+</script>

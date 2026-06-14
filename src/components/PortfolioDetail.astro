@@ -1,0 +1,269 @@
+---
+import Layout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+  altBase: string;
+  slug: string;
+  imageCount: number;
+}
+
+const { title, altBase, slug, imageCount } = Astro.props;
+
+const images = Array.from(
+  { length: imageCount },
+  (_, index) => `/assets/portfolio/${slug}/${String(index + 1).padStart(2, '0')}.webp`,
+);
+---
+
+<Layout title={`${title}｜phox999 photography`}>
+  <main class="portfolio-detail">
+    <section class="portfolio-detail__hero container">
+      <a class="portfolio-detail__back" href="/#portfolio">← 回作品集</a>
+
+      <p class="eyebrow">PORTFOLIO</p>
+      <h1>{title}</h1>
+    </section>
+
+    <section
+      class="portfolio-justified container"
+      aria-label={`${title} 照片集`}
+      data-justified-gallery
+    >
+      {
+        images.map((image, index) => (
+          <figure class="portfolio-justified__item">
+            <button
+              class="portfolio-justified__button"
+              type="button"
+              data-lightbox-open
+              data-lightbox-index={index}
+              aria-label={`開啟 ${title} 照片 ${index + 1}`}
+            >
+              <img
+                src={image}
+                alt={`${altBase} ${index + 1}`}
+                loading={index < 3 ? 'eager' : 'lazy'}
+              />
+            </button>
+          </figure>
+        ))
+      }
+    </section>
+
+    <dialog class="portfolio-lightbox" data-lightbox-dialog>
+      <div class="portfolio-lightbox__inner">
+        <button
+          class="portfolio-lightbox__close"
+          type="button"
+          aria-label="關閉照片"
+          data-lightbox-close
+        >
+          ×
+        </button>
+
+        <button
+          class="portfolio-lightbox__nav portfolio-lightbox__nav--prev"
+          type="button"
+          aria-label="上一張照片"
+          data-lightbox-prev
+        >
+          ‹
+        </button>
+
+        <img class="portfolio-lightbox__image" src="" alt="" data-lightbox-image />
+
+        <button
+          class="portfolio-lightbox__nav portfolio-lightbox__nav--next"
+          type="button"
+          aria-label="下一張照片"
+          data-lightbox-next
+        >
+          ›
+        </button>
+
+        <p class="portfolio-lightbox__count" data-lightbox-count></p>
+      </div>
+    </dialog>
+  </main>
+
+  <script>
+    const layoutJustifiedGalleries = () => {
+      const galleries = document.querySelectorAll('[data-justified-gallery]');
+
+      galleries.forEach((gallery) => {
+        const items = Array.from(gallery.querySelectorAll('.portfolio-justified__item'));
+        const styles = window.getComputedStyle(gallery);
+
+        const gap = Number.parseFloat(styles.getPropertyValue('--gallery-gap')) || 8;
+        const targetHeight =
+          Number.parseFloat(styles.getPropertyValue('--target-row-height')) || 300;
+
+        const containerWidth = gallery.clientWidth;
+        if (!containerWidth || !items.length) return;
+
+        let row = [];
+        let ratioSum = 0;
+
+        const flushRow = (isLastRow = false) => {
+          if (!row.length) return;
+
+          const totalGap = gap * (row.length - 1);
+          let rowHeight = (containerWidth - totalGap) / ratioSum;
+
+          if (isLastRow) {
+            rowHeight = Math.min(targetHeight, rowHeight);
+          }
+
+          row.forEach((item) => {
+            const ratio = Number.parseFloat(item.dataset.ratio || '1.5');
+
+            item.style.width = `${rowHeight * ratio}px`;
+            item.style.height = `${rowHeight}px`;
+          });
+
+          row = [];
+          ratioSum = 0;
+        };
+
+        items.forEach((item) => {
+          const img = item.querySelector('img');
+
+          const ratio =
+            img && img.naturalWidth && img.naturalHeight
+              ? img.naturalWidth / img.naturalHeight
+              : 1.5;
+
+          item.dataset.ratio = String(ratio);
+
+          row.push(item);
+          ratioSum += ratio;
+
+          const projectedWidth = ratioSum * targetHeight + gap * (row.length - 1);
+
+          if (projectedWidth >= containerWidth) {
+            flushRow(false);
+          }
+        });
+
+        flushRow(true);
+      });
+    };
+
+    const waitForGalleryImages = async () => {
+      const images = Array.from(document.querySelectorAll('[data-justified-gallery] img'));
+
+      await Promise.all(
+        images.map((img) => {
+          if (img.complete && img.naturalWidth > 0) {
+            return Promise.resolve();
+          }
+
+          return new Promise((resolve) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          });
+        }),
+      );
+    };
+
+    const setupPortfolioLightbox = () => {
+      const gallery = document.querySelector('[data-justified-gallery]');
+      const dialog = document.querySelector('[data-lightbox-dialog]');
+      const lightboxImage = document.querySelector('[data-lightbox-image]');
+      const count = document.querySelector('[data-lightbox-count]');
+      const closeButton = document.querySelector('[data-lightbox-close]');
+      const prevButton = document.querySelector('[data-lightbox-prev]');
+      const nextButton = document.querySelector('[data-lightbox-next]');
+
+      if (!gallery || !dialog || !lightboxImage) return;
+
+      const images = Array.from(gallery.querySelectorAll('img'));
+      let currentIndex = 0;
+
+      const updateLightbox = (index) => {
+        if (!images.length) return;
+
+        currentIndex = (index + images.length) % images.length;
+
+        const currentImage = images[currentIndex];
+
+        lightboxImage.src = currentImage.currentSrc || currentImage.src;
+        lightboxImage.alt = currentImage.alt || '';
+
+        if (count) {
+          count.textContent = `${currentIndex + 1} / ${images.length}`;
+        }
+      };
+
+      const openLightbox = (index) => {
+        updateLightbox(index);
+
+        if (typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute('open', '');
+        }
+      };
+
+      const closeLightbox = () => {
+        dialog.close();
+        lightboxImage.src = '';
+        lightboxImage.alt = '';
+      };
+
+      gallery.addEventListener('click', (event) => {
+        const target = event.target;
+
+        if (!(target instanceof HTMLElement)) return;
+
+        const button = target.closest('[data-lightbox-open]');
+        if (!button) return;
+
+        const index = Number.parseInt(button.dataset.lightboxIndex || '0', 10);
+        openLightbox(index);
+      });
+
+      closeButton?.addEventListener('click', closeLightbox);
+
+      prevButton?.addEventListener('click', () => {
+        updateLightbox(currentIndex - 1);
+      });
+
+      nextButton?.addEventListener('click', () => {
+        updateLightbox(currentIndex + 1);
+      });
+
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+          closeLightbox();
+        }
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (!dialog.open) return;
+
+        if (event.key === 'ArrowLeft') {
+          updateLightbox(currentIndex - 1);
+        }
+
+        if (event.key === 'ArrowRight') {
+          updateLightbox(currentIndex + 1);
+        }
+      });
+    };
+
+    waitForGalleryImages().then(() => {
+      layoutJustifiedGalleries();
+      setupPortfolioLightbox();
+
+      document.querySelectorAll('[data-justified-gallery]').forEach((gallery) => {
+        gallery.classList.add('is-ready');
+      });
+
+      window.addEventListener('resize', () => {
+        layoutJustifiedGalleries();
+      });
+    });
+  </script>
+</Layout>

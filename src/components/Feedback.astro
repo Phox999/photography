@@ -1,0 +1,381 @@
+---
+type Feedback = {
+  id: string;
+  text?: string;
+  paragraphs?: string[];
+};
+
+const feedbacks: Feedback[] = [
+  {
+    id: 'n1ii8_',
+    paragraphs: [
+      '這次合作是我在小紅書上滑到景崙攝影師的作品，被他的風格與創作感吸引，覺得作品很有生命力與個人特色，所以主動私訊詢問合作機會。',
+      '在合作前，其實最期待的是能一起創作出具有生命力的作品，而不是單純的拍攝紀錄。',
+      '整體溝通過程中，攝影師都非常有耐心，也很有禮貌，對於問題都能清楚回覆，讓人感覺很放心。',
+      '拍攝當天的氛圍非常輕鬆愉快，每次合作攝影師都會貼心準備瓶裝水或飲料，這點真的很加分，也能感受到他對模特的重視與照顧。拍攝過程中，他會清楚說明想要的畫面與動作，也會給很多情緒上的鼓勵與稱讚，讓人更放鬆、更能進入狀態。同時整體拍攝過程也很專業、有條理。',
+      '在拍攝引導、互動以及專業度上都非常到位，可以說是各方面都很讓人安心與信任的合作對象。',
+      '過程中最印象深刻的是，景崙攝影師會教我不同的拍攝動作，並且是攝影師自己擺動作 / 看圖片讓模特學習，沒有任何肢體接觸，非常安心。攝影師也會分享動作教學影片，讓我們在現場一起學習、一起嘗試，整個過程很有趣，也讓拍攝不只是工作，而像是一種共同創作。',
+      '收到作品後，最滿意的是整體照片的質感，尤其在調色與光影的呈現上非常出色，讓畫面很有層次與氛圍感。',
+      '其中最喜歡的是制服主題那一次的創作，日落光線非常漂亮，整體畫面呈現出人與環境的融合感，彼此襯托得很自然也很有生命力。',
+      '如果要用三個形容詞形容這次合作，我會選：專業、細膩、舒服。',
+      '每次合作都是有超出預期的，每次收到成品都會有驚喜感，尤其是攝影師在色調與畫面氛圍上的處理，非常有個人風格與辨識度。',
+      '如果朋友想找攝影師，我會推薦景崙攝影師，因為不只是技術專業，整體合作過程也很舒服、很讓人安心，而且照片成品品質穩定又有特色。',
+      '最後如果用一句話形容每次的合作，我會說：「是一場讓人放鬆、自信又能被作品驚艷的創作合作。」',
+    ],
+  },
+  {
+    id: 'yooahning',
+    text: '雖然是第一次合作，但很快就能進入拍攝狀況。攝影師很會引導動作，也願意協助拍攝紀錄影片，整體合作過程很感動，也很希望之後還有機會再合作。',
+  },
+  {
+    id: 'iris0716_',
+    text: '過程中收穫滿滿的情緒價值，很會引導模特怎麼樣才好看，照片拍出來也都很有生命力。',
+  },
+  {
+    id: 'blueworld0519',
+    text: '合作了兩次，很喜歡攝影師本身的親切感，情緒價值也給得很滿。不會刻意拍得尺度很大，是一位讓人安心的攝影師。',
+  },
+  {
+    id: 'zhiwu_ye',
+    text: '有讓模特安心並全心投入狀態的能力，會指導動作及眼神光，也會一直稱讚模特。即使天氣不理想，也能拍出不一樣的感覺。',
+  },
+  {
+    id: '_.yhhhhh',
+    text: '一開始拍攝的時侯，肢體有點僵硬，但攝影師很會引導，也一直誇獎我說很好看，就逐漸有自信，之後就愈拍愈順利了，合作經驗很不錯，期待未來有機會再合作～☺️',
+  },  {
+    id: 'yune_cos0910',
+    text: '和這位攝影師合作過幾次，整體過程都很愉快，也很好溝通。自己本身不太擅長在鏡頭前自然的表現表情和動作，所以能遇到會耐心引導模特放鬆、慢慢進入狀態的攝影師，真的讓拍攝過程安心很多，也幫了很大的忙！',
+  },
+
+];
+
+const toParagraphs = (feedback: Feedback) => {
+  if (feedback.paragraphs?.length) return feedback.paragraphs;
+  if (feedback.text) return [feedback.text];
+  return [];
+};
+
+const toPreviewText = (feedback: Feedback) => {
+  const paragraphs = toParagraphs(feedback);
+  return paragraphs.join(' ');
+};
+
+const feedbackPages = [];
+for (let i = 0; i < feedbacks.length; i += 3) {
+  feedbackPages.push(feedbacks.slice(i, i + 3));
+}
+---
+
+<section
+  class="mini-section feedback-section"
+  id="feedback"
+  aria-labelledby="feedback-title"
+  data-feedback-section
+>
+  <div class="section-heading">
+    <p class="eyebrow">FEEDBACK</p>
+    <h2 id="feedback-title">合作回饋</h2>
+  </div>
+
+  <div class="feedback-carousel">
+    <button
+      class="feedback-nav feedback-nav--prev"
+      type="button"
+      aria-label="上一頁回饋"
+      data-feedback-prev
+    >
+      ‹
+    </button>
+
+    <div class="feedback-track" data-feedback-track tabindex="0">
+      {
+        feedbackPages.map((page) => (
+          <article class="feedback-slide" data-feedback-card>
+            <div class="feedback-page">
+              {page.map((feedback) => {
+                const previewText = toPreviewText(feedback);
+                const paragraphs = toParagraphs(feedback);
+
+                return (
+                  <div class="feedback-item">
+                    <div class="feedback-item__header">
+                      <p class="feedback-item__id">{feedback.id}</p>
+
+                      <button
+                        class="feedback-more"
+                        type="button"
+                        data-feedback-open
+                        data-feedback-id={feedback.id}
+                        data-feedback-paragraphs={JSON.stringify(paragraphs)}
+                        aria-hidden="true"
+                        tabindex="-1"
+                      >
+                        查看完整回饋
+                      </button>
+                    </div>
+
+                    <p class="feedback-item__text" data-feedback-text>
+                      {previewText}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <button
+      class="feedback-nav feedback-nav--next"
+      type="button"
+      aria-label="下一頁回饋"
+      data-feedback-next
+    >
+      ›
+    </button>
+  </div>
+
+<dialog class="feedback-dialog" data-feedback-dialog>
+  <button
+    class="feedback-dialog__nav feedback-dialog__nav--prev"
+    type="button"
+    aria-label="上一則回饋"
+    data-feedback-dialog-prev
+  >
+    ‹
+  </button>
+
+  <button
+    class="feedback-dialog__nav feedback-dialog__nav--next"
+    type="button"
+    aria-label="下一則回饋"
+    data-feedback-dialog-next
+  >
+    ›
+  </button>
+
+  <div class="feedback-dialog__inner">
+    <button
+      class="feedback-dialog__close"
+      type="button"
+      aria-label="關閉完整回饋"
+      data-feedback-close
+    >
+      ×
+    </button>
+
+    <p class="feedback-dialog__label">完整回饋</p>
+    <p class="feedback-dialog__id" data-feedback-dialog-id></p>
+    <div class="feedback-dialog__text" data-feedback-dialog-text></div>
+  </div>
+</dialog>
+</section>
+
+<script>
+  const section = document.querySelector('[data-feedback-section]');
+
+  if (section) {
+    const track = section.querySelector('[data-feedback-track]');
+    const pages = Array.from(section.querySelectorAll('[data-feedback-card]'));
+    const prevButton = section.querySelector('[data-feedback-prev]');
+    const nextButton = section.querySelector('[data-feedback-next]');
+    const dialog = section.querySelector('[data-feedback-dialog]');
+    const dialogId = section.querySelector('[data-feedback-dialog-id]');
+    const dialogText = section.querySelector('[data-feedback-dialog-text]');
+    const closeButton = section.querySelector('[data-feedback-close]');
+    const dialogPrevButton = section.querySelector('[data-feedback-dialog-prev]');
+    const dialogNextButton = section.querySelector('[data-feedback-dialog-next]');
+    const dialogButtons = Array.from(section.querySelectorAll('[data-feedback-open]'));
+
+    let currentIndex = 0;
+    let currentDialogIndex = 0;
+    let feedbackScrollY = 0;
+    let isFeedbackScrollLocked = false;
+
+    const lockFeedbackScroll = () => {
+      if (isFeedbackScrollLocked) return;
+
+      isFeedbackScrollLocked = true;
+      feedbackScrollY = window.scrollY;
+
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${feedbackScrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100%';
+    };
+
+const unlockFeedbackScroll = () => {
+  if (!isFeedbackScrollLocked) return;
+
+  isFeedbackScrollLocked = false;
+
+  const html = document.documentElement;
+  const previousScrollBehavior = html.style.scrollBehavior;
+
+  html.style.scrollBehavior = 'auto';
+
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+
+  window.scrollTo({
+    top: feedbackScrollY,
+    left: 0,
+    behavior: 'auto',
+  });
+
+  requestAnimationFrame(() => {
+    html.style.scrollBehavior = previousScrollBehavior;
+  });
+};
+
+    const goTo = (index) => {
+      if (!pages.length || !track) return;
+
+      currentIndex = (index + pages.length) % pages.length;
+
+      const targetPage = pages[currentIndex];
+      const targetLeft = targetPage.offsetLeft - track.offsetLeft;
+
+      track.scrollTo({
+        left: targetLeft,
+        behavior: 'smooth',
+      });
+    };
+
+    const updateMoreButtons = () => {
+      const items = Array.from(section.querySelectorAll('.feedback-item'));
+
+      items.forEach((item) => {
+        const text = item.querySelector('[data-feedback-text]');
+        const button = item.querySelector('[data-feedback-open]');
+
+        if (!text || !button) return;
+
+        const isOverflowing = text.scrollHeight > text.clientHeight + 2;
+
+        item.classList.toggle('is-overflowing', isOverflowing);
+        button.setAttribute('aria-hidden', String(!isOverflowing));
+        button.tabIndex = isOverflowing ? 0 : -1;
+      });
+    };
+
+    const getParagraphsFromButton = (button) => {
+      const raw = button.getAttribute('data-feedback-paragraphs') || '[]';
+
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const renderDialogByIndex = (index) => {
+      if (!dialogId || !dialogText || !dialogButtons.length) return;
+
+      currentDialogIndex = (index + dialogButtons.length) % dialogButtons.length;
+
+      const button = dialogButtons[currentDialogIndex];
+      const paragraphs = getParagraphsFromButton(button);
+
+      dialogId.textContent = button.dataset.feedbackId || '';
+      dialogText.replaceChildren();
+
+      paragraphs.forEach((paragraph) => {
+        const paragraphElement = document.createElement('p');
+        paragraphElement.textContent = paragraph;
+        dialogText.appendChild(paragraphElement);
+      });
+    };
+
+    const openDialog = (button) => {
+      if (!dialog || !dialogId || !dialogText) return;
+
+      const index = dialogButtons.indexOf(button);
+      renderDialogByIndex(index >= 0 ? index : 0);
+
+      lockFeedbackScroll();
+
+      if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+      } else {
+        dialog.setAttribute('open', '');
+      }
+    };
+
+const closeDialog = () => {
+  if (!dialog?.open) return;
+
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+
+  dialog.close();
+};
+
+    section.addEventListener('click', (event) => {
+      const target = event.target;
+
+      if (!(target instanceof HTMLElement)) return;
+
+      const openButton = target.closest('[data-feedback-open]');
+
+      if (openButton instanceof HTMLElement) {
+        openDialog(openButton);
+      }
+    });
+
+    prevButton?.addEventListener('click', () => {
+      goTo(currentIndex - 1);
+    });
+
+    nextButton?.addEventListener('click', () => {
+      goTo(currentIndex + 1);
+    });
+
+    closeButton?.addEventListener('click', closeDialog);
+
+    dialogPrevButton?.addEventListener('click', () => {
+      renderDialogByIndex(currentDialogIndex - 1);
+    });
+
+    dialogNextButton?.addEventListener('click', () => {
+      renderDialogByIndex(currentDialogIndex + 1);
+    });
+
+    dialog?.addEventListener('click', (event) => {
+      if (event.target === dialog) {
+        closeDialog();
+      }
+    });
+
+    dialog?.addEventListener('close', unlockFeedbackScroll);
+
+    window.addEventListener('keydown', (event) => {
+      if (!dialog?.open) return;
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        renderDialogByIndex(currentDialogIndex - 1);
+      }
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        renderDialogByIndex(currentDialogIndex + 1);
+      }
+
+      if (event.key === 'Escape') {
+        closeDialog();
+      }
+    });
+
+    window.addEventListener('resize', updateMoreButtons);
+    window.addEventListener('load', updateMoreButtons);
+    requestAnimationFrame(updateMoreButtons);
+  }
+</script>

@@ -1,0 +1,22 @@
+---
+import { behindScenesItems, siteConfig } from '../data/site';
+---
+
+<section class="mini-section behind-section" id="behind-the-scenes" aria-labelledby="behind-title">
+  <div class="section-heading section-heading--row">
+    <div>
+      <p class="eyebrow">BEHIND THE SCENES</p>
+      <h2 id="behind-title">拍攝花絮</h2>
+    </div>
+    <a class="text-link" href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer">
+      查看更多花絮
+    </a>
+  </div>
+  <div class="behind-grid">
+    {
+      behindScenesItems.map((item) => (
+        <img src={item.image} alt={item.title} loading="lazy" />
+      ))
+    }
+  </div>
+</section>

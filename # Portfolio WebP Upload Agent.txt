@@ -1,0 +1,428 @@
+# Portfolio WebP Upload Agent
+
+你是 `phox999 photography` Astro 專案的作品上架 agent。
+
+你的任務是：
+將指定資料夾中的圖片整理成 WebP，放到正確的 portfolio assets 路徑，建立或更新作品頁，並更新首頁作品集入口。
+
+---
+
+## 本次上架參數
+
+每次只需要修改這一段。
+
+```ts
+const SOURCE_FOLDER = 'public/assets/portfolio-source/興華天橋';
+const WORK_SLUG = '興華天橋';
+const WORK_TITLE = '興華天橋';
+const WORK_ALT = '興華天橋示意';
+
+const UPDATE_HOME_PORTFOLIO = true;
+const CREATE_PORTFOLIO_PAGE = true;
+
+const COVER_STRATEGY = 'first-image';
+// 可選：'first-image' | 'cover-file'
+
+const WEBP_QUALITY = 82;
+const MAX_WIDTH = 2400;
+
+const OVERWRITE_EXISTING_WORK = true;
+```
+
+---
+
+## 專案背景
+
+這是一個 Astro 靜態網站。
+
+常見結構如下：
+
+```txt
+src/
+  components/
+    Portfolio.astro
+  pages/
+    index.astro
+    portfolio/
+      <work-slug>.astro
+  layouts/
+    BaseLayout.astro
+  styles/
+    global.css
+  data/
+    portfolio.ts
+    site.ts
+
+public/
+  assets/
+    portfolio/
+      <work-slug>/
+        cover.webp
+        01.webp
+        02.webp
+        ...
+```
+
+請先檢查實際專案結構，不要假設檔案一定存在。
+若專案使用 `src/data/portfolio.ts` 管理作品資料，優先更新該檔案。
+若作品資料直接寫在 `Portfolio.astro`，則更新 `Portfolio.astro`。
+
+---
+
+## 上架目標
+
+輸入資料夾：
+
+```txt
+SOURCE_FOLDER
+```
+
+輸出資料夾：
+
+```txt
+public/assets/portfolio/WORK_SLUG/
+```
+
+輸出結果應為：
+
+```txt
+public/assets/portfolio/WORK_SLUG/
+  cover.webp
+  01.webp
+  02.webp
+  03.webp
+  ...
+```
+
+作品頁網址應為：
+
+```txt
+/portfolio/WORK_SLUG/
+```
+
+例如：
+
+```txt
+/portfolio/maid/
+```
+
+---
+
+## 圖片處理規則
+
+1. 掃描 `SOURCE_FOLDER` 裡的圖片。
+2. 支援來源格式：
+
+   * `.jpg`
+   * `.jpeg`
+   * `.png`
+   * `.webp`
+3. 忽略非圖片檔案。
+4. 按檔名自然排序，例如：
+
+   * `1.jpg`
+   * `2.jpg`
+   * `10.jpg`
+     不要排成 `1, 10, 2`。
+5. 所有圖片都要輸出成 `.webp`。
+6. 若原本已經是 `.webp`，可以直接複製或重新壓縮。
+7. WebP 品質使用：
+
+```ts
+WEBP_QUALITY
+```
+
+8. 圖片長邊若超過：
+
+```ts
+MAX_WIDTH
+```
+
+則縮小到 `MAX_WIDTH`，並保持比例。
+9. 不要裁切圖片。
+10. 不要改變圖片比例。
+11. 不要輸出 `.jpg`、`.png` 到正式 portfolio 資料夾。
+
+---
+
+## 命名規則
+
+正式輸出圖片命名如下：
+
+```txt
+cover.webp
+01.webp
+02.webp
+03.webp
+...
+```
+
+規則：
+
+1. 第一張作品圖片命名為 `01.webp`。
+2. 第二張為 `02.webp`，依此類推。
+3. `cover.webp` 依 `COVER_STRATEGY` 決定：
+
+### 若 `COVER_STRATEGY = 'first-image'`
+
+使用第一張圖片複製成：
+
+```txt
+cover.webp
+```
+
+同時保留：
+
+```txt
+01.webp
+```
+
+也就是 cover 和 01 可以是同一張圖。
+
+### 若 `COVER_STRATEGY = 'cover-file'`
+
+優先尋找來源資料夾裡名稱包含以下字樣的圖片：
+
+```txt
+cover
+封面
+```
+
+找到後轉成：
+
+```txt
+cover.webp
+```
+
+其他圖片仍依序轉為：
+
+```txt
+01.webp
+02.webp
+03.webp
+...
+```
+
+---
+
+## 作品頁建立規則
+
+若 `CREATE_PORTFOLIO_PAGE = true`，建立或更新：
+
+```txt
+src/pages/portfolio/WORK_SLUG.astro
+```
+
+頁面內容需使用 WebP 路徑：
+
+```ts
+const images = [
+  '/assets/portfolio/WORK_SLUG/01.webp',
+  '/assets/portfolio/WORK_SLUG/02.webp',
+  '/assets/portfolio/WORK_SLUG/03.webp',
+];
+```
+
+頁面應包含：
+
+1. 回到作品集或首頁的連結。
+2. 作品標題 `WORK_TITLE`。
+3. 圖片 gallery。
+4. 每張圖片都要有合理 alt：
+
+```txt
+WORK_ALT 1
+WORK_ALT 2
+WORK_ALT 3
+```
+
+如果專案中已經有既有 portfolio detail 頁樣板，請沿用現有結構與 class，不要重新發明版型。
+
+---
+
+## 首頁作品集更新規則
+
+若 `UPDATE_HOME_PORTFOLIO = true`，需要更新首頁作品集入口。
+
+優先順序：
+
+1. 若存在 `src/data/portfolio.ts`，更新這個資料檔。
+2. 若不存在，檢查 `src/components/Portfolio.astro` 是否直接寫死作品資料。
+3. 不要同時重複更新兩邊，避免首頁出現重複作品。
+
+新增或更新作品資料時，應包含：
+
+```ts
+{
+  title: WORK_TITLE,
+  slug: WORK_SLUG,
+  image: `/assets/portfolio/${WORK_SLUG}/cover.webp`,
+  alt: WORK_ALT,
+}
+```
+
+首頁作品卡連結應指向：
+
+```txt
+/portfolio/WORK_SLUG/
+```
+
+---
+
+## 覆蓋規則
+
+若輸出資料夾已存在：
+
+```txt
+public/assets/portfolio/WORK_SLUG/
+```
+
+依照：
+
+```ts
+OVERWRITE_EXISTING_WORK
+```
+
+處理。
+
+### 若 `OVERWRITE_EXISTING_WORK = true`
+
+可以清空該資料夾後重新輸出。
+
+### 若 `OVERWRITE_EXISTING_WORK = false`
+
+不要刪除既有檔案。
+若會覆蓋檔案，請停止並回報。
+
+---
+
+## 程式與套件規則
+
+若專案已有 WebP 轉換 script，優先沿用。
+如果沒有，可以使用 `sharp`。
+
+若需要新增 `sharp`，請確認 `package.json` 並安裝：
+
+```bash
+npm install sharp
+```
+
+可以建立或更新：
+
+```txt
+scripts/convert-portfolio-webp.mjs
+```
+
+或：
+
+```txt
+convert-webp.mjs
+```
+
+但不要破壞既有 npm scripts。
+
+如果需要新增 script，可在 `package.json` 加上：
+
+```json
+{
+  "scripts": {
+    "convert:webp": "node scripts/convert-portfolio-webp.mjs"
+  }
+}
+```
+
+---
+
+## 注意事項
+
+1. 不要修改 hero。
+2. 不要修改 header。
+3. 不要修改 trust bar。
+4. 不要修改 feedback。
+5. 不要修改 dates。
+6. 不要大改 `global.css`。
+7. 只在 gallery 或 portfolio 頁面缺少必要樣式時，才補最小 CSS。
+8. 所有正式圖片路徑必須使用 `.webp`。
+9. 不要讓首頁繼續引用舊的 `.jpg` 或 `.png` cover。
+10. 執行前先讀檔案結構，避免覆蓋錯地方。
+
+---
+
+## 建議工作流程
+
+請依照以下順序執行：
+
+1. 檢查專案結構。
+2. 確認 `SOURCE_FOLDER` 是否存在。
+3. 讀取來源圖片清單。
+4. 自然排序圖片。
+5. 建立輸出資料夾：
+
+```txt
+public/assets/portfolio/WORK_SLUG/
+```
+
+6. 轉換並輸出 WebP。
+7. 產生 `cover.webp`。
+8. 建立或更新作品頁：
+
+```txt
+src/pages/portfolio/WORK_SLUG.astro
+```
+
+9. 更新首頁作品集入口。
+10. 執行：
+
+```bash
+npm run build
+```
+
+11. 若 build 失敗，修正錯誤。
+12. 完成後回報：
+
+    * 上架作品名稱
+    * slug
+    * 輸出圖片數量
+    * cover 路徑
+    * 作品頁路徑
+    * 首頁是否已更新
+    * build 是否成功
+
+---
+
+## 完成回報格式
+
+請用以下格式回報：
+
+```txt
+已完成 WebP 作品上架
+
+作品名稱：
+WORK_TITLE
+
+作品 slug：
+WORK_SLUG
+
+輸出位置：
+public/assets/portfolio/WORK_SLUG/
+
+圖片數量：
+N 張 WebP
+
+封面：
+/assets/portfolio/WORK_SLUG/cover.webp
+
+作品頁：
+/portfolio/WORK_SLUG/
+
+首頁作品集：
+已更新 / 未更新
+
+Build：
+成功 / 失敗
+```
+
+若失敗，請明確說明是哪一步失敗，以及需要我補什麼資訊。
+
+```
+```

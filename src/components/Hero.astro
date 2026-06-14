@@ -1,0 +1,71 @@
+---
+import { siteConfig } from '../data/site';
+
+const heroImages = [
+  '/assets/hero.jpg',
+  '/assets/hero-02.jpg',
+  '/assets/hero-03.jpg',
+  '/assets/hero-04.jpg',
+];
+---
+
+<section class="hero" id="hero" aria-labelledby="hero-title" data-hero-carousel>
+  <div class="hero__media" aria-hidden="true">
+    {
+      heroImages.map((image, index) => (
+        <img
+          class={`hero__image ${index === 0 ? 'is-active' : ''}`}
+          src={image}
+          alt=""
+          loading={index === 0 ? 'eager' : 'lazy'}
+          data-hero-image
+        />
+      ))
+    }
+  </div>
+
+  <div class="hero__overlay"></div>
+
+  <div class="hero__content container">
+    <h1 id="hero-title">一起創作，<br />有溫度、有故事的人像作品</h1>
+
+    <p class="hero__subtitle"></p>
+
+    <p class="hero__copy">
+      提供北部地區的互惠拍攝合作，適合想累積作品、記錄生活或社群照的你。
+      <br>讓我們一起創作能你的人生代表作。
+    </p>
+
+    <a
+      class="button button--primary"
+      href={siteConfig.googleFormUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      填寫合作意向
+    </a>
+  </div>
+</section>
+
+<script>
+  const heroCarousel = document.querySelector('[data-hero-carousel]');
+
+  if (heroCarousel) {
+    const images = Array.from(heroCarousel.querySelectorAll('[data-hero-image]'));
+    let currentIndex = 0;
+
+    const goToHeroImage = (index) => {
+      if (!images.length) return;
+
+      images[currentIndex].classList.remove('is-active');
+      currentIndex = (index + images.length) % images.length;
+      images[currentIndex].classList.add('is-active');
+    };
+
+    if (images.length > 1) {
+      window.setInterval(() => {
+        goToHeroImage(currentIndex + 1);
+      }, 4600);
+    }
+  }
+</script>

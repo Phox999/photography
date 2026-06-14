@@ -1,0 +1,25 @@
+---
+import '../styles/global.css';
+
+const {
+  title = 'phox999 photography｜互惠人像攝影合作',
+  description = 'phox999 photography 提供自然、真實、有故事感的人像互惠攝影合作，適合想累積形象作品、個人品牌內容或社群照片的你。',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="/assets/hero.jpg" />
+    <meta property="og:type" content="website" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "phox999-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "images:webp": "node scripts/convert-webp.mjs",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.10.0",
+    "sharp": "^0.35.1"
+  }
+}

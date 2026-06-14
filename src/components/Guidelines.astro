@@ -1,0 +1,28 @@
+---
+const guidelines = [
+  ['合作性質', '這是互惠創作，非商業委託，不涉及購買服務。'],
+  ['照片使用', '雙方可將作品用於作品集與社群展示，具體範圍事前確認。'],
+  ['公開範圍', '公開前可先討論範圍與限制，不會臨時超出共識。'],
+  ['額外費用', '場地、妝髮、交通等費用，事前討論是否分攤。'],
+  ['合作篩選', '會依拍攝主題與檔期評估，不一定能接受所有申請。'],
+];
+---
+
+<section class="section container" id="guidelines" aria-labelledby="guidelines-title">
+  <div class="section-heading">
+    <p class="eyebrow">GUIDELINES</p>
+    <h2 id="guidelines-title">合作前請先了解</h2>
+  </div>
+
+  <div class="guideline-grid">
+    {
+      guidelines.map(([title, text]) => (
+        <article class="guideline-card">
+          <span class="line-icon line-icon--spark" aria-hidden="true"></span>
+          <h3>{title}</h3>
+          <p>{text}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>
