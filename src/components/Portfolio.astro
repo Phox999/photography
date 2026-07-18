@@ -1,8 +1,8 @@
 ---
-import { portfolioItems, siteConfig } from '../data/site';
+import { portfolioFilters, portfolioItems, siteConfig } from '../data/site';
 ---
 
-<section class="section portfolio-section container" id="portfolio" aria-labelledby="portfolio-title">
+<section class="section portfolio-section container" id="portfolio" aria-labelledby="portfolio-title" data-portfolio-filter>
   <div class="section-heading section-heading--row">
     <div>
       <p class="eyebrow">PORTFOLIO</p>
@@ -18,10 +18,26 @@ import { portfolioItems, siteConfig } from '../data/site';
 </a>
   </div>
 
+  <div class="portfolio-filter" aria-label="篩選作品">
+    {
+      portfolioFilters.map((filter, index) => (
+        <button
+          class={`portfolio-filter__button ${index === 0 ? 'is-active' : ''}`}
+          type="button"
+          aria-pressed={index === 0 ? 'true' : 'false'}
+          data-portfolio-filter-button
+          data-filter={filter}
+        >
+          {filter}
+        </button>
+      ))
+    }
+  </div>
+
   <div class="portfolio-strip" aria-label="作品分類">
     {
       portfolioItems.map((item) => (
-        <article class="portfolio-card">
+        <article class="portfolio-card" data-portfolio-card data-tags={item.tags.join(',')}>
           <a
             class="portfolio-card__link"
             href={item.href ?? siteConfig.portfolioUrl}
@@ -34,4 +50,50 @@ import { portfolioItems, siteConfig } from '../data/site';
       ))
     }
   </div>
+
+  <p class="portfolio-empty" data-portfolio-empty hidden>目前沒有符合這個分類的作品。</p>
 </section>
+
+<script>
+  const portfolioSection = document.querySelector('[data-portfolio-filter]');
+
+  if (portfolioSection) {
+    const buttons = Array.from(portfolioSection.querySelectorAll('[data-portfolio-filter-button]'));
+    const cards = Array.from(portfolioSection.querySelectorAll('[data-portfolio-card]'));
+    const empty = portfolioSection.querySelector('[data-portfolio-empty]');
+
+    const applyFilter = (activeFilter) => {
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const tags = String(card.getAttribute('data-tags') || '')
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        const isVisible = activeFilter === '全部' || tags.includes(activeFilter);
+
+        card.toggleAttribute('hidden', !isVisible);
+
+        if (isVisible) {
+          visibleCount += 1;
+        }
+      });
+
+      buttons.forEach((button) => {
+        const isActive = button.getAttribute('data-filter') === activeFilter;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+
+      if (empty instanceof HTMLElement) {
+        empty.hidden = visibleCount > 0;
+      }
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        applyFilter(button.getAttribute('data-filter') || '全部');
+      });
+    });
+  }
+</script>

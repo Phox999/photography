@@ -12,15 +12,15 @@ import { navItems, siteConfig } from '../data/site';
     {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
   </nav>
 
-  <a class="button button--header" href={siteConfig.googleFormUrl} target="_blank" rel="noopener noreferrer">
-    填寫合作單
+  <a class="button button--header" href={siteConfig.inquiryUrl}>
+    開始聊聊拍攝
   </a>
 
   <details class="mobile-nav">
     <summary aria-label="開啟導覽選單">選單</summary>
     <div class="mobile-nav__panel">
       {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
-      <a href={siteConfig.googleFormUrl} target="_blank" rel="noopener noreferrer">填寫合作意向</a>
+      <a href={siteConfig.inquiryUrl}>開始聊聊拍攝</a>
     </div>
   </details>
 </header>

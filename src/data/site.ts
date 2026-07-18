@@ -1,6 +1,8 @@
 export const siteConfig = {
   brandName: 'phox999 photography',
   googleFormUrl: 'https://forms.gle/8V17E3gPVf3NdEaY8',
+  inquiryUrl: '/#contact',
+  adminUrl: '/admin/',
   portfolioUrl: '/portfolio/',
   instagramUrl: 'https://www.instagram.com/phox999_/',
   email: 'chuajinglun@ymail.com',
@@ -13,7 +15,10 @@ export const navItems = [
   { label: '合作流程', href: '#process' },
   { label: '拍攝回饋', href: '#feedback' },
   { label: '常見問題', href: '#faq' },
+  { label: '聯繫我', href: '#contact' },
 ];
+
+export const portfolioFilters = ['全部', '外拍', '棚拍', '夜晚', '午後', '日系'];
 
 export const portfolioItems = [
   {
@@ -22,6 +27,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/maid/cover.webp',
     href: '/portfolio/maid/',
     alt: '跳石車站示意',
+    tags: ['外拍', '午後', '日系'],
   },
   {
     slug: '信義聖誕節',
@@ -29,6 +35,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/信義聖誕節/cover.webp',
     href: '/portfolio/信義聖誕節/',
     alt: '信義聖誕節示意',
+    tags: ['外拍', '夜晚'],
   },
   {
     slug: '廢土世界',
@@ -36,6 +43,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/廢土世界/cover.webp',
     href: '/portfolio/廢土世界/',
     alt: '廢土世界示意',
+    tags: ['外拍'],
   },
   {
     slug: '藍色襯衫',
@@ -43,6 +51,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/藍色襯衫/cover.webp',
     href: '/portfolio/藍色襯衫/',
     alt: '藍色襯衫示意',
+    tags: ['外拍', '午後', '日系'],
   },
   {
     slug: '學院風棚拍',
@@ -50,6 +59,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/學院風棚拍/cover.webp',
     href: '/portfolio/學院風棚拍/',
     alt: '學院風棚拍示意',
+    tags: ['棚拍', '日系'],
   },
   {
     slug: '光劍JK',
@@ -57,6 +67,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/光劍JK/cover.webp',
     href: '/portfolio/光劍JK/',
     alt: '光劍JK示意',
+    tags: ['外拍', '夜晚', '日系'],
   },
   {
     slug: '午後車站',
@@ -64,6 +75,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/午後車站/cover.webp',
     href: '/portfolio/午後車站/',
     alt: '午後車站示意',
+    tags: ['外拍', '午後', '日系'],
   },
   {
     slug: '興華天橋',
@@ -71,6 +83,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/興華天橋/cover.webp',
     href: '/portfolio/興華天橋/',
     alt: '興華天橋示意',
+    tags: ['外拍', '午後'],
   },
   {
     slug: '寶藏嚴',
@@ -78,6 +91,7 @@ export const portfolioItems = [
     image: '/assets/portfolio/寶藏嚴/cover.webp',
     href: '/portfolio/寶藏嚴/',
     alt: '寶藏嚴示意',
+    tags: ['外拍', '午後', '日系'],
   },
 ];
 
@@ -137,6 +151,6 @@ export const faqItems = [
   },
   {
     question: '如何申請合作？',
-    answer: '請點擊「填寫合作意向」填寫表單。我會依主題、檔期與合作適配度回覆是否能安排。',
+    answer: '請點擊「開始聊聊拍攝」填寫表單。我會依主題、檔期與合作適配度回覆是否能安排。',
   },
 ];

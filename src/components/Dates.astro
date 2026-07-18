@@ -26,15 +26,15 @@ const datePages: DatePage[] = [
       { day: 12, status: 'soldout' },
       { day: 18, status: 'soldout' },
       { day: 19, status: 'soldout' },
-      { day: 25, status: 'available' },
-      { day: 26, status: 'available' },
+      { day: 25, status: 'soldout' },
+      { day: 26, status: 'soldout' },
     ],
   },
   {
   year: 2026,
   month: 8,
   slots: [
-    { day: 1, status: 'available' },
+    { day: 1, status: 'soldout' },
     { day: 2, status: 'available' },
     { day: 8, status: 'available' },
     { day: 9, status: 'available'},
@@ -42,7 +42,7 @@ const datePages: DatePage[] = [
     { day: 16, status: 'available' },
     { day: 22, status: 'available' },
     { day: 23, status: 'available' },
-    { day: 29, status: 'available' },
+    { day: 29, status: 'soldout' },
     { day: 30, status: 'available' },
   ],
 },
@@ -150,7 +150,7 @@ const formatSlot = (page: DatePage, slot: DateSlot) => {
                     </div>
 
                     <div class="date-group">
-                      <p class="date-group__title">已完售</p>
+                      <p class="date-group__title">已被預約</p>
                       <div class="date-chip-list">
                         {
                           soldoutSlots.length ? (
@@ -174,11 +174,9 @@ const formatSlot = (page: DatePage, slot: DateSlot) => {
 
                     <a
                       class="button button--primary"
-                      href={siteConfig.googleFormUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={siteConfig.inquiryUrl}
                     >
-                      填寫合作意向
+                      開始聊聊拍攝
                     </a>
 
                     <small>提交後我會儘快確認檔期</small>
