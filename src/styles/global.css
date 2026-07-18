@@ -33,6 +33,7 @@
 
 html {
   color-scheme: light;
+  scroll-padding-top: 88px;
   scroll-behavior: smooth;
 }
 
@@ -561,6 +562,13 @@ p {
 
 .section {
   padding-block: var(--section-padding);
+  scroll-margin-top: 88px;
+}
+
+.mini-section,
+#portfolio,
+#contact {
+  scroll-margin-top: 88px;
 }
 
 .section-heading {
@@ -606,6 +614,46 @@ p {
   padding-bottom: clamp(20px, 5vw, 20px);
 }
 
+.portfolio-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -6px 0 28px;
+}
+
+.portfolio-filter__button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(123, 171, 192, 0.42);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0 18px;
+  color: var(--color-primary-dark);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.portfolio-filter__button:hover,
+.portfolio-filter__button.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.portfolio-filter__button:hover {
+  transform: translateY(-1px);
+}
+
 .portfolio-strip {
   display: grid;
   grid-template-columns: repeat(6, minmax(145px, 1fr));
@@ -614,6 +662,10 @@ p {
 
 .portfolio-card {
   min-width: 0;
+}
+
+.portfolio-card[hidden] {
+  display: none;
 }
 
 .portfolio-card__link {
@@ -652,6 +704,13 @@ p {
   font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.portfolio-empty {
+  margin-top: 22px;
+  color: var(--color-muted);
+  font-weight: 800;
+  text-align: center;
 }
 
 .portfolio-detail {
@@ -2251,6 +2310,17 @@ p {
     overflow-x: hidden;
   }
 
+  html {
+    scroll-padding-top: 76px;
+  }
+
+  .section,
+  .mini-section,
+  #portfolio,
+  #contact {
+    scroll-margin-top: 76px;
+  }
+
   .container {
     width: min(calc(100% - 28px), var(--container-max));
   }
@@ -2492,6 +2562,23 @@ p {
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
+  }
+
+  .portfolio-filter {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-bottom: 22px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .portfolio-filter::-webkit-scrollbar {
+    display: none;
+  }
+
+  .portfolio-filter__button {
+    flex: 0 0 auto;
   }
 
   .portfolio-strip::-webkit-scrollbar {
@@ -2760,4 +2847,346 @@ p {
 
 #faq {
   padding-bottom: clamp(60px, 8vw, 60px);
+}
+
+.contact-section {
+  padding-block: clamp(56px, 8vw, 92px);
+  background:
+    linear-gradient(180deg, rgba(239, 250, 255, 0), rgba(239, 250, 255, 0.72)),
+    #fff;
+}
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: start;
+}
+
+.contact-copy {
+  position: sticky;
+  top: 120px;
+  display: grid;
+  gap: 20px;
+}
+
+.contact-copy h2 {
+  max-width: 9em;
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.22;
+}
+
+.contact-copy p {
+  max-width: 34em;
+  color: var(--color-muted);
+  font-size: clamp(1rem, 1.24vw, 1.12rem);
+}
+
+.contact-form,
+.admin-panel {
+  display: grid;
+  gap: 18px;
+  border: 1px solid rgba(123, 171, 192, 0.26);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.88);
+  padding: clamp(24px, 4vw, 38px);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-page {
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(99, 186, 223, 0.12), transparent 24rem),
+    linear-gradient(180deg, #eff8fb 0, #fff 28rem);
+  padding-block: clamp(28px, 5vw, 58px);
+}
+
+.admin-shell {
+  display: grid;
+  gap: 24px;
+}
+
+.admin-heading,
+.admin-toolbar,
+.admin-card__header,
+.admin-card__controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-heading h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.2;
+}
+
+.admin-home-link {
+  width: auto;
+  margin-top: 0;
+  padding: 0 22px;
+}
+
+.admin-toolbar p,
+.admin-empty,
+.admin-error {
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.admin-error {
+  color: #9b2c2c;
+}
+
+.admin-list {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-card {
+  display: grid;
+  gap: 18px;
+  border: 1px solid rgba(123, 171, 192, 0.22);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  padding: 22px;
+}
+
+.admin-card__title {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-card h2 {
+  font-family: var(--font-body);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  line-height: 1.25;
+}
+
+.admin-card__date {
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.admin-status {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  padding: 0 12px;
+  background: var(--color-surface-soft);
+  color: var(--color-primary-dark);
+  font-size: 0.84rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.admin-status.is-scheduled {
+  background: #eaf7ec;
+  color: #25743a;
+}
+
+.admin-status.is-closed {
+  background: #f2f2f2;
+  color: #555;
+}
+
+.admin-card__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-card__meta p {
+  display: grid;
+  gap: 4px;
+  border-radius: 14px;
+  background: rgba(239, 250, 255, 0.72);
+  padding: 12px;
+}
+
+.admin-card__meta strong,
+.admin-card__controls label {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.admin-card__meta span,
+.admin-card__message {
+  overflow-wrap: anywhere;
+}
+
+.admin-card__message {
+  border-left: 4px solid var(--color-primary);
+  padding-left: 14px;
+  color: #24333a;
+}
+
+.admin-card__controls {
+  align-items: end;
+  border-top: 1px solid rgba(123, 171, 192, 0.2);
+  padding-top: 16px;
+}
+
+.admin-card__controls label {
+  display: grid;
+  flex: 1 1 180px;
+  gap: 8px;
+}
+
+.admin-card__controls select,
+.admin-card__controls textarea {
+  width: 100%;
+  border: 1px solid rgba(123, 171, 192, 0.52);
+  border-radius: 14px;
+  background: #fff;
+  padding: 10px 12px;
+  color: var(--color-text);
+  font: inherit;
+}
+
+.admin-card__controls .button {
+  width: auto;
+  min-width: 128px;
+  padding: 0 18px;
+}
+
+.admin-save-message {
+  min-width: 5em;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.form-field,
+.contact-form label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 0.94rem;
+  font-weight: 800;
+}
+
+.form-field label {
+  display: block;
+}
+
+.contact-form .hidden-field {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  border: 1px solid rgba(123, 171, 192, 0.52);
+  border-radius: 16px;
+  background: #fff;
+  padding: 12px 14px;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 500;
+}
+
+.contact-form textarea {
+  resize: vertical;
+}
+
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus {
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(99, 186, 223, 0.22);
+}
+
+.checkbox-field {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.checkbox-field input {
+  width: 18px;
+  height: 18px;
+  margin-top: 4px;
+}
+
+.form-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.form-footer .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+}
+
+.form-status {
+  color: var(--color-muted);
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .contact-section {
+    padding-block: 48px 64px;
+  }
+
+  .contact-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-copy {
+    position: static;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-form {
+    padding: 22px;
+  }
+
+  .form-footer .button {
+    width: 100%;
+  }
+
+  .admin-heading,
+  .admin-toolbar,
+  .admin-card__header,
+  .admin-card__controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-home-link,
+  .admin-toolbar .button,
+  .admin-card__controls .button {
+    width: 100%;
+  }
+
+  .admin-card__meta {
+    grid-template-columns: 1fr;
+  }
 }

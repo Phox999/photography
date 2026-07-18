@@ -10,7 +10,11 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.7",
     "astro": "^5.10.0",
     "sharp": "^0.35.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.112.0"
   }
 }

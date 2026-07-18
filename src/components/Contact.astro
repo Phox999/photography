@@ -1,0 +1,138 @@
+<section class="section contact-section" id="contact" aria-labelledby="contact-title">
+  <div class="container contact-layout">
+    <div class="contact-copy">
+      <p class="eyebrow">CONTACT</p>
+      <h2 id="contact-title">想一起拍一組作品嗎？</h2>
+      <p>
+        如果你有想嘗試的風格、服裝或主題，可以先留下合作意向。
+        我會依主題、檔期與合作適配度回覆是否能安排。
+      </p>
+
+    </div>
+
+    <form class="contact-form" data-inquiry-form>
+      <label class="hidden-field" aria-hidden="true">
+        <span>網站</span>
+        <input name="website" type="text" autocomplete="off" tabindex="-1" />
+      </label>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="name">姓名 / 昵稱</label>
+          <input id="name" name="name" type="text" autocomplete="name" required />
+        </div>
+
+        <div class="form-field">
+          <label for="collaboration_type">合作類型</label>
+          <select id="collaboration_type" name="collaboration_type" required>
+            <option value="">請選擇</option>
+            <option value="輕量體驗(2hr)">輕量體驗(2hr)</option>
+            <option value="標準方案(3hr)">標準方案(3hr)</option>
+            <option value="主題合作">主題合作</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="contact_method">聯絡方式</label>
+          <select id="contact_method" name="contact_method" required>
+            <option value="">請選擇</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Line">Line</option>
+            <option value="Facebook">Facebook</option>
+            <option value="Threads">Threads</option>
+            <option value="手機">手機</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="contact_account">聯絡帳號</label>
+          <input id="contact_account" name="contact_account" type="text" autocomplete="off" required />
+        </div>
+
+
+
+        <div class="form-field">
+          <label for="preferred_date">偏好日期</label>
+          <input id="preferred_date" name="preferred_date" type="text" autocomplete="off" placeholder="例如：8/3、8/10 下午" />
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="description">想拍攝的風格 / 主題</label>
+        <textarea
+          id="description"
+          name="description"
+          rows="5"
+          maxlength="2000"
+          placeholder="可以寫主題、服裝、地點、想呈現的感覺，或附上作品 / moodboard 連結。"
+          required
+        ></textarea>
+      </div>
+
+      <label class="checkbox-field">
+        <input name="consent" type="checkbox" required />
+        <span>我同意資料僅用於本次合作聯繫與檔期確認。</span>
+      </label>
+
+      <div class="form-footer">
+        <button class="button button--primary" type="submit">送出合作意向</button>
+        <p class="form-status" role="status" data-inquiry-status></p>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+  const inquiryForm = document.querySelector('[data-inquiry-form]');
+
+  if (inquiryForm instanceof HTMLFormElement) {
+    const status = inquiryForm.querySelector('[data-inquiry-status]');
+
+    inquiryForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const submitButton = inquiryForm.querySelector('button[type="submit"]');
+      const formData = new FormData(inquiryForm);
+      const payload = Object.fromEntries(formData.entries());
+
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = true;
+      }
+
+      if (status) {
+        status.textContent = '送出中...';
+      }
+
+      try {
+        const response = await fetch('/api/inquiries', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google Form 聯絡。');
+        }
+
+        inquiryForm.reset();
+
+        if (status) {
+          status.textContent = '已收到合作意向，我會再回覆確認檔期。';
+        }
+      } catch (error) {
+        if (status) {
+          status.textContent = error instanceof Error ? error.message : '目前無法送出，請改用 Instagram 或 Google Form 聯絡。';
+        }
+      } finally {
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = false;
+        }
+      }
+    });
+  }
+</script>
