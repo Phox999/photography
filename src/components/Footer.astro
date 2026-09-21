@@ -4,12 +4,13 @@ import { siteConfig } from '../data/site';
 
 <footer class="site-footer">
   <div class="container footer-inner">
-    <a class="logo logo--footer" href="#hero" aria-label="回到首頁">
+    <a class="logo logo--footer" href="/" aria-label="回到首頁">
       <span>phox999</span>
       <small>photography</small>
     </a>
     <p>© 2026 phox999 Photography. All Rights Reserved.</p>
     <div class="footer-links" aria-label="聯絡連結">
+      <a href={siteConfig.aboutUrl}>關於我</a>
       <a href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>
       <a href={siteConfig.mailtoUrl}>Email</a>
     </div>
