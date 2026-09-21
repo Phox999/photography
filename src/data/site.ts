@@ -4,21 +4,23 @@ export const siteConfig = {
   inquiryUrl: '/#contact',
   adminUrl: '/admin/',
   portfolioUrl: '/portfolio/',
+  aboutUrl: '/about/',
   instagramUrl: 'https://www.instagram.com/phox999_/',
   email: 'chuajinglun@ymail.com',
   mailtoUrl: 'mailto:chuajinglun@ymail.com',
 };
 
 export const navItems = [
-  { label: '作品集', href: '#portfolio' },
-  { label: '合作方式', href: '#plans' },
-  { label: '合作流程', href: '#process' },
-  { label: '拍攝回饋', href: '#feedback' },
-  { label: '常見問題', href: '#faq' },
-  { label: '聯繫我', href: '#contact' },
+  { label: '作品集', href: '/#portfolio' },
+  { label: '合作方式', href: '/#plans' },
+  { label: '合作流程', href: '/#process' },
+  { label: '拍攝回饋', href: '/#feedback' },
+  { label: '關於我', href: '/about/' },
+  { label: '常見問題', href: '/#faq' },
+  { label: '聯繫我', href: '/#contact' },
 ];
 
-export const portfolioFilters = ['全部', '外拍', '棚拍', '夜晚', '午後', '日系'];
+export const portfolioFilters = ['全部', '外拍', '棚拍'];
 
 export const portfolioItems = [
   {
@@ -123,34 +125,22 @@ export const behindScenesItems = [
 export const faqItems = [
   {
     question: '我不會擺姿勢怎麼辦？',
-    answer: '沒關係。拍攝過程會協助引導姿勢、表情與動作，不需要事先具備模特兒經驗。',
+    answer: '拍攝過程會協助引導姿勢、表情與動作，不需要事先有模特兒經驗。',
   },
   {
     question: '拍攝需要付費嗎？',
-    answer: '互惠合作本身不收取拍攝費，但若有場地、或道具等額外支出，會在拍攝前討論是否分攤。',
-  },
-  {
-    question: '照片可以用在哪裡？',
-    answer: '通常可用於個人社群、作品集、形象照與非商業用途。若涉及商業、品牌或廣告使用，請事前說明並另外討論。',
-  },
-  {
-    question: '可以帶親友一起來嗎？',
-    answer: '可以的。若你是第一次拍攝，帶親友陪同，但仍需避免影響拍攝流程。',
+    answer: '互惠合作本身不收取拍攝費；若有棚租、場地或道具等額外支出，會在拍攝前討論如何分攤。',
   },
   {
     question: '多久可以拿到照片？',
-    answer: '會依拍攝量與當月工作狀況而定。一般 2-3 個星期内給予照片。',
+    answer: '一般會在拍攝後 2–3 週交付，實際時間會依當月拍攝量調整。',
   },
   {
     question: '如果臨時有事要改期？',
-    answer: '請盡早告知。互惠合作重視彼此時間，若多次臨時取消，可能會影響後續合作安排。',
-  },
-  {
-    question: '可以拍哪些風格？',
-    answer: '沒有限制。任何主題、服裝或情境，都可以在表單中提出。',
+    answer: '請盡早告知，我們會再確認彼此可配合的日期；多次臨時取消可能影響後續合作安排。',
   },
   {
     question: '如何申請合作？',
-    answer: '請點擊「開始聊聊拍攝」填寫表單。我會依主題、檔期與合作適配度回覆是否能安排。',
+    answer: '點擊「開始聊聊拍攝」填寫合作資訊，我會依主題、檔期與合作方式回覆是否能安排。',
   },
 ];
