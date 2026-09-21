@@ -13,14 +13,14 @@ import { navItems, siteConfig } from '../data/site';
   </nav>
 
   <a class="button button--header" href={siteConfig.inquiryUrl}>
-    開始聊聊拍攝
+    立即預約
   </a>
 
   <details class="mobile-nav">
     <summary aria-label="開啟導覽選單">選單</summary>
     <div class="mobile-nav__panel">
       {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
-      <a href={siteConfig.inquiryUrl}>開始聊聊拍攝</a>
+      <a href={siteConfig.inquiryUrl}>立即預約</a>
     </div>
   </details>
 </header>
