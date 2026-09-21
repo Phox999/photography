@@ -19,8 +19,10 @@ const datePages: DatePage[] = [
     year: 2026,
     month: 9,
     slots: [
+      { day: 25, status: 'available' },
       { day: 26, status: 'available' },
       { day: 27, status: 'soldout' },
+      { day: 28, status: 'soldout' },
     ],
   },
   {
@@ -29,12 +31,14 @@ const datePages: DatePage[] = [
     slots: [
       { day: 3, status: 'available' },
       { day: 4, status: 'soldout' },
+      { day: 9, status: 'available' },
       { day: 10, status: 'available' },
       { day: 11, status: 'available' },
       { day: 17, status: 'available' },
       { day: 18, status: 'available' },
       { day: 24, status: 'available' },
       { day: 25, status: 'available' },
+      { day: 26, status: 'available' },
       { day: 31, status: 'soldout' },
     ],
   },
@@ -63,6 +67,7 @@ const datePages: DatePage[] = [
       { day: 13, status: 'available' },
       { day: 19, status: 'available' },
       { day: 20, status: 'available' },
+      { day: 25, status: 'available' },
       { day: 26, status: 'available' },
       { day: 27, status: 'available' },
     ],
@@ -189,7 +194,7 @@ const formatSlot = (page: DatePage, slot: DateSlot) => {
                   <div class="cta-card">
                     <h3>一天只拍攝一場</h3>
                     <p>
-                      六、日為主要開放檔期，為了確保每一組作品的品質與溝通時間，
+                      六、日與國定假日為主要開放檔期，為了確保每一組作品的品質與溝通時間，
                       當日額滿後即不再追加。
                     </p>
 
