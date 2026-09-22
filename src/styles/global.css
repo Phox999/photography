@@ -4014,3 +4014,176 @@ p {
   max-width: none !important;
   text-align: left !important;
 }
+
+
+/* === 2026-09-22 carousel controls and process refinement === */
+
+/* Feedback: compact dot pagination */
+.feedback-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.feedback-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(58, 129, 160, 0.22);
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.feedback-dot:hover {
+  background: rgba(58, 129, 160, 0.48);
+  transform: scale(1.12);
+}
+
+.feedback-dot.is-active {
+  background: var(--color-primary);
+}
+
+/* Dates: use the referenced segmented month control instead of arrow buttons */
+.date-switcher {
+  display: grid;
+  width: min(520px, 48vw);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  border: 2px solid #111;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  padding: 6px;
+}
+
+.date-switcher__button {
+  display: grid;
+  min-height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  padding: 0 18px;
+  color: #111;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.date-switcher__button:hover {
+  background: rgba(99, 186, 223, 0.14);
+}
+
+.date-switcher__button.is-active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* Portfolio: try the same segmented-control language for category switching */
+.portfolio-filter--segmented {
+  display: inline-flex;
+  width: fit-content;
+  gap: 4px;
+  border: 2px solid #111;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  padding: 6px;
+}
+
+.portfolio-filter--segmented .portfolio-filter__button {
+  min-width: 86px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 0 20px;
+  color: #111;
+}
+
+.portfolio-filter--segmented .portfolio-filter__button:hover {
+  border-color: transparent;
+  background: rgba(99, 186, 223, 0.14);
+  color: var(--color-primary-dark);
+  transform: none;
+}
+
+.portfolio-filter--segmented .portfolio-filter__button.is-active {
+  border-color: transparent;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* Process: blue number, no underline, body copy starts on the same left edge as the number */
+.process-flow__content {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.process-flow__heading-row {
+  width: 100% !important;
+  justify-content: flex-start !important;
+  padding-bottom: 0 !important;
+  text-align: left;
+}
+
+.process-flow__heading-row::after {
+  display: none !important;
+}
+
+.process-flow__number {
+  color: var(--color-primary) !important;
+}
+
+.process-flow__content > p {
+  width: 100%;
+  max-width: none !important;
+  margin: 16px 0 0 !important;
+  color: #2e5161;
+  font-size: clamp(1rem, 1.08vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.85;
+  text-align: left !important;
+}
+
+@media (max-width: 900px) {
+  .dates-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .date-switcher {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .date-switcher {
+    gap: 2px;
+    padding: 5px;
+  }
+
+  .date-switcher__button {
+    min-height: 40px;
+    padding-inline: 8px;
+    font-size: 0.92rem;
+  }
+
+  .portfolio-filter--segmented {
+    width: 100%;
+  }
+
+  .portfolio-filter--segmented .portfolio-filter__button {
+    min-width: 0;
+    flex: 1 1 0;
+    padding-inline: 12px;
+  }
+}
