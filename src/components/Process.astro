@@ -46,10 +46,6 @@ const steps = [
     {
       steps.map((step) => (
         <article class="process-flow__card">
-          <div class="process-flow__icon" aria-hidden="true">
-            <img src={step.icon} alt="" loading="lazy" />
-          </div>
-
           <div class="process-flow__heading-row">
             <span class="process-flow__number">{step.number}</span>
             <h3>{step.title}</h3>
