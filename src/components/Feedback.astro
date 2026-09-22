@@ -198,6 +198,21 @@ for (let i = 0; i < feedbacks.length; i += 3) {
     </button>
   </div>
 
+  <div class="feedback-pagination" aria-label="回饋頁面">
+    {
+      feedbackPages.map((_, index) => (
+        <button
+          class={`feedback-dot ${index === 0 ? 'is-active' : ''}`}
+          type="button"
+          aria-label={`前往第 ${index + 1} 頁回饋`}
+          aria-current={index === 0 ? 'page' : undefined}
+          data-feedback-dot
+          data-feedback-index={index}
+        ></button>
+      ))
+    }
+  </div>
+
 <dialog class="feedback-dialog" data-feedback-dialog>
   <button
     class="feedback-dialog__nav feedback-dialog__nav--prev"
@@ -249,6 +264,7 @@ for (let i = 0; i < feedbacks.length; i += 3) {
     const dialogPrevButton = section.querySelector('[data-feedback-dialog-prev]');
     const dialogNextButton = section.querySelector('[data-feedback-dialog-next]');
     const dialogButtons = Array.from(section.querySelectorAll('[data-feedback-open]'));
+    const dots = Array.from(section.querySelectorAll('[data-feedback-dot]'));
 
     let currentIndex = 0;
     let currentDialogIndex = 0;
@@ -295,6 +311,18 @@ const unlockFeedbackScroll = () => {
   });
 };
 
+    const updateDots = () => {
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('is-active', index === currentIndex);
+
+        if (index === currentIndex) {
+          dot.setAttribute('aria-current', 'page');
+        } else {
+          dot.removeAttribute('aria-current');
+        }
+      });
+    };
+
     const goTo = (index) => {
       if (!pages.length || !track) return;
 
@@ -307,6 +335,8 @@ const unlockFeedbackScroll = () => {
         left: targetLeft,
         behavior: 'smooth',
       });
+
+      updateDots();
     };
 
     const updateMoreButtons = () => {
@@ -400,6 +430,13 @@ const closeDialog = () => {
       goTo(currentIndex + 1);
     });
 
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const index = Number(dot.getAttribute('data-feedback-index'));
+        if (Number.isFinite(index)) goTo(index);
+      });
+    });
+
     closeButton?.addEventListener('click', closeDialog);
 
     dialogPrevButton?.addEventListener('click', () => {
@@ -438,6 +475,9 @@ const closeDialog = () => {
 
     window.addEventListener('resize', updateMoreButtons);
     window.addEventListener('load', updateMoreButtons);
-    requestAnimationFrame(updateMoreButtons);
+    requestAnimationFrame(() => {
+      updateMoreButtons();
+      updateDots();
+    });
   }
 </script>
