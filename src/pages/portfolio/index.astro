@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { portfolioCatalog, portfolioCategories } from '../../data/portfolioCatalog';
+---
+
+<BaseLayout
+  title="全部作品｜phox999 photography"
+  description="瀏覽 phox999 photography 的人像攝影作品，包含外拍、棚拍、日系、Cosplay 與城市寫真系列。"
+>
+  <Header />
+
+  <main class="portfolio-index-page" data-portfolio-archive>
+    <section class="portfolio-index-hero container">
+      <p class="eyebrow">PORTFOLIO ARCHIVE</p>
+      <h1>全部作品</h1>
+      <p>從每次合作中精選一段完整的影像敘事。選擇系列，查看 30–40 張作品與拍攝氛圍。</p>
+    </section>
+
+    <section class="portfolio-index-content container" aria-labelledby="portfolio-archive-title">
+      <div class="portfolio-index-toolbar">
+        <h2 id="portfolio-archive-title">作品系列</h2>
+
+        <div class="portfolio-filter" aria-label="篩選作品系列">
+          {
+            portfolioCategories.map((category, index) => (
+              <button
+                class={`portfolio-filter__button ${index === 0 ? 'is-active' : ''}`}
+                type="button"
+                aria-pressed={index === 0 ? 'true' : 'false'}
+                data-archive-filter
+                data-filter={category}
+              >
+                {category}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="portfolio-index-grid">
+        {
+          portfolioCatalog.map((collection, index) => (
+            <article class="portfolio-index-card" data-archive-card data-category={collection.category}>
+              <a href={collection.href} aria-label={`查看${collection.title}完整作品`}>
+                <div class="portfolio-index-card__media">
+                  <img
+                    src={collection.cover}
+                    alt={`${collection.title}作品封面`}
+                    loading={index < 6 ? 'eager' : 'lazy'}
+                  />
+                  <span>{collection.images.length} 張精選</span>
+                </div>
+
+                <div class="portfolio-index-card__body">
+                  <p>{collection.category}</p>
+                  <h3>{collection.title}</h3>
+                  <span>{collection.description}</span>
+                </div>
+              </a>
+            </article>
+          ))
+        }
+      </div>
+
+      <p class="portfolio-empty" data-archive-empty hidden>目前沒有符合這個分類的系列。</p>
+    </section>
+  </main>
+
+  <Footer />
+
+  <script>
+    const archive = document.querySelector('[data-portfolio-archive]');
+
+    if (archive) {
+      const buttons = Array.from(archive.querySelectorAll('[data-archive-filter]'));
+      const cards = Array.from(archive.querySelectorAll('[data-archive-card]'));
+      const empty = archive.querySelector('[data-archive-empty]');
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const filter = button.getAttribute('data-filter') || '全部';
+          let visibleCount = 0;
+
+          cards.forEach((card) => {
+            const visible = filter === '全部' || card.getAttribute('data-category') === filter;
+            card.toggleAttribute('hidden', !visible);
+            if (visible) visibleCount += 1;
+          });
+
+          buttons.forEach((item) => {
+            const active = item.getAttribute('data-filter') === filter;
+            item.classList.toggle('is-active', active);
+            item.setAttribute('aria-pressed', String(active));
+          });
+
+          if (empty instanceof HTMLElement) empty.hidden = visibleCount > 0;
+        });
+      });
+    }
+  </script>
+</BaseLayout>

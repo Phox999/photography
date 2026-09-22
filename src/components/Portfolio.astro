@@ -1,5 +1,8 @@
 ---
-import { portfolioFilters, portfolioItems, siteConfig } from '../data/site';
+import { portfolioCatalog, portfolioCategories } from '../data/portfolioCatalog';
+
+const portfolioItems = portfolioCatalog.slice(0, 12);
+const portfolioFilters = portfolioCategories;
 ---
 
 <section class="section portfolio-section container" id="portfolio" aria-labelledby="portfolio-title" data-portfolio-filter>
@@ -17,9 +20,7 @@ import { portfolioFilters, portfolioItems, siteConfig } from '../data/site';
 
       <a
         class="text-link"
-        href="https://www.instagram.com/phox999_/"
-        target="_blank"
-        rel="noopener noreferrer"
+        href="/portfolio/"
       >
         查看更多作品
       </a>
@@ -45,13 +46,13 @@ import { portfolioFilters, portfolioItems, siteConfig } from '../data/site';
   <div class="portfolio-strip" aria-label="作品分類" data-portfolio-strip>
     {
       portfolioItems.map((item) => (
-        <article class="portfolio-card" data-portfolio-card data-tags={item.tags.join(',')}>
+        <article class="portfolio-card" data-portfolio-card data-tags={item.category}>
           <a
             class="portfolio-card__link"
-            href={item.href ?? siteConfig.portfolioUrl}
+            href={item.href}
             aria-label={`查看${item.title}完整作品`}
           >
-            <img src={item.image} alt={item.alt ?? `${item.title}作品示意`} loading="lazy" />
+            <img src={item.cover} alt={`${item.title}作品封面`} loading="lazy" />
           </a>
         </article>
       ))

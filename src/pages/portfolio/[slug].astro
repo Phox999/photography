@@ -1,0 +1,25 @@
+---
+import PortfolioDetail from '../../components/PortfolioDetail.astro';
+import { portfolioCatalog, type PortfolioCollection } from '../../data/portfolioCatalog';
+
+export function getStaticPaths() {
+  return portfolioCatalog.map((collection) => ({
+    params: { slug: collection.slug },
+    props: { collection },
+  }));
+}
+
+interface Props {
+  collection: PortfolioCollection;
+}
+
+const { collection } = Astro.props;
+---
+
+<PortfolioDetail
+  title={collection.title}
+  description={collection.description}
+  category={collection.category}
+  images={collection.images}
+  totalImages={collection.totalImages}
+/>

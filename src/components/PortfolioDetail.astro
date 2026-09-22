@@ -1,28 +1,29 @@
 ---
 import Layout from '../layouts/BaseLayout.astro';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
 
 interface Props {
   title: string;
-  altBase: string;
-  slug: string;
-  imageCount: number;
+  description: string;
+  category: string;
+  images: string[];
+  totalImages: number;
 }
 
-const { title, altBase, slug, imageCount } = Astro.props;
-
-const images = Array.from(
-  { length: imageCount },
-  (_, index) => `/assets/portfolio/${slug}/${String(index + 1).padStart(2, '0')}.webp`,
-);
+const { title, description, category, images, totalImages } = Astro.props;
 ---
 
 <Layout title={`${title}｜phox999 photography`}>
+  <Header />
   <main class="portfolio-detail">
     <section class="portfolio-detail__hero container">
-      <a class="portfolio-detail__back" href="/#portfolio">← 回作品集</a>
+      <a class="portfolio-detail__back" href="/portfolio/">← 回全部作品</a>
 
       <p class="eyebrow">PORTFOLIO</p>
       <h1>{title}</h1>
+      <p class="portfolio-detail__description">{description}</p>
+      <p class="portfolio-detail__meta">{category} · 精選 {images.length} 張 / 全系列 {totalImages} 張</p>
     </section>
 
     <section
@@ -42,7 +43,7 @@ const images = Array.from(
             >
               <img
                 src={image}
-                alt={`${altBase} ${index + 1}`}
+                alt={`${title}作品照片 ${index + 1}`}
                 loading={index < 3 ? 'eager' : 'lazy'}
               />
             </button>
@@ -86,6 +87,7 @@ const images = Array.from(
       </div>
     </dialog>
   </main>
+  <Footer />
 
   <script>
     const layoutJustifiedGalleries = () => {
@@ -148,23 +150,6 @@ const images = Array.from(
 
         flushRow(true);
       });
-    };
-
-    const waitForGalleryImages = async () => {
-      const images = Array.from(document.querySelectorAll('[data-justified-gallery] img'));
-
-      await Promise.all(
-        images.map((img) => {
-          if (img.complete && img.naturalWidth > 0) {
-            return Promise.resolve();
-          }
-
-          return new Promise((resolve) => {
-            img.addEventListener('load', resolve, { once: true });
-            img.addEventListener('error', resolve, { once: true });
-          });
-        }),
-      );
     };
 
     const setupPortfolioLightbox = () => {
@@ -253,17 +238,21 @@ const images = Array.from(
       });
     };
 
-    waitForGalleryImages().then(() => {
+    const galleryImages = document.querySelectorAll('[data-justified-gallery] img');
+
+    layoutJustifiedGalleries();
+    setupPortfolioLightbox();
+
+    document.querySelectorAll('[data-justified-gallery]').forEach((gallery) => {
+      gallery.classList.add('is-ready');
+    });
+
+    galleryImages.forEach((image) => {
+      image.addEventListener('load', layoutJustifiedGalleries, { once: true });
+    });
+
+    window.addEventListener('resize', () => {
       layoutJustifiedGalleries();
-      setupPortfolioLightbox();
-
-      document.querySelectorAll('[data-justified-gallery]').forEach((gallery) => {
-        gallery.classList.add('is-ready');
-      });
-
-      window.addEventListener('resize', () => {
-        layoutJustifiedGalleries();
-      });
     });
   </script>
 </Layout>
