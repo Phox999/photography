@@ -3695,25 +3695,54 @@ p {
 .process-flow__card {
   display: flex !important;
   flex-direction: column !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   justify-content: flex-start !important;
   min-width: 0 !important;
-  min-height: 300px;
-  padding: 34px 28px 30px;
-  text-align: left !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 30px 24px !important;
+  text-align: center !important;
 }
 
 .process-flow__icon {
-  display: none !important;
+  display: grid !important;
+  width: 58px !important;
+  height: 58px !important;
+  flex: 0 0 58px !important;
+  place-items: center;
+  margin: 0 0 20px !important;
+  border-radius: 50%;
+  background: #eaf7fc;
+  opacity: 1;
+}
+
+.process-flow__icon img {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: contain;
 }
 
 .process-flow__heading-row {
-  display: flex !important;
-  width: 100% !important;
-  min-width: 0;
+  position: relative;
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: 100%;
   flex-wrap: nowrap !important;
-  gap: 12px;
+  gap: 10px;
   align-items: baseline;
+  justify-content: center;
+  padding-bottom: 14px;
+}
+
+.process-flow__heading-row::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  content: '';
 }
 
 .process-flow__number,
@@ -3721,7 +3750,7 @@ p {
 .process-flow__card h3 {
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: clamp(1.35rem, 1.75vw, 1.62rem) !important;
+  font-size: clamp(1.35rem, 1.7vw, 1.58rem) !important;
   font-weight: 800;
   line-height: 1.35;
   letter-spacing: 0.01em;
@@ -3743,8 +3772,6 @@ p {
   position: static !important;
   width: auto !important;
   max-width: none !important;
-  min-width: 0;
-  flex: 1 1 auto;
   margin: 0 !important;
   white-space: nowrap !important;
   word-break: keep-all !important;
@@ -3752,53 +3779,59 @@ p {
 }
 
 .process-flow__divider {
-  display: block !important;
-  width: 36px !important;
-  height: 3px !important;
-  flex: 0 0 3px;
-  margin: 20px 0 !important;
+  display: none !important;
 }
 
 .process-flow__card > p {
   width: 100%;
-  max-width: none !important;
-  margin: 0 !important;
+  max-width: 18em !important;
+  margin: 20px 0 0 !important;
   color: #2e5161;
-  font-size: clamp(1rem, 1.1vw, 1.06rem);
+  font-size: clamp(1rem, 1.08vw, 1.05rem);
   font-weight: 500;
   line-height: 1.85;
-  text-align: left !important;
+  text-align: center !important;
 }
 
 @media (max-width: 1100px) {
   .process-flow__number,
   .process-flow__heading-row h3,
   .process-flow__card h3 {
-    font-size: 1.32rem !important;
+    font-size: 1.3rem !important;
   }
 }
 
 @media (max-width: 720px) {
   .process-flow__card {
-    min-height: 0;
-    padding: 28px 24px;
+    padding: 26px 22px !important;
+  }
+
+  .process-flow__icon {
+    width: 52px !important;
+    height: 52px !important;
+    flex-basis: 52px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .process-flow__icon img {
+    width: 29px !important;
+    height: 29px !important;
   }
 
   .process-flow__heading-row {
-    gap: 10px;
+    gap: 9px;
+    padding-bottom: 12px;
   }
 
   .process-flow__number,
   .process-flow__heading-row h3,
   .process-flow__card h3 {
-    font-size: 1.4rem !important;
-  }
-
-  .process-flow__divider {
-    margin: 16px 0 !important;
+    font-size: 1.35rem !important;
   }
 
   .process-flow__card > p {
+    max-width: none !important;
+    margin-top: 18px !important;
     font-size: 1.02rem;
     line-height: 1.8;
   }
