@@ -3837,3 +3837,12 @@ p {
   }
 }
 
+
+
+/* === 2026-09 process copy alignment fix === */
+
+.process-flow__card > p {
+  align-self: stretch;
+  max-width: none !important;
+  text-align: left !important;
+}
