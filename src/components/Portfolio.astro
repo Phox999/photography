@@ -12,12 +12,12 @@ const portfolioFilters = portfolioCategories;
       <h2 id="portfolio-title">作品集</h2>
     </div>
 
-    <div class="portfolio-heading-actions">
-      <div class="portfolio-scroll-controls" aria-label="瀏覽更多作品">
-        <button type="button" aria-label="向左瀏覽作品" data-portfolio-prev>‹</button>
-        <button type="button" aria-label="向右瀏覽作品" data-portfolio-next>›</button>
-      </div>
+    <div class="portfolio-scroll-controls" aria-label="瀏覽更多作品">
+      <button type="button" aria-label="向左瀏覽作品" data-portfolio-prev>‹</button>
+      <button type="button" aria-label="向右瀏覽作品" data-portfolio-next>›</button>
+    </div>
 
+    <div class="portfolio-heading-actions">
       <a
         class="text-link"
         href="/portfolio/"
@@ -27,7 +27,7 @@ const portfolioFilters = portfolioCategories;
     </div>
   </div>
 
-  <div class="portfolio-filter portfolio-filter--segmented" aria-label="篩選作品">
+  <div class="portfolio-filter" aria-label="篩選作品">
     {
       portfolioFilters.map((filter, index) => (
         <button
