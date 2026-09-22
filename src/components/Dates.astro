@@ -107,14 +107,21 @@ const formatSlot = (page: DatePage, slot: DateSlot) => {
         <h2 id="dates-title">開放檔期</h2>
       </div>
 
-      <div class="dates-nav" aria-label="切換月份">
-        <button class="dates-nav__button" type="button" aria-label="上一個月份" data-dates-prev>
-          ‹
-        </button>
-
-        <button class="dates-nav__button" type="button" aria-label="下一個月份" data-dates-next>
-          ›
-        </button>
+      <div class="date-switcher" role="tablist" aria-label="切換月份">
+        {
+          datePages.map((page, index) => (
+            <button
+              class={`date-switcher__button ${index === 0 ? 'is-active' : ''}`}
+              type="button"
+              role="tab"
+              aria-selected={index === 0 ? 'true' : 'false'}
+              data-date-tab
+              data-date-index={index}
+            >
+              {page.month}月
+            </button>
+          ))
+        }
       </div>
     </div>
 
@@ -218,8 +225,7 @@ const formatSlot = (page: DatePage, slot: DateSlot) => {
   if (datesSection) {
     const track = datesSection.querySelector('[data-dates-track]');
     const pages = Array.from(datesSection.querySelectorAll('.dates-page'));
-    const prevButton = datesSection.querySelector('[data-dates-prev]');
-    const nextButton = datesSection.querySelector('[data-dates-next]');
+    const tabButtons = Array.from(datesSection.querySelectorAll('[data-date-tab]'));
 
     let currentIndex = 0;
 
@@ -232,14 +238,19 @@ const formatSlot = (page: DatePage, slot: DateSlot) => {
       pages.forEach((page, pageIndex) => {
         page.setAttribute('aria-hidden', String(pageIndex !== currentIndex));
       });
+
+      tabButtons.forEach((button, buttonIndex) => {
+        const isActive = buttonIndex === currentIndex;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-selected', String(isActive));
+      });
     };
 
-    prevButton?.addEventListener('click', () => {
-      goToDatePage(currentIndex - 1);
-    });
-
-    nextButton?.addEventListener('click', () => {
-      goToDatePage(currentIndex + 1);
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const index = Number(button.getAttribute('data-date-index'));
+        if (Number.isFinite(index)) goToDatePage(index);
+      });
     });
   }
 </script>
