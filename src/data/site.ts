@@ -13,11 +13,8 @@ export const siteConfig = {
 export const navItems = [
   { label: '作品集', href: '/#portfolio' },
   { label: '合作方式', href: '/#plans' },
-  { label: '合作流程', href: '/#process' },
-  { label: '拍攝回饋', href: '/#feedback' },
   { label: '關於我', href: '/about/' },
   { label: '常見問題', href: '/#faq' },
-  { label: '聯繫我', href: '/#contact' },
 ];
 
 export const portfolioFilters = ['全部', '外拍', '棚拍'];
