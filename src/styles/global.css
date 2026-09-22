@@ -3571,19 +3571,28 @@ p {
 }
 
 .process-flow__icon {
-  position: absolute;
-  top: 28px;
-  right: 26px;
-  width: 46px;
-  height: 46px;
-  background: rgba(234, 247, 252, 0.78);
-  opacity: 0.72;
+  position: static;
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  margin: 0 0 22px;
+  border-radius: 50%;
+  background: rgba(234, 247, 252, 0.9);
+  opacity: 0.88;
 }
 
 .process-flow__icon img {
-  width: 26px;
-  height: 26px;
+  width: 27px;
+  height: 27px;
   object-fit: contain;
+}
+
+.process-flow__heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
 }
 
 .process-flow__number {
@@ -3593,14 +3602,15 @@ p {
   border-radius: 0;
   background: transparent;
   color: var(--color-primary-dark);
-  font-size: 0.86rem;
+  font-size: 0.9rem;
   font-weight: 800;
+  line-height: 1;
   letter-spacing: 0.08em;
 }
 
 .process-flow__card h3 {
-  max-width: calc(100% - 48px);
-  margin-top: 18px;
+  max-width: none;
+  margin: 0;
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: clamp(1.35rem, 1.75vw, 1.62rem);
@@ -3617,6 +3627,7 @@ p {
 
 .process-flow__card p {
   max-width: none;
+  margin: 0;
   color: #2e5161;
   font-size: clamp(1rem, 1.15vw, 1.08rem);
   font-weight: 500;
@@ -3636,31 +3647,30 @@ p {
   }
 
   .process-flow__icon {
-    top: 24px;
-    right: 22px;
-    width: 40px;
-    height: 40px;
+    grid-column: 1;
+    grid-row: 1;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 18px;
   }
 
   .process-flow__icon img {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .process-flow__heading-row {
+    grid-column: 1;
+    grid-row: 2;
+    gap: 9px;
   }
 
   .process-flow__number {
-    grid-column: 1;
-    grid-row: 1;
-    width: auto;
-    height: auto;
-    margin: 0;
-    font-size: 0.82rem;
+    font-size: 0.84rem;
   }
 
   .process-flow__card h3 {
-    grid-column: 1;
-    grid-row: 2;
-    max-width: calc(100% - 46px);
-    margin: 12px 0 0;
+    margin: 0;
     font-size: 1.4rem;
   }
 
@@ -3679,3 +3689,4 @@ p {
     line-height: 1.8;
   }
 }
+
