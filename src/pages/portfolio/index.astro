@@ -15,7 +15,6 @@ import { portfolioCatalog, portfolioCategories } from '../../data/portfolioCatal
     <section class="portfolio-index-hero container">
       <p class="eyebrow">PORTFOLIO ARCHIVE</p>
       <h1>全部作品</h1>
-      <p>從每次合作中精選一段完整的影像敘事。選擇系列，查看 30–40 張作品與拍攝氛圍。</p>
     </section>
 
     <section class="portfolio-index-content container" aria-labelledby="portfolio-archive-title">
@@ -50,13 +49,11 @@ import { portfolioCatalog, portfolioCategories } from '../../data/portfolioCatal
                     alt={`${collection.title}作品封面`}
                     loading={index < 6 ? 'eager' : 'lazy'}
                   />
-                  <span>{collection.images.length} 張精選</span>
-                </div>
 
-                <div class="portfolio-index-card__body">
-                  <p>{collection.category}</p>
-                  <h3>{collection.title}</h3>
-                  <span>{collection.description}</span>
+                  <div class="portfolio-index-card__overlay" aria-hidden="true">
+                    <h3>{collection.title}</h3>
+                    <span>{collection.totalImages}張</span>
+                  </div>
                 </div>
               </a>
             </article>
