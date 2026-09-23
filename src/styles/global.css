@@ -995,7 +995,7 @@ p {
 .guideline-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
+  gap: 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.78);
@@ -2624,7 +2624,7 @@ p {
   /* Process */
   .process-flow__list {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 8px;
   }
 
   .process-flow__card {
