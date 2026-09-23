@@ -3561,12 +3561,14 @@ p {
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 20px;
   background: rgba(0, 0, 0, 0.62);
   color: #fff;
+  text-align: center;
   opacity: 0;
   pointer-events: none;
   transition: opacity 180ms ease;
@@ -3578,14 +3580,15 @@ p {
   font-family: var(--font-heading);
   font-size: clamp(1.4rem, 2vw, 1.9rem);
   line-height: 1.2;
+  text-align: center;
 }
 
 .portfolio-index-card__overlay span {
-  flex: 0 0 auto;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
   font-weight: 800;
   line-height: 1;
+  text-align: center;
   white-space: nowrap;
 }
 
