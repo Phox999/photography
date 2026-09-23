@@ -1,12 +1,7 @@
 export const siteConfig = {
-  brandName: 'phox999 photography',
-  googleFormUrl: 'https://forms.gle/8V17E3gPVf3NdEaY8',
   inquiryUrl: '/#contact',
-  adminUrl: '/admin/',
-  portfolioUrl: '/portfolio/',
   aboutUrl: '/about/',
   instagramUrl: 'https://www.instagram.com/phox999_/',
-  email: 'chuajinglun@ymail.com',
   mailtoUrl: 'mailto:chuajinglun@ymail.com',
 };
 
@@ -15,99 +10,6 @@ export const navItems = [
   { label: '合作方式', href: '/#plans' },
   { label: '關於我', href: '/about/' },
   { label: '常見問題', href: '/#faq' },
-];
-
-export const portfolioFilters = ['全部', '外拍', '棚拍'];
-
-export const portfolioItems = [
-  {
-    slug: 'maid',
-    title: '跳石車站',
-    image: '/assets/portfolio/maid/cover.webp',
-    href: '/portfolio/maid/',
-    alt: '跳石車站示意',
-    tags: ['外拍', '午後', '日系'],
-  },
-  {
-    slug: '信義聖誕節',
-    title: '信義聖誕節',
-    image: '/assets/portfolio/信義聖誕節/cover.webp',
-    href: '/portfolio/信義聖誕節/',
-    alt: '信義聖誕節示意',
-    tags: ['外拍', '夜晚'],
-  },
-  {
-    slug: '廢土世界',
-    title: '廢土世界',
-    image: '/assets/portfolio/廢土世界/cover.webp',
-    href: '/portfolio/廢土世界/',
-    alt: '廢土世界示意',
-    tags: ['外拍'],
-  },
-  {
-    slug: '藍色襯衫',
-    title: '藍色襯衫',
-    image: '/assets/portfolio/藍色襯衫/cover.webp',
-    href: '/portfolio/藍色襯衫/',
-    alt: '藍色襯衫示意',
-    tags: ['外拍', '午後', '日系'],
-  },
-  {
-    slug: '學院風棚拍',
-    title: '學院風棚拍',
-    image: '/assets/portfolio/學院風棚拍/cover.webp',
-    href: '/portfolio/學院風棚拍/',
-    alt: '學院風棚拍示意',
-    tags: ['棚拍', '日系'],
-  },
-  {
-    slug: '光劍JK',
-    title: '光劍JK',
-    image: '/assets/portfolio/光劍JK/cover.webp',
-    href: '/portfolio/光劍JK/',
-    alt: '光劍JK示意',
-    tags: ['外拍', '夜晚', '日系'],
-  },
-  {
-    slug: '午後車站',
-    title: '午後車站',
-    image: '/assets/portfolio/午後車站/cover.webp',
-    href: '/portfolio/午後車站/',
-    alt: '午後車站示意',
-    tags: ['外拍', '午後', '日系'],
-  },
-  {
-    slug: '興華天橋',
-    title: '興華天橋',
-    image: '/assets/portfolio/興華天橋/cover.webp',
-    href: '/portfolio/興華天橋/',
-    alt: '興華天橋示意',
-    tags: ['外拍', '午後'],
-  },
-  {
-    slug: '寶藏嚴',
-    title: '寶藏嚴',
-    image: '/assets/portfolio/寶藏嚴/cover.webp',
-    href: '/portfolio/寶藏嚴/',
-    alt: '寶藏嚴示意',
-    tags: ['外拍', '午後', '日系'],
-  },
-];
-
-export const portfolioGalleryItems = [
-  { title: '作品名稱 01', image: '/assets/portfolio-01.jpg', layout: 'gallery-item--wide' },
-  { title: '作品名稱 02', image: '/assets/portfolio-02.jpg', layout: 'gallery-item--wide' },
-  { title: '作品名稱 03', image: '/assets/_I7A3962.jpg', layout: 'gallery-item--wide' },
-  { title: '作品名稱 04', image: '/assets/portfolio-04.jpg', layout: 'gallery-item--tall' },
-  { title: '作品名稱 05', image: '/assets/portfolio-05.jpg', layout: 'gallery-item--wide' },
-  { title: '作品名稱 06', image: '/assets/portfolio-06.jpg', layout: 'gallery-item--tall' },
-  { title: '拍攝花絮 01', image: '/assets/behind-01.jpg', layout: 'gallery-item--small' },
-  { title: '拍攝花絮 02', image: '/assets/behind-02.jpg', layout: 'gallery-item--small' },
-  { title: '拍攝花絮 03', image: '/assets/behind-03.jpg', layout: 'gallery-item--small' },
-  { title: '拍攝花絮 04', image: '/assets/behind-04.jpg', layout: 'gallery-item--wide' },
-  { title: '拍攝花絮 05', image: '/assets/behind-05.jpg', layout: 'gallery-item--small' },
-  { title: '拍攝花絮 06', image: '/assets/behind-06.jpg', layout: 'gallery-item--wide' },
-  { title: '形象主視覺', image: '/assets/hero.jpg', layout: 'gallery-item--wide' },
 ];
 
 export const behindScenesItems = [
