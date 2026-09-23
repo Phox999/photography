@@ -3528,7 +3528,7 @@ p {
 .portfolio-index-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(28px, 4vw, 54px) clamp(18px, 2.5vw, 32px);
+  gap: 14px;
 }
 
 .portfolio-index-card[hidden] {
@@ -3547,6 +3547,9 @@ p {
 }
 
 .portfolio-index-card__media img {
+  position: relative;
+  z-index: 1;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -3556,15 +3559,17 @@ p {
 .portfolio-index-card__overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.58);
+  background: rgba(0, 0, 0, 0.62);
   color: #fff;
   opacity: 0;
-  transition: opacity 220ms ease;
+  pointer-events: none;
+  transition: opacity 180ms ease;
 }
 
 .portfolio-index-card__overlay h3 {
@@ -3589,7 +3594,9 @@ p {
   transform: scale(1.025);
 }
 
+.portfolio-index-card__media:hover .portfolio-index-card__overlay,
 .portfolio-index-card:hover .portfolio-index-card__overlay,
+.portfolio-index-card a:hover .portfolio-index-card__overlay,
 .portfolio-index-card:focus-within .portfolio-index-card__overlay {
   opacity: 1;
 }
@@ -3617,7 +3624,7 @@ p {
 
   .portfolio-index-grid {
     grid-template-columns: 1fr;
-    gap: 38px;
+    gap: 14px;
   }
 
   .portfolio-index-card__media {
