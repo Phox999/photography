@@ -4,6 +4,22 @@ export const PAGE_SIZE = 20;
 export const STATUSES = ['new', 'reviewing', 'contacted', 'closed'];
 export const INQUIRY_FIELDS = 'id,name,contact_method,contact_account,collaboration_type,preferred_date,description,consent,status,admin_notes,created_at,updated_at,version';
 export const CONTENT_FIELDS = 'id,announcement,announcement_enabled,faqs,hero_title,hero_copy,hero_image_paths,version,updated_at';
+export const STATIC_HERO_IMAGE_PATHS = Object.freeze([
+  'static:/assets/hero.webp',
+  'static:/assets/hero-02.webp',
+  'static:/assets/hero-03.webp',
+  'static:/assets/hero-04.webp',
+  'static:/assets/portfolio/6-20海邊jk_/IMG_9630.webp',
+  'static:/assets/portfolio/照片分享/IMG_6114.webp',
+  'static:/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp',
+  'static:/assets/portfolio/興華天橋/13.webp',
+  'static:/assets/portfolio/maid/01.webp',
+]);
+const STORAGE_HERO_IMAGE_PATH = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/;
+
+export function isValidHeroImagePath(path) {
+  return typeof path === 'string' && (STATIC_HERO_IMAGE_PATHS.includes(path) || STORAGE_HERO_IMAGE_PATH.test(path));
+}
 
 const invalid = (message) => { throw new HttpError(400, message, 'invalid_input'); };
 
@@ -76,9 +92,8 @@ export function contentUpdate(body) {
   const heroTitle = plainText(body.hero_title, 120, '首頁主標', { required: true, noMarkup: true });
   const heroCopy = plainText(body.hero_copy, 1000, '首頁介紹', { required: true, noMarkup: true });
   const heroImagePaths = body.hero_image_paths;
-  const imagePathPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/;
   if (!Array.isArray(heroImagePaths) || heroImagePaths.length > 10
-    || heroImagePaths.some((path) => typeof path !== 'string' || !imagePathPattern.test(path))
+    || heroImagePaths.some((path) => !isValidHeroImagePath(path))
     || new Set(heroImagePaths).size !== heroImagePaths.length) {
     invalid('首頁輪播最多選擇 10 張有效照片，請重新載入後再試。');
   }
@@ -125,4 +140,53 @@ export function rowResult(data) {
   const row = Array.isArray(data) ? data[0] : data;
   if (!row || typeof row !== 'object') throw new HttpError(502, '資料格式異常，請重新載入。', 'upstream_error');
   return row;
+}
+
+const STORAGE_PORTFOLIO_IMAGE_PATH = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/;
+
+export function isValidPortfolioImagePath(path) {
+  if (typeof path !== 'string') return false;
+  if (STORAGE_PORTFOLIO_IMAGE_PATH.test(path)) return true;
+  if (!path.startsWith('static:/assets/portfolio/') || /[?#\\]/.test(path)) return false;
+  try {
+    const url = new URL(path.slice('static:'.length), 'https://portfolio.invalid');
+    if (url.origin !== 'https://portfolio.invalid' || url.search || url.hash) return false;
+    const segments = url.pathname.split('/');
+    if (segments.length !== 5 || segments[1] !== 'assets' || segments[2] !== 'portfolio') return false;
+    const decoded = segments.slice(3).map((segment) => decodeURIComponent(segment));
+    return decoded.every((segment) => segment && segment !== '.' && segment !== '..' && !/[\\/\u0000-\u001f]/.test(segment))
+      && /\.(jpg|png|webp)$/i.test(decoded[1]);
+  } catch { return false; }
+}
+
+function portfolioText(value, limit, label, { required = false } = {}) {
+  if (typeof value !== 'string') invalid(`${label}格式不正確。`);
+  const text = value.trim();
+  if (text.length > limit) invalid(`${label}不可超過 ${limit} 字。`);
+  if (required && !text) invalid(`請填寫${label}。`);
+  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f<>]/.test(text)) invalid(`${label}包含不支援的字元。`);
+  return text;
+}
+
+export function portfolioUpdate(body) {
+  objectBody(body, ['collections', 'version']);
+  if (!Array.isArray(body.collections) || body.collections.length > 80) invalid('作品集最多可管理 80 組。');
+  const slugs = new Set();
+  const collections = body.collections.map((item) => {
+    objectBody(item, ['slug', 'title', 'category', 'description', 'cover', 'images', 'totalImages']);
+    const slug = portfolioText(item.slug, 120, '作品集識別名稱', { required: true });
+    if (/[\\/?#]/.test(slug) || slugs.has(slug)) invalid('作品集名稱重複或格式不正確。');
+    slugs.add(slug);
+    const title = portfolioText(item.title, 120, '作品名稱', { required: true });
+    if (!['外拍', '棚拍'].includes(item.category)) invalid('請選擇有效的作品分類。');
+    const description = portfolioText(item.description, 1000, '作品介紹');
+    if (!Array.isArray(item.images) || item.images.length < 1 || item.images.length > 500
+      || item.images.some((path) => !isValidPortfolioImagePath(path))
+      || new Set(item.images).size !== item.images.length) invalid('每組作品需有 1 至 500 張有效照片。');
+    if (!isValidPortfolioImagePath(item.cover)) invalid('請選擇有效的封面照片。');
+    if (!Number.isInteger(item.totalImages) || item.totalImages < item.images.length || item.totalImages > 10000) invalid('作品照片數量不正確。');
+    return { slug, title, category: item.category, description, cover: item.cover, images: item.images, totalImages: item.totalImages };
+  });
+  if (!collections.length) invalid('請至少保留一組公開作品。');
+  return { p_collections: collections, p_version: parseVersion(body.version) };
 }

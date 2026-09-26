@@ -9,7 +9,7 @@ export async function finalizeAdminBuild(outputDirectory) {
   const root = outputDirectory instanceof URL ? fileURLToPath(outputDirectory) : outputDirectory;
   const assetDirectory = path.join(root, '_astro');
   let externalized = 0;
-  for (const route of ['admin', 'admin/login', 'admin/content', 'admin/audit', 'admin/galleries', 'admin/feedback', 'admin/availability']) {
+  for (const route of ['admin', 'admin/login', 'admin/content', 'admin/portfolio', 'admin/audit', 'admin/galleries', 'admin/feedback', 'admin/availability']) {
     const file = path.join(root, route, 'index.html');
     let html = await fs.readFile(file, 'utf8');
     const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];

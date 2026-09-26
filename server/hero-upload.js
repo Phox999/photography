@@ -3,7 +3,7 @@ import { getSecretConfig, HttpError } from './auth.js';
 const MAX_BYTES = 8 * 1024 * 1024;
 const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const invalid = () => new HttpError(400, '請選擇有效的 JPEG、PNG 或 WebP 圖片。', 'invalid_input');
-const unavailable = () => new HttpError(503, '首頁照片上傳尚未確認，請稍後重新整理。', 'upload_unconfirmed');
+const unavailable = (label = '首頁照片') => new HttpError(503, `${label}上傳暫時無法使用，請稍後重新整理。`, 'upload_unconfirmed');
 
 export function assertHeroUpload(request) {
   if (request.headers.get('origin') !== new URL(request.url).origin
@@ -16,7 +16,7 @@ export function assertHeroUpload(request) {
   }
 }
 
-async function readBounded(body, limit) {
+async function readBounded(body, limit, label) {
   if (!body) throw invalid();
   const reader = body.getReader();
   const chunks = [];
@@ -28,7 +28,7 @@ async function readBounded(body, limit) {
       size += value.byteLength;
       if (size > limit) {
         await reader.cancel();
-        throw new HttpError(413, '首頁照片最多 8 MiB。', 'payload_too_large');
+        throw new HttpError(413, `${label}最多 8 MiB。`, 'payload_too_large');
       }
       chunks.push(value);
     }
@@ -47,14 +47,14 @@ function matchesType(bytes, type) {
     && ['VP8 ', 'VP8L', 'VP8X'].includes(String.fromCharCode(...bytes.slice(12, 16)));
 }
 
-export async function readHeroUpload(request) {
+export async function readHeroUpload(request, label = '首頁照片') {
   const maxFormBytes = MAX_BYTES + 32768;
   if (Number(request.headers.get('content-length') || 0) > maxFormBytes) {
-    throw new HttpError(413, '首頁照片最多 8 MiB。', 'payload_too_large');
+    throw new HttpError(413, `${label}最多 8 MiB。`, 'payload_too_large');
   }
   const contentType = request.headers.get('content-type');
   if (!contentType || contentType.length > 512) throw invalid();
-  const bytes = await readBounded(request.body, maxFormBytes);
+  const bytes = await readBounded(request.body, maxFormBytes, label);
   let form;
   try { form = await new Response(bytes, { headers: { 'Content-Type': contentType } }).formData(); } catch { throw invalid(); }
   if ([...form.keys()].some((key) => key !== 'file') || form.getAll('file').length !== 1) throw invalid();
@@ -65,7 +65,7 @@ export async function readHeroUpload(request) {
   return { bytes: image, type: file.type, path: `${crypto.randomUUID()}.${TYPES[file.type]}` };
 }
 
-export async function persistHeroUpload(env, upload) {
+export async function persistHeroUpload(env, upload, bucket = 'site-hero', label = '首頁照片') {
   const config = getSecretConfig(env);
   const headers = new Headers({
     apikey: config.key,
@@ -77,17 +77,17 @@ export async function persistHeroUpload(env, upload) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20000);
   try {
-    const response = await fetch(`${config.url}/storage/v1/object/site-hero/${upload.path}`, {
+    const response = await fetch(`${config.url}/storage/v1/object/${bucket}/${upload.path}`, {
       method: 'POST', headers, body: upload.bytes, signal: controller.signal, redirect: 'error', cache: 'no-store',
     });
     const text = await response.text();
-    if (text.length > 16384) throw unavailable();
+    if (text.length > 16384) throw unavailable(label);
     let result;
-    try { result = JSON.parse(text); } catch { throw unavailable(); }
-    if (!response.ok || result?.Key !== `site-hero/${upload.path}`) throw unavailable();
+    try { result = JSON.parse(text); } catch { throw unavailable(label); }
+    if (!response.ok || result?.Key !== `${bucket}/${upload.path}`) throw unavailable(label);
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw unavailable();
+    throw unavailable(label);
   } finally { clearTimeout(timer); }
-  return { path: upload.path, url: `${config.url}/storage/v1/object/public/site-hero/${upload.path}` };
+  return { path: upload.path, url: `${config.url}/storage/v1/object/public/${bucket}/${upload.path}` };
 }

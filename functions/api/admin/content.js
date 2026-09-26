@@ -1,14 +1,15 @@
 import { assertMutation, endpoint, HttpError, json, readJson, requireAdmin, supabaseRequest } from '../../../server/auth.js';
-import { allowMethods, CONTENT_FIELDS, contentUpdate, rowResult } from '../../../server/admin-validation.js';
+import { allowMethods, CONTENT_FIELDS, contentUpdate, isValidHeroImagePath, rowResult } from '../../../server/admin-validation.js';
 
 function withHeroUrls(content, config) {
   const paths = content.hero_image_paths;
-  const imagePathPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/;
   if (!Array.isArray(paths) || paths.length > 10
-      || paths.some((path) => typeof path !== 'string' || !imagePathPattern.test(path))) {
+      || paths.some((path) => !isValidHeroImagePath(path))) {
     throw new HttpError(503, '首頁照片設定暫時無法載入。', 'content_unavailable');
   }
-  return { ...content, hero_image_urls: paths.map((path) => `${config.url}/storage/v1/object/public/site-hero/${path}`) };
+  return { ...content, hero_image_urls: paths.map((path) => path.startsWith('static:')
+    ? path.slice('static:'.length)
+    : `${config.url}/storage/v1/object/public/site-hero/${path}`) };
 }
 
 export const onRequest = endpoint(async (context) => {

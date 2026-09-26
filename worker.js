@@ -10,11 +10,15 @@ import { onRequest as adminInquiry } from './functions/api/admin/inquiries/[id].
 import { onRequest as adminInquiryReferences } from './functions/api/admin/inquiries/[id]/references.js';
 import { onRequest as adminInquiryConfirmation } from './functions/api/admin/inquiries/[id]/confirmation.js';
 import { onRequest as adminContent } from './functions/api/admin/content.js';
+import { onRequest as adminHeroImage } from './functions/api/admin/hero-image.js';
+import { onRequest as adminPortfolio } from './functions/api/admin/portfolio.js';
+import { onRequest as adminPortfolioUpload } from './functions/api/admin/portfolio-upload.js';
 import { onRequest as adminAvailability } from './functions/api/admin/availability.js';
 import { onRequest as adminAudit } from './functions/api/admin/audit.js';
 import { onRequest as adminGalleries } from './functions/api/admin/galleries.js';
 import { onRequest as adminGalleryUpload } from './functions/api/admin/gallery-upload.js';
 import { onRequest as adminFeedback } from './functions/api/admin/feedback.js';
+import { onRequest as portfolio } from './functions/api/portfolio.js';
 import { onRequest as clientSelection } from './functions/api/client/selection.js';
 import { onRequest as clientGallery } from './functions/api/client/gallery.js';
 import { onRequest as clientDraft } from './functions/api/client/draft.js';
@@ -42,11 +46,15 @@ const apiRoutes = [
   [/^\/api\/admin\/inquiries\/([^/]+)\/confirmation$/, adminInquiryConfirmation, ['id']],
   [/^\/api\/admin\/inquiries\/([^/]+)$/, adminInquiry, ['id']],
   [/^\/api\/admin\/content$/, adminContent],
+  [/^\/api\/admin\/hero-image$/, adminHeroImage],
+  [/^\/api\/admin\/portfolio$/, adminPortfolio],
+  [/^\/api\/admin\/portfolio-upload$/, adminPortfolioUpload],
   [/^\/api\/admin\/availability$/, adminAvailability],
   [/^\/api\/admin\/audit$/, adminAudit],
   [/^\/api\/admin\/galleries$/, adminGalleries],
   [/^\/api\/admin\/gallery-upload$/, adminGalleryUpload],
   [/^\/api\/admin\/feedback$/, adminFeedback],
+  [/^\/api\/portfolio$/, portfolio],
   [/^\/api\/client\/selection$/, clientSelection],
   [/^\/api\/client\/gallery$/, clientGallery],
   [/^\/api\/client\/draft$/, clientDraft],

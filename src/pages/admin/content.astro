@@ -2,7 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 <AdminLayout title="網站內容" current="content">
-  <header class="admin-page-heading"><div><span class="admin-eyebrow">網站設定</span><h1>網站內容</h1><p>修改首頁主視覺、網站公告與常見問題。</p></div><button class="admin-button admin-button--quiet" type="button" id="content-reload">重新載入</button></header>
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">網站設定</span><h1>網站內容</h1></div><button class="admin-button admin-button--quiet" type="button" id="content-reload">重新載入</button></header>
   <p class="admin-status" id="content-load-status" role="status" aria-live="polite">正在載入網站內容…</p>
   <form id="admin-content-form" method="post" action="/api/admin/content" hidden>
     <div class="admin-content-grid">
@@ -27,10 +27,16 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   type Faq = { question: string; answer: string };
   type HeroImage = { path: string; url: string };
   type Content = { id: number; announcement: string; announcement_enabled: boolean; faqs: Faq[]; hero_title: string; hero_copy: string; hero_image_paths: string[]; hero_image_urls: string[]; version: number; updated_at: string };
-  const originalHeroImages = [
-    '/assets/hero.webp', '/assets/hero-02.webp', '/assets/hero-03.webp', '/assets/hero-04.webp',
-    '/assets/portfolio/6-20海邊jk_/IMG_9630.webp', '/assets/portfolio/照片分享/IMG_6114.webp',
-    '/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp', '/assets/portfolio/興華天橋/13.webp', '/assets/portfolio/maid/01.webp',
+  const originalHeroImages: HeroImage[] = [
+    { path: 'static:/assets/hero.webp', url: '/assets/hero.webp' },
+    { path: 'static:/assets/hero-02.webp', url: '/assets/hero-02.webp' },
+    { path: 'static:/assets/hero-03.webp', url: '/assets/hero-03.webp' },
+    { path: 'static:/assets/hero-04.webp', url: '/assets/hero-04.webp' },
+    { path: 'static:/assets/portfolio/6-20海邊jk_/IMG_9630.webp', url: '/assets/portfolio/6-20海邊jk_/IMG_9630.webp' },
+    { path: 'static:/assets/portfolio/照片分享/IMG_6114.webp', url: '/assets/portfolio/照片分享/IMG_6114.webp' },
+    { path: 'static:/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp', url: '/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp' },
+    { path: 'static:/assets/portfolio/興華天橋/13.webp', url: '/assets/portfolio/興華天橋/13.webp' },
+    { path: 'static:/assets/portfolio/maid/01.webp', url: '/assets/portfolio/maid/01.webp' },
   ];
   const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
   const form = $<HTMLFormElement>('#admin-content-form');
@@ -70,7 +76,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       && chosenFiles.every((file) => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) && file.size > 0 && file.size <= 8 * 1024 * 1024);
     heroUpload.disabled = busy || uploading || !filesValid;
     heroFile.disabled = busy || uploading;
-    $('#hero-image-restore').toggleAttribute('disabled', busy || uploading || !heroImages.length);
+    const isOriginalCarousel = JSON.stringify(heroImages.map(({ path }) => path)) === JSON.stringify(originalHeroImages.map(({ path }) => path));
+    $('#hero-image-restore').toggleAttribute('disabled', busy || uploading || isOriginalCarousel);
     $<HTMLButtonElement>('#content-reload').disabled = busy || uploading;
     add.disabled = busy || value.faqs.length >= 12;
     publish.disabled = busy || uploading || !changed;
@@ -119,7 +126,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     announcement.value = content.announcement || '';
     heroTitle.value = content.hero_title;
     heroCopy.value = content.hero_copy;
-    heroImages = content.hero_image_paths.map((path, index) => ({ path, url: content.hero_image_urls[index] }));
+    heroImages = content.hero_image_paths.length
+      ? content.hero_image_paths.map((path, index) => ({ path, url: content.hero_image_urls[index] }))
+      : originalHeroImages.map((image) => ({ ...image }));
     renderHeroImages();
     enabled.checked = content.announcement_enabled;
     faqList.replaceChildren();
@@ -145,26 +154,23 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   enabled.addEventListener('change', updateState);
   function renderHeroImages() {
     heroPreview.replaceChildren();
-    const customImages = heroImages.length > 0;
-    const entries = customImages ? heroImages : originalHeroImages.map((url) => ({ path: '', url }));
-    entries.forEach((image, index) => {
+    heroImages.forEach((image, index) => {
       const card = document.createElement('div'); card.className = 'admin-hero-image-card';
-      const preview = document.createElement('img'); preview.src = image.url; preview.alt = customImages ? `首頁輪播第 ${index + 1} 張照片` : `原始首頁輪播範例第 ${index + 1} 張`; preview.loading = index < 3 ? 'eager' : 'lazy';
+      const preview = document.createElement('img'); preview.src = image.url; preview.alt = `首頁輪播第 ${index + 1} 張照片`; preview.loading = index < 3 ? 'eager' : 'lazy';
       card.append(preview);
-      if (customImages) {
-        const actions = document.createElement('div'); actions.className = 'admin-hero-image-actions';
-        const order = document.createElement('span'); order.textContent = `${index + 1} / ${heroImages.length}`; actions.append(order);
-        for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '移除']]) {
-          const button = document.createElement('button'); button.type = 'button'; button.dataset.heroAction = action; button.dataset.heroIndex = String(index); button.textContent = label;
-          button.disabled = uploading || busy || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1);
-          button.setAttribute('aria-label', action === 'remove' ? `移除輪播第 ${index + 1} 張照片` : `將輪播第 ${index + 1} 張照片${action === 'up' ? '上移' : '下移'}`);
-          actions.append(button);
-        }
-        card.append(actions);
+      const actions = document.createElement('div'); actions.className = 'admin-hero-image-actions';
+      const order = document.createElement('span'); order.textContent = `${index + 1} / ${heroImages.length}`; actions.append(order);
+      for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '移除']]) {
+        const button = document.createElement('button'); button.type = 'button'; button.dataset.heroAction = action; button.dataset.heroIndex = String(index); button.textContent = label;
+        button.disabled = uploading || busy || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1) || (action === 'remove' && heroImages.length <= 1);
+        button.setAttribute('aria-label', action === 'remove' ? `移除輪播第 ${index + 1} 張照片` : `將輪播第 ${index + 1} 張照片${action === 'up' ? '上移' : '下移'}`);
+        actions.append(button);
       }
+      card.append(actions);
       heroPreview.append(card);
     });
-    $('#hero-image-caption').textContent = customImages ? `已選 ${heroImages.length} 張，可調整順序；發布更新後套用。` : `目前使用網站原始的 ${originalHeroImages.length} 張照片輪播。`;
+    $('#hero-image-caption').textContent = `目前 ${heroImages.length} 張；可上移、下移或移除。發布後套用至首頁。`;
+    updateState();
   }
   async function uploadHeroFile(file: File, retryAuth = true): Promise<HeroImage> {
     const body = new FormData(); body.append('file', file);
@@ -209,8 +215,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   });
   $('#hero-image-restore').addEventListener('click', () => {
     if (busy) return;
-    heroImages = []; heroFile.value = ''; renderHeroImages();
-    $('#hero-image-caption').textContent = '發布後會恢復網站原始照片輪播。';
+    heroImages = originalHeroImages.map((image) => ({ ...image })); heroFile.value = ''; renderHeroImages();
     message($('#hero-image-status'), '已選擇恢復原本輪播，發布更新後生效。'); updateState();
   });
   add.addEventListener('click', () => {

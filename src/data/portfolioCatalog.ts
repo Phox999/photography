@@ -19,6 +19,7 @@ export interface PortfolioCollection extends PortfolioSource {
 
 const portfolioRoot = path.join(process.cwd(), 'public', 'assets', 'portfolio');
 const selectionSize = 40;
+const adminSelectionSize = 500;
 
 const sources: PortfolioSource[] = [
   { slug: '260827_敦煌 RE', title: '敦煌', category: '外拍', description: '金色光影與異域感造型的戶外人像系列。' },
@@ -67,7 +68,7 @@ const selectEvenly = (files: string[], limit: number) => {
 const assetUrl = (slug: string, file: string) =>
   encodeURI(`/assets/portfolio/${slug}/${file}`);
 
-export const portfolioCatalog: PortfolioCollection[] = sources.flatMap((source) => {
+const buildCatalog = (limit: number): PortfolioCollection[] => sources.flatMap((source) => {
   const directory = path.join(portfolioRoot, source.slug);
 
   if (!existsSync(directory)) return [];
@@ -78,7 +79,7 @@ export const portfolioCatalog: PortfolioCollection[] = sources.flatMap((source) 
 
   if (!files.length) return [];
 
-  const selectedFiles = selectEvenly(files, selectionSize);
+  const selectedFiles = selectEvenly(files, limit);
   const customCover = path.join(directory, 'cover.webp');
   const fallbackCover = selectedFiles[Math.floor(selectedFiles.length * 0.45)] ?? selectedFiles[0];
 
@@ -90,6 +91,9 @@ export const portfolioCatalog: PortfolioCollection[] = sources.flatMap((source) 
     totalImages: files.length,
   }];
 });
+
+export const portfolioCatalog = buildCatalog(selectionSize);
+export const portfolioAdminCatalog = buildCatalog(adminSelectionSize);
 
 export const portfolioCategories = ['全部', '外拍', '棚拍'] as const;
 

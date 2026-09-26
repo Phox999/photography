@@ -11,12 +11,18 @@ export type PublicSiteContent = {
 
 const DEFAULT_HERO_TITLE = '第一次互惠拍攝，\n也能安心開始。';
 const DEFAULT_HERO_COPY = '不論你是第一次拍照，還是想累積作品，\n拍攝前都會充分溝通需求與風格，尊重彼此的想法，一起完成自然、有故事的作品。';
+const STATIC_HERO_IMAGE_URLS = new Set([
+  '/assets/hero.webp', '/assets/hero-02.webp', '/assets/hero-03.webp', '/assets/hero-04.webp',
+  '/assets/portfolio/6-20海邊jk_/IMG_9630.webp', '/assets/portfolio/照片分享/IMG_6114.webp',
+  '/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp', '/assets/portfolio/興華天橋/13.webp', '/assets/portfolio/maid/01.webp',
+]);
 
 function validHeroImageUrls(value: unknown): value is string[] {
   if (!Array.isArray(value) || value.length > 10) return false;
   try {
     return value.every((item) => {
       if (typeof item !== 'string') return false;
+      if (STATIC_HERO_IMAGE_URLS.has(item)) return true;
       const url = new URL(item);
       return url.protocol === 'https:' && !url.username && !url.password
         && /^\/storage\/v1\/object\/public\/site-hero\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/.test(url.pathname);

@@ -111,11 +111,13 @@ const countFor = (category: string) =>
 </style>
 
 <script>
+  import { loadPublishedPortfolio } from '../lib/portfolio-content';
+
   const portfolioSection = document.querySelector<HTMLElement>('[data-portfolio-filter]');
 
   if (portfolioSection) {
     const buttons = Array.from(portfolioSection.querySelectorAll<HTMLButtonElement>('[data-portfolio-filter-button]'));
-    const cards = Array.from(portfolioSection.querySelectorAll<HTMLElement>('[data-portfolio-card]'));
+    let cards = Array.from(portfolioSection.querySelectorAll<HTMLElement>('[data-portfolio-card]'));
     const strip = portfolioSection.querySelector<HTMLElement>('[data-portfolio-strip]');
     const prevButton = portfolioSection.querySelector<HTMLButtonElement>('[data-portfolio-prev]');
     const nextButton = portfolioSection.querySelector<HTMLButtonElement>('[data-portfolio-next]');
@@ -133,7 +135,9 @@ const countFor = (category: string) =>
       const gap = Number.parseFloat(getComputedStyle(strip).columnGap) || 0;
       return card.getBoundingClientRect().width + gap;
     };
-    const applyFilter = (activeFilter: string) => {
+    let activeFilter = '全部';
+    const applyFilter = (filter: string) => {
+      activeFilter = filter;
       let visibleCount = 0;
       cards.forEach((card) => {
         card.hidden = activeFilter !== '全部' && card.dataset.tags !== activeFilter;
@@ -156,5 +160,49 @@ const countFor = (category: string) =>
     strip?.addEventListener('scroll', updateControls, { passive: true });
     if (strip && typeof ResizeObserver !== 'undefined') new ResizeObserver(updateControls).observe(strip);
     updateControls();
+
+    const renderPublishedPortfolio = async () => {
+      const published = await loadPublishedPortfolio();
+      if (!published || !strip) return;
+      const featured = published.slice(0, 12);
+      strip.replaceChildren(...featured.map((item) => {
+        const article = document.createElement('article');
+        article.className = 'portfolio-card';
+        article.dataset.portfolioCard = '';
+        article.dataset.tags = item.category;
+        const link = document.createElement('a');
+        link.className = 'portfolio-card__link';
+        link.href = item.href;
+        link.setAttribute('aria-label', `查看${item.title}作品`);
+        const media = document.createElement('div');
+        media.className = 'portfolio-card__media';
+        const image = document.createElement('img');
+        image.src = item.cover;
+        image.alt = `${item.title}作品封面`;
+        image.loading = 'lazy';
+        image.decoding = 'async';
+        media.append(image);
+        const caption = document.createElement('div');
+        caption.className = 'portfolio-card__caption';
+        const title = document.createElement('h3');
+        title.textContent = item.title;
+        const category = document.createElement('p');
+        category.textContent = item.category;
+        caption.append(title, category);
+        link.append(media, caption);
+        article.append(link);
+        return article;
+      }));
+      cards = Array.from(portfolioSection.querySelectorAll<HTMLElement>('[data-portfolio-card]'));
+      buttons.forEach((button) => {
+        const category = button.dataset.filter || '全部';
+        const count = published.filter((item) => category === '全部' || item.category === category).length;
+        const countLabel = button.querySelector<HTMLElement>('.portfolio-filter__count');
+        if (countLabel) countLabel.textContent = String(count);
+        button.setAttribute('aria-label', `${category}，${count} 組作品`);
+      });
+      applyFilter(activeFilter);
+    };
+    void renderPublishedPortfolio();
   }
 </script>

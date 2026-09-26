@@ -2,7 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 <AdminLayout title="合作管理" current="inquiries">
-  <header class="admin-page-heading"><div><span class="admin-eyebrow">合作管理</span><h1>合作意向</h1><p>檢視送出的合作意向，更新處理進度與內部備註。</p></div><button type="button" class="admin-button admin-button--quiet" id="inquiry-refresh">重新整理</button></header>
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">合作管理</span><h1>合作意向</h1></div><button type="button" class="admin-button admin-button--quiet" id="inquiry-refresh">重新整理</button></header>
   <dl class="admin-stats" aria-label="合作意向統計">
     <div class="admin-stat"><dt>全部申請</dt><dd data-count="total">—</dd></div>
     <div class="admin-stat"><dt>待處理</dt><dd data-count="new">—</dd></div>
@@ -11,7 +11,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     <div class="admin-stat"><dt>已結案</dt><dd data-count="closed">—</dd></div>
   </dl>
   <p class="admin-status" id="overview-status" role="status" aria-live="polite"></p>
-  <p class="admin-help" style="margin-bottom:20px">統計涵蓋站內合作表單；Google 表單的回覆需至 Google 表單管理。</p>
   <div class="admin-filters" role="search" aria-label="搜尋合作意向">
     <div class="admin-field"><label for="inquiry-query">搜尋申請</label><input type="search" id="inquiry-query" placeholder="姓名或聯絡帳號" maxlength="120" autocomplete="off" /></div>
     <div class="admin-field"><label for="inquiry-filter">處理狀態</label><select id="inquiry-filter"><option value="all">全部狀態</option><option value="new">待處理</option><option value="reviewing">評估中</option><option value="contacted">已聯繫</option><option value="closed">已結案</option></select></div>
