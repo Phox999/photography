@@ -61,7 +61,7 @@ const countFor = (category: string) =>
 </section>
 
 <style>
-  .portfolio-section { overflow: visible; padding-block: clamp(56px, 6vw, 96px); }
+  .portfolio-section { --portfolio-card-radius: clamp(22px, 2.4vw, 40px); overflow: visible; padding-block: clamp(56px, 6vw, 96px); }
   .portfolio-section h2 { font-size: clamp(36px, 4vw, 56px); }
   .portfolio-section > .section-heading--row { display: flex; justify-content: space-between; align-items: flex-end; }
   .portfolio-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; gap: 12px; flex-wrap: wrap; }
@@ -74,13 +74,13 @@ const countFor = (category: string) =>
   .portfolio-scroll-controls button:hover:not(:disabled) { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
   .portfolio-scroll-controls button:disabled { opacity: .35; cursor: default; }
   .portfolio-more-link { display: inline-flex; min-height: 48px; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
-  .portfolio-strip { display: flex; gap: 20px; overflow-x: auto; padding: 5px 5px 16px; margin: 24px -5px 0; scroll-padding-inline: 5px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .portfolio-strip { display: flex; gap: 24px; overflow-x: auto; padding: 5px 5px 16px; margin: 24px -5px 0; scroll-padding-inline: 5px; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .portfolio-strip::-webkit-scrollbar { display: none; }
-  .portfolio-card { position: relative; flex: 0 0 calc((100% - 60px) / 4); min-width: 0; scroll-snap-align: start; }
-  .portfolio-card[hidden] { display: none; }
+  .portfolio-section :global(.portfolio-card) { position: relative; flex: 0 0 calc((100% - 72px) / 4); min-width: 0; scroll-snap-align: start; }
+  .portfolio-section :global(.portfolio-card[hidden]) { display: none; }
   /* Published cards are rebuilt in client JavaScript, so their selectors must remain global. */
-  :global(.portfolio-card__link) { position: relative; display: block; overflow: hidden; border-radius: var(--radius-media, 28px); }
-  :global(.portfolio-card__media) { overflow: hidden; aspect-ratio: 1; border-radius: var(--radius-media, 28px); background: var(--color-surface-soft); }
+  .portfolio-section :global(.portfolio-card__link) { position: relative; display: block; overflow: hidden; border-radius: var(--portfolio-card-radius); }
+  .portfolio-section :global(.portfolio-card__media) { overflow: hidden; aspect-ratio: 1; border-radius: var(--portfolio-card-radius); background: var(--color-surface-soft); }
   :global(.portfolio-card img) { display: block; width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 240ms ease; }
   :global(.portfolio-card__link:hover img), :global(.portfolio-card__link:focus-visible img) { transform: scale(1.025); }
   :global(.portfolio-card__caption) { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 18px; color: #fff; background: rgb(0 0 0 / .58); text-align: center; opacity: 0; transition: opacity 180ms ease; }
@@ -89,11 +89,11 @@ const countFor = (category: string) =>
   :global(.portfolio-card__caption p) { display: flex; gap: 12px; margin: 4px 0 0; color: #fff; font-size: 16px; }
   .portfolio-result { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .portfolio-empty[hidden] { display: none; }
-  @media (max-width: 900px) { .portfolio-card { flex-basis: calc((100% - 40px) / 3); } }
+  @media (max-width: 900px) { .portfolio-section :global(.portfolio-card) { flex-basis: calc((100% - 48px) / 3); } }
   @media (max-width: 620px) {
     .portfolio-section > .section-heading--row { align-items: flex-end; }
     .portfolio-scroll-controls button { width: 44px; height: 44px; }
-    .portfolio-card { flex-basis: 72%; }
+    .portfolio-section :global(.portfolio-card) { flex-basis: 84%; }
     .portfolio-toolbar { align-items: center; }
     .portfolio-filter { width: auto; flex-wrap: wrap; overflow: visible; }
     .portfolio-filter__button { min-height: 44px; padding-inline: 12px; }
