@@ -137,7 +137,9 @@ export async function supabaseRequest(config, path, options = {}) {
     response = await fetch(config.url + path, {
       method: options.method || 'GET', headers,
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-      signal: controller.signal, redirect: 'error', cache: 'no-store',
+      // Cloudflare Workers support only "follow" and "manual" here. Manual
+      // keeps upstream redirects from being followed while remaining edge-safe.
+      signal: controller.signal, redirect: 'manual', cache: 'no-store',
     });
     if (options.method !== 'HEAD' && response.status !== 204) {
       const text = await response.text();

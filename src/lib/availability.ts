@@ -38,5 +38,10 @@ export function openSlotsForDay(slots: PublicSlot[], date: string, now = Date.no
 }
 export function slotPreference(slot: PublicSlot): string {
   const start = taipeiInput(slot.startsAt); const end = taipeiInput(slot.endsAt);
+  const startDate = start.slice(0, 10);
+  const nextDate = new Date(Date.parse(`${startDate}T00:00:00+08:00`) + 86400000).toISOString();
+  if (start.endsWith('T00:00') && end.endsWith('T00:00') && end.slice(0, 10) === taipeiDate(nextDate)) {
+    return `${startDate.replaceAll('-', '/')} 全天可洽詢（台北時間）`;
+  }
   return `${start.slice(0, 10).replaceAll('-', '/')} ${start.slice(11)}–${start.slice(0, 10) === end.slice(0, 10) ? end.slice(11) : end.replace('T', ' ')}（台北時間）`;
 }
