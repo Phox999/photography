@@ -1,6 +1,14 @@
 import { assertMutation, endpoint, HttpError, json, readJson, requireAdmin, supabaseRequest } from '../../../server/auth.js';
 import { allowMethods, CONTENT_FIELDS, contentUpdate, rowResult } from '../../../server/admin-validation.js';
 
+function withHeroUrl(content, config) {
+  const path = content.hero_image_path;
+  if (path !== null && (typeof path !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/.test(path))) {
+    throw new HttpError(503, '首頁照片設定暫時無法載入。', 'content_unavailable');
+  }
+  return { ...content, hero_image_url: path ? `${config.url}/storage/v1/object/public/site-hero/${path}` : null };
+}
+
 export const onRequest = endpoint(async (context) => {
   const unsupported = allowMethods(context.request, ['GET', 'PATCH']);
   if (unsupported) return unsupported;
@@ -12,7 +20,7 @@ export const onRequest = endpoint(async (context) => {
     if (!Array.isArray(result.data) || !result.data[0]) {
       throw new HttpError(503, '網站內容尚未初始化，請先完成資料庫設定。', 'content_unavailable');
     }
-    return json({ content: result.data[0] });
+    return json({ content: withHeroUrl(result.data[0], config) });
   }
   // Twelve Chinese FAQ entries can exceed 32 KiB while staying within all
   // character limits. Keep a byte cap large enough for escaped Unicode JSON.
@@ -20,5 +28,5 @@ export const onRequest = endpoint(async (context) => {
   const result = await supabaseRequest(config, '/rest/v1/rpc/admin_update_content', {
     method: 'POST', accessToken, body: payload,
   });
-  return json({ content: rowResult(result.data) });
+  return json({ content: withHeroUrl(rowResult(result.data), config) });
 });

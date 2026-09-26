@@ -2,7 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 <AdminLayout title="操作紀錄" current="audit">
-  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / ACTIVITY</span><h1>每一次更新，都有紀錄。</h1><p>追蹤合作狀態與網站內容的管理操作，協助確認更新時間與執行者。</p></div><button class="admin-button admin-button--quiet" type="button" id="audit-refresh">重新整理</button></header>
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">管理記錄</span><h1>操作紀錄</h1><p>追蹤合作狀態與網站內容的管理操作，確認更新時間與執行者。</p></div><button class="admin-button admin-button--quiet" type="button" id="audit-refresh">重新整理</button></header>
   <p class="admin-notice">紀錄僅供管理員檢視。此頁不提供刪除或修改，識別碼用於追查資料；時間以台北時間顯示。</p>
   <p class="admin-status" id="audit-status" role="status" aria-live="polite">正在載入操作紀錄…</p>
   <section class="admin-card admin-list-panel" aria-labelledby="audit-heading" id="audit-region" aria-busy="true">

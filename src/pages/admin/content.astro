@@ -2,25 +2,40 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 <AdminLayout title="網站內容" current="content">
-  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / CONTENT</span><h1>讓資訊，跟上工作室的節奏。</h1><p>維護網站公告與常見問題。發布後，前台可能需等待約 1–3 分鐘更新。</p></div><button class="admin-button admin-button--quiet" type="button" id="content-reload">重新載入</button></header>
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">網站設定</span><h1>網站內容</h1><p>修改首頁主視覺、網站公告與常見問題。</p></div><button class="admin-button admin-button--quiet" type="button" id="content-reload">重新載入</button></header>
   <p class="admin-status" id="content-load-status" role="status" aria-live="polite">正在載入網站內容…</p>
   <form id="admin-content-form" method="post" action="/api/admin/content" hidden>
     <div class="admin-content-grid">
       <div class="admin-content-form">
+        <section class="admin-card"><fieldset><legend>首頁主視覺</legend><p class="admin-help">更新首頁的大圖、標題與介紹文字。上傳新照片後發布，前台會改用這張照片；按「恢復輪播照片」可回到原本的多張輪播。</p><div class="admin-hero-editor">
+          <div class="admin-hero-editor__fields">
+            <div class="admin-field"><label for="hero-title-input">首頁主標</label><textarea id="hero-title-input" maxlength="120" rows="2" required placeholder="第一次互惠拍攝，&#10;也能安心開始。" aria-describedby="hero-title-help"></textarea><p class="admin-help" id="hero-title-help">純文字，最多 120 字。換行會保留在首頁顯示。</p></div>
+            <div class="admin-field"><label for="hero-copy-input">首頁介紹</label><textarea id="hero-copy-input" maxlength="1000" rows="5" required placeholder="介紹你的拍攝方式與合作特色。" aria-describedby="hero-copy-help"></textarea><p class="admin-help" id="hero-copy-help">純文字，最多 1,000 字。</p></div>
+            <div class="admin-field"><label for="hero-image-input">首頁照片</label><input id="hero-image-input" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="hero-image-help" /><p class="admin-help" id="hero-image-help">選擇 JPEG、PNG 或 WebP，單張最多 8 MiB。照片上傳後按下方「發布更新」才會套用。</p><div class="admin-actions"><button class="admin-button admin-button--quiet" type="button" id="hero-image-upload" disabled>上傳照片</button><button class="admin-button admin-button--quiet" type="button" id="hero-image-restore">恢復輪播照片</button></div><p class="admin-status" id="hero-image-status" role="status" aria-live="polite"></p></div>
+          </div>
+          <figure class="admin-hero-preview"><img id="hero-image-preview" src="/assets/hero.webp" alt="首頁背景照片預覽" /><figcaption id="hero-image-caption">目前使用原本的首頁照片輪播。</figcaption></figure>
+        </div></fieldset></section>
         <section class="admin-card"><fieldset><legend>網站公告</legend><label class="admin-check"><input type="checkbox" id="announcement-enabled" />在前台顯示公告</label><div class="admin-field" style="margin-top:20px"><label for="announcement">公告內容</label><textarea id="announcement" maxlength="500" rows="4" placeholder="例如：近期合作安排或拍攝時程提醒。" aria-describedby="announcement-help"></textarea><p class="admin-help" id="announcement-help">純文字內容，最多 500 字。啟用公告時必須填寫內容。</p><span class="admin-count" id="announcement-count">0 / 500</span></div></fieldset></section>
         <section class="admin-card"><fieldset><legend>常見問題</legend><p class="admin-help" style="margin-bottom:20px">最多 12 題，可調整順序。每題標題最多 160 字，回答最多 1,200 字。</p><div class="admin-faq-items" id="content-faq-list"></div><p class="admin-help" id="faq-empty" hidden>目前沒有常見問題。發布後，前台會隱藏常見問題區塊。</p><button class="admin-button admin-button--quiet" type="button" id="content-add-faq" style="margin-top:20px">＋ 新增問題</button><p class="admin-status" id="faq-status" role="status" aria-live="polite"></p></fieldset></section>
       </div>
-      <aside class="admin-card admin-publish-card" aria-labelledby="publish-heading"><span class="admin-eyebrow">PUBLISHING</span><h2 id="publish-heading">準備好讓大家看見？</h2><p class="admin-help">確認內容後再發布。這裡的修改只會影響公告與常見問題。</p><p class="admin-meta" id="content-version" style="margin-top:18px"></p><p class="admin-help" id="content-dirty">內容尚未變更。</p><button type="submit" class="admin-button" id="content-publish">發布更新</button><p class="admin-status" id="content-save-status" role="status" aria-live="polite"></p><hr style="border:0;border-top:1px solid var(--adm-line);margin:22px 0" /><h3>公告預覽</h3><p class="admin-preview-text" id="announcement-preview">前台公告未啟用。</p><a class="admin-text-link" href="/" target="_blank" rel="noopener">開啟前台網站</a></aside>
+      <aside class="admin-card admin-publish-card" aria-labelledby="publish-heading"><span class="admin-eyebrow">發布設定</span><h2 id="publish-heading">發布網站更新</h2><p class="admin-help">發布後會更新首頁主視覺、網站公告與常見問題。前台可能需等待約 1–3 分鐘更新。</p><p class="admin-meta" id="content-version" style="margin-top:18px"></p><p class="admin-help" id="content-dirty">內容尚未變更。</p><button type="submit" class="admin-button" id="content-publish">發布更新</button><p class="admin-status" id="content-save-status" role="status" aria-live="polite"></p><hr style="border:0;border-top:1px solid var(--adm-line);margin:22px 0" /><h3>公告預覽</h3><p class="admin-preview-text" id="announcement-preview">前台公告未啟用。</p><a class="admin-text-link" href="/" target="_blank" rel="noopener">開啟前台網站</a></aside>
     </div>
   </form>
 </AdminLayout>
 <script>
   import { requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate, setUnsavedChanges, confirmDiscardChanges, AdminApiError } from '../../lib/admin-client';
   type Faq = { question: string; answer: string };
-  type Content = { id: number; announcement: string; announcement_enabled: boolean; faqs: Faq[]; version: number; updated_at: string };
+  type Content = { id: number; announcement: string; announcement_enabled: boolean; faqs: Faq[]; hero_title: string; hero_copy: string; hero_image_path: string | null; hero_image_url: string | null; version: number; updated_at: string };
   const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
   const form = $<HTMLFormElement>('#admin-content-form');
   const announcement = $<HTMLTextAreaElement>('#announcement');
+  const heroTitle = $<HTMLTextAreaElement>('#hero-title-input');
+  const heroCopy = $<HTMLTextAreaElement>('#hero-copy-input');
+  const heroFile = $<HTMLInputElement>('#hero-image-input');
+  const heroUpload = $<HTMLButtonElement>('#hero-image-upload');
+  const heroPreview = $<HTMLImageElement>('#hero-image-preview');
+  let heroImagePath: string | null = null;
+  let heroImageUrl: string | null = null;
   const enabled = $<HTMLInputElement>('#announcement-enabled');
   const faqList = $('#content-faq-list');
   const add = $<HTMLButtonElement>('#content-add-faq');
@@ -30,12 +45,13 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   let loaded: Content | null = null;
   let original = '';
   let busy = false;
+  let uploading = false;
   let serial = 0;
   function message(element: HTMLElement, value: string, error = false) { element.textContent = value; element.dataset.error = String(error); }
   function readFaqs(): Faq[] {
     return Array.from(faqList.querySelectorAll<HTMLElement>('.admin-faq-item')).map((item) => ({ question: item.querySelector<HTMLInputElement>('[data-faq-question]')!.value, answer: item.querySelector<HTMLTextAreaElement>('[data-faq-answer]')!.value }));
   }
-  function readContent() { return { announcement: announcement.value, announcement_enabled: enabled.checked, faqs: readFaqs() }; }
+  function readContent() { return { announcement: announcement.value, announcement_enabled: enabled.checked, faqs: readFaqs(), hero_title: heroTitle.value, hero_copy: heroCopy.value, hero_image_path: heroImagePath }; }
   function updateState() {
     const value = readContent();
     const changed = Boolean(loaded && JSON.stringify(value) !== original);
@@ -44,8 +60,11 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     $('#announcement-count').textContent = `${announcement.value.length} / 500`;
     $('#announcement-preview').textContent = enabled.checked ? announcement.value || '啟用公告後，請填寫要顯示的內容。' : '前台公告未啟用。';
     announcement.required = enabled.checked;
+    heroUpload.disabled = busy || uploading || !heroFile.files?.length;
+    $('#hero-image-restore').toggleAttribute('disabled', busy || uploading || !heroImagePath);
+    $<HTMLButtonElement>('#content-reload').disabled = busy || uploading;
     add.disabled = busy || value.faqs.length >= 12;
-    publish.disabled = busy || !changed;
+    publish.disabled = busy || uploading || !changed;
     $('#faq-empty').hidden = value.faqs.length !== 0;
   }
   function renumber() {
@@ -89,6 +108,12 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   function applyContent(content: Content) {
     loaded = content;
     announcement.value = content.announcement || '';
+    heroTitle.value = content.hero_title;
+    heroCopy.value = content.hero_copy;
+    heroImagePath = content.hero_image_path;
+    heroImageUrl = content.hero_image_url;
+    heroPreview.src = heroImageUrl || '/assets/hero.webp';
+    $('#hero-image-caption').textContent = heroImageUrl ? '已選擇自訂首頁照片，發布後套用。' : '目前使用原本的首頁照片輪播。';
     enabled.checked = content.announcement_enabled;
     faqList.replaceChildren();
     content.faqs.forEach(createFaq);
@@ -109,7 +134,40 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     finally { setBusy(false); }
   }
   form.addEventListener('input', updateState);
+  heroFile.addEventListener('change', updateState);
   enabled.addEventListener('change', updateState);
+  async function uploadHero(retryAuth = true) {
+    const file = heroFile.files?.[0];
+    if (!file || busy || uploading) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || !file.size || file.size > 8 * 1024 * 1024) {
+      message($('#hero-image-status'), '請選擇 JPEG、PNG 或 WebP，且檔案不可超過 8 MiB。', true);
+      return;
+    }
+    const body = new FormData(); body.append('file', file);
+    uploading = true; updateState();
+    message($('#hero-image-status'), '正在上傳照片…');
+    try {
+      const controller = new AbortController(); const timeout = window.setTimeout(() => controller.abort(), 30000);
+      let response: Response;
+      try { response = await fetch('/api/admin/hero-image', { method: 'POST', credentials: 'same-origin', cache: 'no-store', headers: { 'X-Phox-Request': '1' }, body, signal: controller.signal }); }
+      finally { window.clearTimeout(timeout); }
+      if (response.status === 401 && retryAuth) { await requestAdmin('/api/auth/refresh', { method: 'POST', body: {}, retryAuth: false }); return await uploadHero(false); }
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.image?.path || !result?.image?.url) throw new Error(result?.message || '照片上傳失敗，請稍後重試。');
+      heroImagePath = result.image.path; heroImageUrl = result.image.url; heroPreview.src = heroImageUrl;
+      $('#hero-image-caption').textContent = '已選擇自訂首頁照片，發布後套用。'; heroFile.value = '';
+      message($('#hero-image-status'), '照片已上傳。按「發布更新」後才會顯示在首頁。');
+      updateState();
+    } catch (error) { message($('#hero-image-status'), error instanceof Error && error.name !== 'AbortError' ? error.message : '照片上傳逾時，請檢查連線後重試。', true); }
+    finally { uploading = false; updateState(); }
+  }
+  heroUpload.addEventListener('click', () => void uploadHero());
+  $('#hero-image-restore').addEventListener('click', () => {
+    if (busy) return;
+    heroImagePath = null; heroImageUrl = null; heroPreview.src = '/assets/hero.webp'; heroFile.value = '';
+    $('#hero-image-caption').textContent = '發布後會恢復原本的首頁照片輪播。';
+    message($('#hero-image-status'), '已選擇恢復原本輪播，發布更新後生效。'); updateState();
+  });
   add.addEventListener('click', () => {
     if (busy || readFaqs().length >= 12) return;
     const row = createFaq({ question: '', answer: '' }); renumber(); row.querySelector<HTMLInputElement>('input')!.focus();
@@ -136,14 +194,14 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       message($('#faq-status'), `已移到第 ${index} 題，發布後生效。`);
     }
   });
-  $('#content-reload').addEventListener('click', () => { if (!busy && confirmDiscardChanges()) void loadContent(); });
+  $('#content-reload').addEventListener('click', () => { if (!busy && !uploading && confirmDiscardChanges()) void loadContent(); });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (busy || !loaded || !form.reportValidity()) return;
+    if (busy || uploading || !loaded || !form.reportValidity()) return;
     const value = readContent();
     if ((value.announcement_enabled && !value.announcement.trim()) || value.faqs.some((faq) => !faq.question.trim() || !faq.answer.trim())) { message(saveStatus, '啟用的公告與每一題問答都需要填寫有效內容。', true); return; }
     if (JSON.stringify(value) === original) { message(saveStatus, '內容尚未變更。'); return; }
-    if (!window.confirm(`確認發布公告與 ${value.faqs.length} 題常見問題？前台可能需等待約 1–3 分鐘更新。`)) return;
+    if (!window.confirm(`確認發布首頁主視覺、公告與 ${value.faqs.length} 題常見問題？前台可能需等待約 1–3 分鐘更新。`)) return;
     setBusy(true); message(saveStatus, '正在發布…');
     try {
       const result = await requestAdmin<{ content: Content }>('/api/admin/content', { method: 'PATCH', body: { ...value, version: loaded.version } });

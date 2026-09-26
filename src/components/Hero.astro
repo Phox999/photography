@@ -32,16 +32,11 @@ const heroImages = [
   <div class="hero__overlay"></div>
 
   <div class="hero__content container">
-    <h1 id="hero-title">第一次互惠拍攝，<br />也能安心開始。</h1>
+    <h1 id="hero-title" data-hero-title>第一次互惠拍攝，<br />也能安心開始。</h1>
 
     <p class="hero__subtitle"></p>
 
-<p class="hero__copy">
-  不論你是第一次拍照，還是想累積作品，
-  <br>
-  拍攝前都會充分溝通需求與風格，尊重彼此的想法，
-  一起完成自然、有故事的作品。
-</p>
+    <p class="hero__copy" data-hero-copy>不論你是第一次拍照，還是想累積作品，<br />拍攝前都會充分溝通需求與風格，尊重彼此的想法，一起完成自然、有故事的作品。</p>
 
     <a
       class="button button--primary"
@@ -53,11 +48,16 @@ const heroImages = [
 </section>
 
 <script>
+  import { loadPublicSiteContent } from '../lib/site-content';
+
   const heroCarousel = document.querySelector('[data-hero-carousel]');
 
   if (heroCarousel) {
-    const images = Array.from(heroCarousel.querySelectorAll('[data-hero-image]'));
+    const images = Array.from(heroCarousel.querySelectorAll<HTMLImageElement>('[data-hero-image]'));
+    const title = heroCarousel.querySelector('[data-hero-title]');
+    const copy = heroCarousel.querySelector('[data-hero-copy]');
     let currentIndex = 0;
+    let hasCustomImage = false;
 
     const goToHeroImage = (index) => {
       if (!images.length) return;
@@ -67,9 +67,23 @@ const heroImages = [
       images[currentIndex].classList.add('is-active');
     };
 
+    loadPublicSiteContent().then((content) => {
+      if (title) title.textContent = content.hero_title;
+      if (copy) copy.textContent = content.hero_copy;
+      if (content.hero_image_url && images[0]) {
+        hasCustomImage = true;
+        images[currentIndex].classList.remove('is-active');
+        currentIndex = 0;
+        images[0].src = content.hero_image_url;
+        images[0].loading = 'eager';
+        images[0].classList.add('is-active');
+        images.slice(1).forEach((image) => image.remove());
+      }
+    });
+
     if (images.length > 1) {
       window.setInterval(() => {
-        goToHeroImage(currentIndex + 1);
+        if (!hasCustomImage) goToHeroImage(currentIndex + 1);
       }, 4600);
     }
   }

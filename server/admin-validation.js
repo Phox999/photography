@@ -3,7 +3,7 @@ import { HttpError, json } from './auth.js';
 export const PAGE_SIZE = 20;
 export const STATUSES = ['new', 'reviewing', 'contacted', 'closed'];
 export const INQUIRY_FIELDS = 'id,name,contact_method,contact_account,collaboration_type,preferred_date,description,consent,status,admin_notes,created_at,updated_at,version';
-export const CONTENT_FIELDS = 'id,announcement,announcement_enabled,faqs,version,updated_at';
+export const CONTENT_FIELDS = 'id,announcement,announcement_enabled,faqs,hero_title,hero_copy,hero_image_path,version,updated_at';
 
 const invalid = (message) => { throw new HttpError(400, message, 'invalid_input'); };
 
@@ -61,7 +61,7 @@ export function inquiryUpdate(body) {
 }
 
 export function contentUpdate(body) {
-  objectBody(body, ['announcement', 'announcement_enabled', 'faqs', 'version']);
+  objectBody(body, ['announcement', 'announcement_enabled', 'faqs', 'hero_title', 'hero_copy', 'hero_image_path', 'version']);
   if (typeof body.announcement_enabled !== 'boolean') invalid('公告顯示設定不正確。');
   if (!Array.isArray(body.faqs) || body.faqs.length > 12) invalid('常見問題最多可設定 12 組。');
   const faqs = body.faqs.map((faq) => {
@@ -73,10 +73,20 @@ export function contentUpdate(body) {
   });
   const announcement = plainText(body.announcement, 500, '公告', { noMarkup: true });
   if (body.announcement_enabled && !announcement) invalid('啟用公告前請填寫公告內容。');
+  const heroTitle = plainText(body.hero_title, 120, '首頁主標', { required: true, noMarkup: true });
+  const heroCopy = plainText(body.hero_copy, 1000, '首頁介紹', { required: true, noMarkup: true });
+  const heroImagePath = body.hero_image_path;
+  if (heroImagePath !== null && (typeof heroImagePath !== 'string'
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/.test(heroImagePath))) {
+    invalid('首頁照片格式不正確，請重新上傳。');
+  }
   return {
     p_announcement: announcement,
     p_announcement_enabled: body.announcement_enabled,
     p_faqs: faqs,
+    p_hero_title: heroTitle,
+    p_hero_copy: heroCopy,
+    p_hero_image_path: heroImagePath,
     p_version: parseVersion(body.version),
   };
 }

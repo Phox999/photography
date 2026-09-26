@@ -328,6 +328,7 @@ p {
   font-weight: 700;
   line-height: 1.5;
   letter-spacing: 0.02em;
+  white-space: pre-line;
 }
 
 .hero__subtitle,
@@ -341,6 +342,7 @@ p {
   color: rgba(255, 255, 255, 0.9);
   font-size: clamp(1rem, 1.5vw, 1.15rem);
    font-family: var(--font-heading);
+  white-space: pre-line;
 }
 
 .hero .button {

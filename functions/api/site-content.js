@@ -12,12 +12,18 @@ export const onRequest = endpoint(async (context) => {
       method: 'POST', body: {},
     });
     const content = result.data;
-    if (!content || typeof content.announcement !== 'string' || !Array.isArray(content.faqs) || !Number.isInteger(content.version)) {
+    const heroPath = content?.hero_image_path;
+    if (!content || typeof content.announcement !== 'string' || !Array.isArray(content.faqs) || !Number.isInteger(content.version)
+      || typeof content.hero_title !== 'string' || typeof content.hero_copy !== 'string'
+      || (heroPath !== null && (typeof heroPath !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/.test(heroPath)))) {
       throw new HttpError(503, '網站內容暫時無法載入。', 'content_unavailable');
     }
     return json({
       announcement: content.announcement,
       faqs: content.faqs.map(({ question, answer }) => ({ question, answer })),
+      hero_title: content.hero_title,
+      hero_copy: content.hero_copy,
+      hero_image_url: heroPath ? `${config.url}/storage/v1/object/public/site-hero/${heroPath}` : null,
       version: content.version,
     }, 200, { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=120' });
   } catch {

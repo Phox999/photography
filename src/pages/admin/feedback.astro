@@ -1,8 +1,8 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
-<AdminLayout title="合作回饋" current="feedback">
-  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / FEEDBACK</span><h1>讓每次合作，都留下回應。</h1><p>回饋先保留於後台。只有已同意公開、並經你核准的顯示名稱與合作經驗，才會出現在前台。</p></div><button type="button" class="admin-button admin-button--quiet" data-feedback-reload>重新載入</button></header>
+<AdminLayout title="回饋表單" current="feedback">
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">合作回饋</span><h1>回饋表單</h1><p>檢視收到的合作回饋。只有已同意公開並經核准的內容，才會顯示在前台。</p></div><button type="button" class="admin-button admin-button--quiet" data-feedback-reload>重新載入</button></header>
   <section class="admin-card feedback-controls" aria-label="篩選合作回饋"><label for="feedback-filter">處理狀態</label><select id="feedback-filter"><option value="pending">待確認</option><option value="approved">已公開</option><option value="declined">不公開</option><option value="all">全部</option></select><a class="admin-text-link" href="/feedback/" target="_blank" rel="noopener noreferrer">查看前台</a></section>
   <p class="admin-status" role="status" aria-live="polite" data-feedback-admin-status>正在載入回饋…</p>
   <div class="feedback-admin-list" data-feedback-admin-list></div>

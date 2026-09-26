@@ -1,8 +1,8 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
-<AdminLayout title="專屬相簿" current="galleries">
-  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / CLIENT GALLERIES</span><h1>從選片，到好好交付。</h1><p>為每次合作建立私人相簿，管理邀請、選片紀錄與交件權限。</p></div><button class="admin-button admin-button--quiet" type="button" id="ag-reload">重新載入</button></header>
+<AdminLayout title="選片交件" current="galleries">
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">選片與交件</span><h1>選片交件</h1><p>為每次合作建立私人相簿，管理邀請、選片紀錄與交件權限。</p></div><button class="admin-button admin-button--quiet" type="button" id="ag-reload">重新載入</button></header>
   <p class="admin-status" id="ag-status" role="status" aria-live="polite">正在載入相簿…</p>
   <div class="ag-layout">
     <aside class="ag-sidebar"><section class="admin-card"><h2>相簿清單</h2><div class="admin-field"><label for="ag-current">選擇相簿</label><select id="ag-current"><option value="">請選擇相簿</option></select></div><p class="admin-help" id="ag-count">尚未載入。</p></section><section class="admin-card"><h2>建立新相簿</h2><form id="ag-create-form"><div class="admin-field"><label for="ag-create-title">相簿名稱</label><input id="ag-create-title" maxlength="120" required placeholder="例如：午後人像合作" /></div><div class="admin-field"><label for="ag-create-limit">可選照片上限</label><input id="ag-create-limit" type="number" min="1" max="200" value="10" required /></div><button type="submit" class="admin-button">建立草稿相簿</button></form><p class="admin-help">草稿不會開放給受邀者。照片準備完成後，再改為「開放選片」。</p></section><a class="admin-text-link" href="/client/" target="_blank" rel="noopener">開啟選片頁</a></aside>
