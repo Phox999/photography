@@ -37,10 +37,10 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
   .support-dialog { --support-viewport-height: 100dvh; --support-keyboard-offset: 0px; position: fixed; inset: auto max(20px, env(safe-area-inset-right)) calc(max(20px, env(safe-area-inset-bottom)) + var(--support-keyboard-offset)) auto; width: min(440px, calc(100vw - 32px)); max-width: none; max-height: calc(var(--support-viewport-height) - 40px); margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.88); border-radius: 32px; background: #fff; color: #111; box-shadow: 0 20px 70px rgb(25 53 64 / .2); overflow: hidden; -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); }
   .support-dialog::backdrop { background: rgb(23 45 54 / .13); }
   .support-panel { display: flex; flex-direction: column; height: auto; max-height: min(640px, calc(var(--support-viewport-height) - 40px)); min-height: 0; font-family: var(--font-body); }
-  .support-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 1px solid #e5eef2; flex: 0 0 auto; background: #fff; }
-  .support-header h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; font: 600 1.18rem/1.5 var(--font-heading); }
-  .support-header h2 span { padding: 4px 10px; border-radius: var(--radius-control); background: #f0f7fa; color: #365968; font: 500 .78rem/1.5 var(--font-body); }
-  .support-close { width: 44px; height: 44px; flex: 0 0 44px; border: 0; border-radius: 50%; background: #f4f9fb; color: #234c5b; cursor: pointer; font: 400 1.6rem/1 var(--font-body); }
+  .support-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #e5eef2; flex: 0 0 auto; background: #fff; }
+  .support-header h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; font: 600 1rem/1.4 var(--font-heading); }
+  .support-header h2 span { padding: 3px 9px; border-radius: var(--radius-pill); background: #f0f7fa; color: #365968; font: 500 .72rem/1.4 var(--font-body); }
+  .support-close { width: 38px; height: 38px; flex: 0 0 38px; border: 0; border-radius: 50%; background: #f4f9fb; color: #234c5b; cursor: pointer; font: 400 1.45rem/1 var(--font-body); }
   .support-body { min-height: 0; flex: 0 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 18px 22px 12px; scrollbar-gutter: stable; background: #f3f5f6; }
   .support-quick { display: flex; flex-wrap: wrap; gap: 8px; }
   .support-quick button, .support-messages :global(.support-options button) { max-width: 100%; min-height: 52px; padding: 10px 16px; border: 1px solid #9dcce0; border-radius: var(--radius-pill); color: #215e75; background: #fff; font: 500 .89rem/1.5 var(--font-body); cursor: pointer; text-align: left; overflow-wrap: anywhere; }
@@ -50,13 +50,13 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
   .support-more .support-quick { margin-top: 5px; }
   .support-messages { display: grid; gap: 14px; padding: 0; margin: 18px 0 0; list-style: none; }
   .support-messages:empty { margin: 0; }
-  .support-messages :global(li) { min-width: 0; width: fit-content; max-width: calc(100% - 20px); justify-self: start; padding: 14px 16px; border: 1px solid #e5eaed; border-radius: var(--radius-control) var(--radius-control) var(--radius-control) 8px; background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); font-size: 1rem; line-height: 1.85; overflow-wrap: anywhere; }
-  .support-messages :global(li.support-message--visitor) { justify-self: end; border-color: #cce8f4; border-radius: var(--radius-control) var(--radius-control) 8px var(--radius-control); background: #def1fa; color: #17495e; }
+  .support-messages :global(li) { min-width: 0; width: fit-content; max-width: calc(100% - 20px); justify-self: start; padding: 14px 16px; border: 1px solid #e5eaed; border-radius: var(--radius-control); background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); font-size: 1rem; line-height: 1.85; overflow-wrap: anywhere; }
+  .support-messages :global(li.support-message--visitor) { justify-self: end; border-color: #cce8f4; border-radius: var(--radius-control); background: #def1fa; color: #17495e; }
   .support-messages :global(li.support-message--assistant) { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 9px; width: 100%; max-width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
   .support-messages :global(.support-avatar) { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
   .support-messages :global(.support-reply-content) { min-width: 0; }
   .support-messages :global(.support-speaker) { display: block; margin: 0 0 5px 2px; color: #397f9b; font-size: .8rem; font-weight: 700; line-height: 1.35; }
-  .support-messages :global(.support-reply-bubble) { padding: 14px 16px; border: 1px solid #e5eaed; border-radius: 20px 20px 20px 7px; background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); }
+  .support-messages :global(.support-reply-bubble) { padding: 14px 16px; border: 1px solid #e5eaed; border-radius: var(--radius-control); background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); }
   .support-messages :global(p) { white-space: pre-wrap; margin: 0; }
   .support-messages :global(.support-options), .support-messages :global(.support-links) { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
   .support-messages :global(.support-links a) { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; min-height: 44px; padding: 9px 16px; border: 1px solid #b7ddec; border-radius: var(--radius-pill); background: #edf8fc; color: #215e75; font: 600 .89rem/1.5 var(--font-body); text-decoration: none; text-align: center; overflow-wrap: anywhere; }
@@ -73,7 +73,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
   @media (max-width: 600px) {
     .support-dialog { inset: auto 8px calc(max(8px, env(safe-area-inset-bottom)) + var(--support-keyboard-offset)) 8px; width: calc(100vw - 16px); max-height: calc(var(--support-viewport-height) - 16px); border-radius: 28px; }
     .support-panel { max-height: min(640px, calc(var(--support-viewport-height) - 16px)); }
-    .support-header { padding: 16px; }
+    .support-header { padding: 10px 14px; }
     .support-body { padding: 14px 16px; }
     .support-form { padding: 10px 16px 5px; }
   }

@@ -3,32 +3,32 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 <AdminLayout title="拍攝檔期" current="availability">
   <header class="admin-page-heading"><div><span class="admin-eyebrow">拍攝安排</span><h1>拍攝檔期</h1><p>以台北時間建立時段，儲存後即顯示在公開月曆。可洽詢不代表預約成立。</p></div><a class="admin-button admin-button--quiet" href="/cooperation/#availability" target="_blank" rel="noopener">查看公開檔期</a></header>
-  <p class="admin-status" id="availability-status" role="status" aria-live="polite">正在確認權限…</p>
+  <section class="admin-card availability-admin-calendar" aria-labelledby="availability-month-title">
+    <div class="admin-panel-heading"><h2 id="availability-month-title">讀取月份…</h2><div class="admin-actions"><button class="admin-button admin-button--quiet admin-button--small" type="button" id="month-prev" aria-label="上一個月">←</button><button class="admin-button admin-button--quiet admin-button--small" type="button" id="month-current">本月</button><button class="admin-button admin-button--quiet admin-button--small" type="button" id="month-next" aria-label="下一個月">→</button></div></div>
+    <p class="admin-status" id="availability-status" role="status" aria-live="polite">正在確認權限…</p>
+    <div class="availability-admin-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+    <div id="availability-admin-grid" class="availability-admin-calendar-grid" role="group" aria-labelledby="availability-month-title"></div>
+    <p class="availability-admin-legend"><span><i class="is-open"></i>可洽詢</span><span><i class="is-other"></i>暫留、已確認或關閉</span><span>空白：尚未公布</span></p>
+  </section>
   <div class="availability-admin-layout">
     <section class="admin-card" aria-labelledby="slot-editor-title">
-      <h2 id="slot-editor-title">新增時段</h2>
-      <p class="admin-help">所有輸入皆為台北時間。單筆最長 24 小時；時段不可重疊，關閉的時段可直接重新開放。</p>
+      <div class="admin-panel-heading"><h2 id="slot-editor-title">新增時段</h2><span id="slot-version" class="admin-meta">尚未儲存。</span></div>
+      <p class="admin-help">先點選月曆日期，預設建立全天時段；也可自行調整起訖時間。時段不可重疊，關閉的時段可重新開放。</p>
       <form id="slot-form" action="/api/admin/availability" method="post">
         <fieldset id="slot-fields" disabled>
           <div class="admin-field"><label for="slot-start">開始時間</label><input id="slot-start" type="datetime-local" required step="60" /></div>
           <div class="admin-field"><label for="slot-end">結束時間</label><input id="slot-end" type="datetime-local" required step="60" /></div>
           <div class="admin-field"><label for="slot-state">公開狀態</label><select id="slot-state"><option value="open">可洽詢</option><option value="held">暫留（不接受洽詢）</option><option value="closed">關閉（不接受洽詢）</option></select></div>
-          <p class="admin-help" id="slot-version">尚未儲存。</p>
           <div class="admin-actions"><button class="admin-button" type="submit" id="slot-save">新增時段</button><button class="admin-button admin-button--quiet" type="button" id="slot-new">清空／新增</button></div>
         </fieldset>
         <p class="admin-status" id="slot-save-status" role="status" aria-live="polite"></p>
       </form>
     </section>
     <section class="admin-card" aria-labelledby="slot-list-title">
-      <div class="admin-panel-heading"><h2 id="slot-list-title">已公布檔期</h2><span id="slot-count" class="admin-meta"></span></div>
-      <form id="slot-filter" class="availability-admin-filters">
-        <div class="admin-field"><label for="slot-from">開始日期</label><input id="slot-from" type="date" required /></div>
-        <div class="admin-field"><label for="slot-to">結束日期</label><input id="slot-to" type="date" required /></div>
-        <button class="admin-button admin-button--quiet" type="submit" id="slot-reload" disabled>查詢／重新載入</button>
-      </form>
-      <p class="admin-help">每次最多查詢 180 天。連結到合作意向的時段，請至拍攝確認單更改安排。</p>
+      <div class="admin-panel-heading"><h2 id="slot-list-title">所選日期</h2><span id="slot-count" class="admin-meta"></span></div>
+      <p class="admin-help">點擊下方檔期可編輯。連結到合作意向的時段，請至拍攝確認單更改安排。</p>
       <ul id="slot-list" class="availability-admin-list"></ul>
-      <p class="admin-empty" id="slot-empty">等待載入檔期。</p>
+      <p class="admin-empty" id="slot-empty">先從月曆選擇日期。</p>
     </section>
   </div>
 </AdminLayout>
@@ -41,35 +41,72 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   const fields = $<HTMLFieldSetElement>('#slot-fields');
   const start = $<HTMLInputElement>('#slot-start'); const end = $<HTMLInputElement>('#slot-end');
   const state = $<HTMLSelectElement>('#slot-state');
-  const from = $<HTMLInputElement>('#slot-from'); const to = $<HTMLInputElement>('#slot-to');
-  const reload = $<HTMLButtonElement>('#slot-reload');
   const saveStatus = $('#slot-save-status'); const loadStatus = $('#availability-status');
   const list = $('#slot-list'); const empty = $('#slot-empty');
+  const grid = $('#availability-admin-grid');
+  const monthTitle = $('#availability-month-title');
   const labels = { open: '可洽詢', held: '暫留', booked: '已確認', closed: '已關閉' };
   let items: Slot[] = []; let selected: Slot | null = null; let busy = false; let ready = false; let stale = false;
+  let activeDate = taipeiDate();
+  const [initialYear, initialMonth] = activeDate.split('-').map(Number);
+  let visibleMonth = new Date(Date.UTC(initialYear, initialMonth - 1, 1));
   let original = '';
-  from.value = taipeiDate();
-  to.value = new Date(Date.parse(`${from.value}T00:00:00Z`) + 89 * 86400000).toISOString().slice(0, 10);
+  const dateKey = (date: Date) => date.toISOString().slice(0, 10);
+  const monthStart = (date: Date) => dateKey(new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)));
+  const monthEnd = (date: Date) => dateKey(new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)));
+  const nextDate = (date: string) => taipeiDate(new Date(Date.parse(`${date}T00:00:00+08:00`) + 86400000));
+  const dateLabel = (date: string) => date.replaceAll('-', '/');
+  function daySlots(date: string) {
+    const dayStart = Date.parse(`${date}T00:00:00+08:00`); const dayEnd = dayStart + 86400000;
+    return items.filter((item) => Date.parse(item.startsAt) < dayEnd && Date.parse(item.endsAt) > dayStart);
+  }
   function snapshot() { return JSON.stringify([start.value, end.value, state.value]); }
   function controls() {
     fields.disabled = busy || !ready;
-    $<HTMLButtonElement>('#slot-save').disabled = stale;
-    reload.disabled = busy || !ready;
-    from.disabled = busy; to.disabled = busy;
+    $<HTMLButtonElement>('#slot-save').disabled = busy || stale;
+    $<HTMLButtonElement>('#slot-new').disabled = busy || !ready;
+    for (const selector of ['#month-prev', '#month-current', '#month-next']) $<HTMLButtonElement>(selector).disabled = busy || !ready;
+    grid.querySelectorAll<HTMLButtonElement>('button').forEach((button) => { button.disabled = busy; });
     list.querySelectorAll<HTMLButtonElement>('button').forEach((button) => { button.disabled = busy; });
   }
-  function apply(slot: Slot | null) {
+  function apply(slot: Slot | null, date = activeDate) {
     selected = slot; stale = false;
-    start.value = slot ? taipeiInput(slot.startsAt) : ''; end.value = slot ? taipeiInput(slot.endsAt) : ''; state.value = slot?.status || 'open';
-    $('#slot-editor-title').textContent = slot ? '編輯時段' : '新增時段';
+    activeDate = date;
+    start.value = slot ? taipeiInput(slot.startsAt) : date ? `${date}T00:00` : '';
+    end.value = slot ? taipeiInput(slot.endsAt) : date ? `${nextDate(date)}T00:00` : '';
+    state.value = slot && ['open', 'held', 'closed'].includes(slot.status) ? slot.status : 'open';
+    $('#slot-editor-title').textContent = slot ? '編輯時段' : date ? `新增 ${dateLabel(date)}` : '新增時段';
     $('#slot-save').textContent = slot ? '儲存檔期' : '新增時段';
     $('#slot-version').textContent = slot ? `版本 ${slot.version} · 可將狀態改為關閉，保留檔期紀錄。` : '尚未儲存。';
     original = snapshot(); setUnsavedChanges(false); saveStatus.textContent = ''; controls();
   }
+  function renderCalendar() {
+    const year = visibleMonth.getUTCFullYear(); const month = visibleMonth.getUTCMonth();
+    const first = new Date(Date.UTC(year, month, 1)); const leading = (first.getUTCDay() + 6) % 7;
+    const total = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    monthTitle.textContent = `${year} / ${month + 1} 月`;
+    grid.replaceChildren();
+    for (let index = 0; index < Math.ceil((leading + total) / 7) * 7; index++) {
+      const day = index - leading + 1;
+      if (day < 1 || day > total) { const spacer = document.createElement('span'); spacer.className = 'availability-admin-day-space'; spacer.setAttribute('aria-hidden', 'true'); grid.append(spacer); continue; }
+      const date = dateKey(new Date(Date.UTC(year, month, day))); const dayItems = daySlots(date);
+      const open = dayItems.some((item) => item.status === 'open');
+      const button = document.createElement('button'); button.type = 'button';
+      button.className = `availability-admin-day${open ? ' is-open' : dayItems.length ? ' is-other' : ''}${activeDate === date ? ' is-selected' : ''}`;
+      button.dataset.calendarDate = date; button.setAttribute('aria-label', `${date}，${open ? '可洽詢' : dayItems.length ? '已有時段' : '尚未公布'}`); button.setAttribute('aria-pressed', String(activeDate === date));
+      const number = document.createElement('span'); number.textContent = String(day); button.append(number);
+      if (date === taipeiDate()) button.setAttribute('aria-current', 'date');
+      grid.append(button);
+    }
+    controls();
+  }
   function render() {
-    list.replaceChildren(); $('#slot-count').textContent = `${items.length} 筆`; empty.hidden = items.length > 0;
-    empty.textContent = '此範圍尚未建立檔期。公開月曆會顯示「尚未公布」，不會推測可預約。';
-    for (const item of items) {
+    renderCalendar();
+    const dayItems = daySlots(activeDate);
+    list.replaceChildren(); $('#slot-list-title').textContent = activeDate ? dateLabel(activeDate) : '所選日期';
+    $('#slot-count').textContent = `${dayItems.length} 筆`; empty.hidden = dayItems.length > 0;
+    empty.textContent = '這一天尚未建立檔期；選擇「新增時段」可公布全天或自訂時段。';
+    for (const item of dayItems) {
       const row = document.createElement('li');
       const heading = document.createElement('strong'); heading.textContent = `${formatAdminDate(item.startsAt)} — ${formatAdminDate(item.endsAt)}`;
       const badge = document.createElement('span'); badge.className = 'admin-pill'; badge.textContent = labels[item.status];
@@ -79,8 +116,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         const note = document.createElement('p'); note.className = 'admin-help'; note.textContent = '此時段已連結拍攝安排，需由確認單修改或解除。'; actions.append(note);
         if (item.inquiryId) { const link = document.createElement('a'); link.className = 'admin-text-link'; link.href = `/admin/?id=${encodeURIComponent(item.inquiryId)}`; link.textContent = '開啟合作意向與確認單'; actions.append(link); }
       } else {
-        const button = document.createElement('button'); button.type = 'button'; button.className = 'admin-button admin-button--small admin-button--quiet'; button.textContent = '編輯／開放／關閉';
-        button.addEventListener('click', () => { if (busy || !confirmDiscardChanges()) return; apply(item); start.focus(); }); actions.append(button);
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'admin-button admin-button--small admin-button--quiet'; button.textContent = '編輯時段'; button.dataset.slotId = item.id;
+        actions.append(button);
       }
       row.append(info, actions); list.append(row);
     }
@@ -88,15 +125,21 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   }
   async function load() {
     if (busy) return;
-    const days = (Date.parse(`${to.value}T00:00:00Z`) - Date.parse(`${from.value}T00:00:00Z`)) / 86400000 + 1;
-    if (!Number.isInteger(days) || days < 1 || days > 180) { loadStatus.textContent = '請選擇 1 至 180 天的有效日期範圍。'; return; }
     busy = true; controls(); loadStatus.textContent = '正在讀取檔期…';
     try {
-      const response = await requestAdmin<{ items: Slot[] }>(`/api/admin/availability?${new URLSearchParams({ from: from.value, to: to.value })}`);
-      items = response.items; render(); loadStatus.textContent = `已載入 ${items.length} 筆檔期。所有時間皆為台北時間。`;
-      apply(null);
-    } catch (error) { items = []; list.replaceChildren(); $('#slot-count').textContent = ''; empty.hidden = false; empty.textContent = '未能取得檔期，請重新載入。'; loadStatus.textContent = adminErrorMessage(error); }
+      const from = monthStart(visibleMonth); const to = monthEnd(visibleMonth);
+      const response = await requestAdmin<{ items: Slot[] }>(`/api/admin/availability?${new URLSearchParams({ from, to })}`);
+      items = response.items; render(); loadStatus.textContent = `已載入 ${items.length} 筆本月檔期；所有時間皆為台北時間。`;
+      apply(null, activeDate);
+    } catch (error) { items = []; render(); loadStatus.textContent = adminErrorMessage(error); }
     finally { busy = false; controls(); }
+  }
+  function navigateMonth(amount: number) {
+    if (busy || !confirmDiscardChanges()) return;
+    const nextMonth = new Date(Date.UTC(visibleMonth.getUTCFullYear(), visibleMonth.getUTCMonth() + amount, 1));
+    const year = nextMonth.getUTCFullYear(); const month = nextMonth.getUTCMonth();
+    const day = Math.min(Number(activeDate.slice(-2)), new Date(Date.UTC(year, month + 1, 0)).getUTCDate());
+    visibleMonth = nextMonth; activeDate = dateKey(new Date(Date.UTC(year, month, day))); apply(null, activeDate); void load();
   }
   form.addEventListener('input', () => { if (!busy) setUnsavedChanges(snapshot() !== original); });
   form.addEventListener('submit', async (event) => {
@@ -109,29 +152,69 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const response = await requestAdmin<{ item: Slot }>('/api/admin/availability', { method: selected ? 'PATCH' : 'POST', body });
       const item = response.item;
       items = items.filter((existing) => existing.id !== item.id);
-      if (Date.parse(item.startsAt) < Date.parse(`${to.value}T00:00:00+08:00`) + 86400000 && Date.parse(item.endsAt) > Date.parse(`${from.value}T00:00:00+08:00`)) items.push(item);
-      items.sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)); render(); apply(item);
+      const rangeStart = Date.parse(`${monthStart(visibleMonth)}T00:00:00+08:00`); const rangeEnd = Date.parse(`${nextDate(monthEnd(visibleMonth))}T00:00:00+08:00`);
+      if (Date.parse(item.startsAt) < rangeEnd && Date.parse(item.endsAt) > rangeStart) items.push(item);
+      items.sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)); render(); apply(item, activeDate);
       saveStatus.textContent = '已儲存，公開月曆會於重新讀取時更新。';
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 409) { stale = true; saveStatus.textContent = '時段可能重疊、已被更新或已連結確認單。修改仍保留；請先複製需要的內容，再重新載入檔期。'; }
       else saveStatus.textContent = adminErrorMessage(error);
     } finally { busy = false; controls(); }
   });
-  $('#slot-new').addEventListener('click', () => { if (!busy && confirmDiscardChanges()) apply(null); });
-  $('#slot-filter').addEventListener('submit', (event) => { event.preventDefault(); if (!busy && confirmDiscardChanges()) void load(); });
+  $('#slot-new').addEventListener('click', () => { if (!busy && confirmDiscardChanges()) apply(null, activeDate); });
+  grid.addEventListener('click', (event) => {
+    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-calendar-date]') : null;
+    if (!button?.dataset.calendarDate || busy || !confirmDiscardChanges()) return;
+    activeDate = button.dataset.calendarDate;
+    const matches = daySlots(activeDate);
+    if (matches.length === 1) apply(matches[0], activeDate); else apply(null, activeDate);
+    render(); start.focus();
+  });
+  list.addEventListener('click', (event) => {
+    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-slot-id]') : null;
+    const slot = items.find((item) => item.id === button?.dataset.slotId);
+    if (!slot || busy || !confirmDiscardChanges()) return;
+    apply(slot, activeDate); start.focus();
+  });
+  $('#month-prev').addEventListener('click', () => navigateMonth(-1));
+  $('#month-next').addEventListener('click', () => navigateMonth(1));
+  $('#month-current').addEventListener('click', () => {
+    if (busy || !confirmDiscardChanges()) return;
+    const today = taipeiDate(); const [year, month] = today.split('-').map(Number);
+    visibleMonth = new Date(Date.UTC(year, month - 1, 1)); activeDate = today; apply(null, activeDate); void load();
+  });
   requireAdminSession().then(() => { ready = true; apply(null); return load(); }).catch((error) => { loadStatus.textContent = adminErrorMessage(error); });
 </script>
 <style>
-  .availability-admin-layout { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.4fr); gap: 24px; align-items: start; }
-  .availability-admin-layout h2 { margin: 0 0 16px; }
+  .availability-admin-calendar { margin-bottom: 24px; }
+  .availability-admin-calendar .admin-panel-heading { align-items: center; }
+  .availability-admin-calendar .admin-panel-heading h2 { margin: 0; }
+  .availability-admin-weekdays, .availability-admin-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; justify-items: center; }
+  .availability-admin-weekdays { margin: 24px 0 10px; color: var(--adm-muted); font-size: 13px; font-weight: 700; }
+  .availability-admin-weekdays span { display: grid; place-items: center; min-height: 30px; }
+  .availability-admin-day, .availability-admin-day-space { display: grid; place-items: center; width: min(100%, 64px); aspect-ratio: 1; }
+  .availability-admin-day { position: relative; border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--adm-ink); font: 500 15px/1 var(--font-body); cursor: pointer; }
+  .availability-admin-day:hover { background: var(--adm-pale); }
+  .availability-admin-day.is-open { color: var(--color-primary-dark); font-weight: 750; }
+  .availability-admin-day.is-open::after, .availability-admin-day.is-other::after { position: absolute; bottom: 7px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ''; }
+  .availability-admin-day.is-other { color: var(--adm-muted); }
+  .availability-admin-day.is-selected, .availability-admin-day.is-selected:hover { border-color: var(--adm-primary); background: var(--adm-pale); }
+  .availability-admin-day[aria-current=date] span { text-decoration: underline; text-underline-offset: 4px; }
+  .availability-admin-day:disabled { opacity: .5; cursor: default; }
+  .availability-admin-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 18px 0 0; color: var(--adm-muted); font-size: 12px; }
+  .availability-admin-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .availability-admin-legend i { width: 7px; height: 7px; border-radius: 50%; background: var(--adm-muted); }
+  .availability-admin-legend i.is-open { background: var(--color-primary-dark); }
+  .availability-admin-layout { display: grid; grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr); gap: 24px; align-items: start; }
+  .availability-admin-layout h2 { margin: 0; }
+  .availability-admin-layout .admin-panel-heading { margin-bottom: 14px; }
   #slot-form { margin-top: 24px; }
   #slot-fields { display: grid; gap: 20px; border: 0; padding: 0; margin: 0; min-width: 0; }
-  .availability-admin-filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 16px; }
-  .availability-admin-filters .admin-field { flex: 1 1 150px; min-width: 0; }
   .availability-admin-list { padding: 0; margin: 20px 0 0; list-style: none; }
   .availability-admin-list :global(li) { display: grid; gap: 16px; border-top: 1px solid var(--adm-line); padding: 22px 0; overflow-wrap: anywhere; }
   .availability-admin-list :global(li > div:first-child) { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
   .availability-admin-list :global(strong) { font-size: .95rem; }
   .availability-admin-layout input { max-width: 100%; min-width: 0; }
   @media (max-width: 900px) { .availability-admin-layout { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 600px) { .availability-admin-calendar { padding-inline: 18px; } .availability-admin-weekdays, .availability-admin-calendar-grid { gap: 4px; } .availability-admin-day, .availability-admin-day-space { width: min(100%, 42px); } }
 </style>

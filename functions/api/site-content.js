@@ -12,10 +12,12 @@ export const onRequest = endpoint(async (context) => {
       method: 'POST', body: {},
     });
     const content = result.data;
-    const heroPath = content?.hero_image_path;
+    const heroPaths = content?.hero_image_paths;
+    const imagePathPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/;
     if (!content || typeof content.announcement !== 'string' || !Array.isArray(content.faqs) || !Number.isInteger(content.version)
       || typeof content.hero_title !== 'string' || typeof content.hero_copy !== 'string'
-      || (heroPath !== null && (typeof heroPath !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/.test(heroPath)))) {
+      || !Array.isArray(heroPaths) || heroPaths.length > 10
+      || heroPaths.some((path) => typeof path !== 'string' || !imagePathPattern.test(path))) {
       throw new HttpError(503, '網站內容暫時無法載入。', 'content_unavailable');
     }
     return json({
@@ -23,7 +25,7 @@ export const onRequest = endpoint(async (context) => {
       faqs: content.faqs.map(({ question, answer }) => ({ question, answer })),
       hero_title: content.hero_title,
       hero_copy: content.hero_copy,
-      hero_image_url: heroPath ? `${config.url}/storage/v1/object/public/site-hero/${heroPath}` : null,
+      hero_image_urls: heroPaths.map((path) => `${config.url}/storage/v1/object/public/site-hero/${path}`),
       version: content.version,
     }, 200, { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=120' });
   } catch {

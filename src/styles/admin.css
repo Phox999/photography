@@ -613,6 +613,49 @@ p {
   border-radius: calc(var(--adm-radius) - 6px);
   object-fit: cover;
 }
+.admin-hero-image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.admin-hero-image-card {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: calc(var(--adm-radius) - 6px);
+  background: #fff;
+}
+.admin-hero-preview .admin-hero-image-card img {
+  aspect-ratio: 1;
+  border-radius: 0;
+}
+.admin-hero-image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 5px;
+  color: var(--adm-muted);
+  font-size: 10px;
+}
+.admin-hero-image-actions span {
+  width: 100%;
+  text-align: center;
+}
+.admin-hero-image-actions button {
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius-pill, 999px);
+  background: #fff;
+  color: var(--adm-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.admin-hero-image-actions button:disabled {
+  opacity: .45;
+  cursor: default;
+}
 .admin-hero-preview figcaption {
   padding: 10px 4px 4px;
   color: var(--adm-muted);

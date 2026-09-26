@@ -53,7 +53,8 @@ const heroImages = [
   const heroCarousel = document.querySelector('[data-hero-carousel]');
 
   if (heroCarousel) {
-    const images = Array.from(heroCarousel.querySelectorAll<HTMLImageElement>('[data-hero-image]'));
+    let images = Array.from(heroCarousel.querySelectorAll<HTMLImageElement>('[data-hero-image]'));
+    const media = heroCarousel.querySelector<HTMLElement>('.hero__media');
     const title = heroCarousel.querySelector('[data-hero-title]');
     const copy = heroCarousel.querySelector('[data-hero-copy]');
     let currentIndex = 0;
@@ -70,14 +71,19 @@ const heroImages = [
     loadPublicSiteContent().then((content) => {
       if (title) title.textContent = content.hero_title;
       if (copy) copy.textContent = content.hero_copy;
-      if (content.hero_image_url && images[0]) {
+      if (content.hero_image_urls.length && media) {
         hasCustomImage = true;
-        images[currentIndex].classList.remove('is-active');
         currentIndex = 0;
-        images[0].src = content.hero_image_url;
-        images[0].loading = 'eager';
-        images[0].classList.add('is-active');
-        images.slice(1).forEach((image) => image.remove());
+        media.replaceChildren(...content.hero_image_urls.map((url, index) => {
+          const image = document.createElement('img');
+          image.className = `hero__image ${index === 0 ? 'is-active' : ''}`;
+          image.src = url;
+          image.alt = '';
+          image.loading = index === 0 ? 'eager' : 'lazy';
+          image.dataset.heroImage = '';
+          return image;
+        }));
+        images = Array.from(media.querySelectorAll<HTMLImageElement>('[data-hero-image]'));
       }
     });
 

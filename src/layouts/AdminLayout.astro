@@ -4,11 +4,11 @@ import '../styles/admin.css';
 const { title = '管理後台', current = '', login = false } = Astro.props;
 const links = [
   { href: '/admin/', label: '合作管理', key: 'inquiries', number: '01' },
-  { href: '/admin/availability/', label: '拍攝檔期', key: 'availability', number: '06' },
   { href: '/admin/content/', label: '網站內容', key: 'content', number: '02' },
   { href: '/admin/audit/', label: '操作紀錄', key: 'audit', number: '03' },
   { href: '/admin/galleries/', label: '選片交件', key: 'galleries', number: '04' },
   { href: '/admin/feedback/', label: '回饋表單', key: 'feedback', number: '05' },
+  { href: '/admin/availability/', label: '拍攝檔期', key: 'availability', number: '06' },
 ];
 ---
 <!doctype html>
