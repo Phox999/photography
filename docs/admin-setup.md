@@ -26,7 +26,7 @@
 
 ## Supabase 啟用
 
-先檢查 Supabase 專案已套用哪些 migration；只補上缺少的檔案，按編號由 `202609240001_admin.sql` 到 `202609240009_gallery_uploads.sql` 依序執行。這批 migration 會新增後台、檔期、回饋、合作流程、私人相簿與檔案上傳所需的資料表、RPC、RLS 和私人 Storage bucket。此程式碼移植沒有連線或變更任何 Supabase 專案。
+先檢查 Supabase 專案已套用哪些 migration；只補上缺少的檔案，按編號由 `202609240001_admin.sql` 到 `202609240010_inquiry_contact_account.sql` 依序執行。這批 migration 會新增後台、檔期、回饋、合作流程、私人相簿與檔案上傳所需的資料表、RPC、RLS 和私人 Storage bucket。`010` 會為舊版合作申請表補上 `contact_account`，並在欄位空白時由既有 Instagram／Email 欄位回填聯絡資料；不會刪除申請或覆寫已填內容。
 
 接著在 Supabase Authentication 關閉公開註冊與匿名登入，由專案管理者建立並驗證管理員帳號，最後把該帳號的 UUID 加入管理員名單：
 
