@@ -78,14 +78,15 @@ const countFor = (category: string) =>
   .portfolio-strip::-webkit-scrollbar { display: none; }
   .portfolio-card { position: relative; flex: 0 0 calc((100% - 60px) / 4); min-width: 0; scroll-snap-align: start; }
   .portfolio-card[hidden] { display: none; }
-  .portfolio-card__link { position: relative; display: block; overflow: hidden; border-radius: var(--radius-media, 28px); }
-  .portfolio-card__media { overflow: hidden; aspect-ratio: 1; border-radius: var(--radius-media, 28px); background: var(--color-surface-soft); }
-  .portfolio-card img { width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 240ms ease; }
-  .portfolio-card__link:hover img, .portfolio-card__link:focus-visible img { transform: scale(1.025); }
-  .portfolio-card__caption { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 18px; color: #fff; background: rgb(0 0 0 / .58); text-align: center; opacity: 0; transition: opacity 180ms ease; }
-  .portfolio-card:hover .portfolio-card__caption, .portfolio-card:focus-within .portfolio-card__caption { opacity: 1; }
-  .portfolio-card h3 { position: static; display: block; width: auto; max-width: 100%; margin: 0; padding: 0; border-radius: 0; background: none; color: #fff; font-family: var(--font-heading); font-size: 20px; line-height: 1.5; }
-  .portfolio-card__caption p { display: flex; gap: 12px; margin: 4px 0 0; color: #fff; font-size: 16px; }
+  /* Published cards are rebuilt in client JavaScript, so their selectors must remain global. */
+  :global(.portfolio-card__link) { position: relative; display: block; overflow: hidden; border-radius: var(--radius-media, 28px); }
+  :global(.portfolio-card__media) { overflow: hidden; aspect-ratio: 1; border-radius: var(--radius-media, 28px); background: var(--color-surface-soft); }
+  :global(.portfolio-card img) { display: block; width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 240ms ease; }
+  :global(.portfolio-card__link:hover img), :global(.portfolio-card__link:focus-visible img) { transform: scale(1.025); }
+  :global(.portfolio-card__caption) { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 18px; color: #fff; background: rgb(0 0 0 / .58); text-align: center; opacity: 0; transition: opacity 180ms ease; }
+  :global(.portfolio-card:hover .portfolio-card__caption), :global(.portfolio-card:focus-within .portfolio-card__caption) { opacity: 1; }
+  :global(.portfolio-card__caption h3) { position: static; display: block; width: auto; max-width: 100%; margin: 0; padding: 0; border-radius: 0; background: none; color: #fff; font-family: var(--font-heading); font-size: 20px; line-height: 1.5; }
+  :global(.portfolio-card__caption p) { display: flex; gap: 12px; margin: 4px 0 0; color: #fff; font-size: 16px; }
   .portfolio-result { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .portfolio-empty[hidden] { display: none; }
   @media (max-width: 900px) { .portfolio-card { flex-basis: calc((100% - 40px) / 3); } }
@@ -99,14 +100,14 @@ const countFor = (category: string) =>
     .portfolio-more-link { width: auto; font-size: 18px; }
   }
   @media (hover: none), (pointer: coarse) {
-    .portfolio-card__caption { justify-content: flex-end; padding: 40px 20px 20px; background: linear-gradient(transparent 30%, rgb(0 0 0 / .68)); opacity: 1; }
-    .portfolio-card h3 { font-size: 18px; }
-    .portfolio-card__caption p { display: none; }
+    :global(.portfolio-card__caption) { justify-content: flex-end; padding: 40px 20px 20px; background: linear-gradient(transparent 30%, rgb(0 0 0 / .68)); opacity: 1; }
+    :global(.portfolio-card__caption h3) { font-size: 18px; }
+    :global(.portfolio-card__caption p) { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .portfolio-strip { scroll-behavior: auto; }
-    .portfolio-card img, .portfolio-card__caption { transition: none; }
-    .portfolio-card__link:hover img { transform: none; }
+    :global(.portfolio-card img), :global(.portfolio-card__caption) { transition: none; }
+    :global(.portfolio-card__link:hover img) { transform: none; }
   }
 </style>
 

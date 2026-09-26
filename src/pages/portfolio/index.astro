@@ -267,9 +267,15 @@ const getShootDate = (slug: string) => {
   }
 
   .portfolio-index-result {
-    margin-bottom: 18px;
-    color: var(--color-muted);
-    font-size: 0.95rem;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .portfolio-index-grid {
@@ -286,7 +292,7 @@ const getShootDate = (slug: string) => {
     display: none;
   }
 
-  .portfolio-index-card > a {
+  :global(.portfolio-index-card > a) {
     display: block;
     overflow: hidden;
     border-radius: var(--radius-xl);
@@ -294,14 +300,14 @@ const getShootDate = (slug: string) => {
     box-shadow: var(--shadow-card);
   }
 
-  .portfolio-index-card__media {
+  :global(.portfolio-index-card__media) {
     position: relative;
     overflow: hidden;
     aspect-ratio: 4 / 5;
     background: var(--color-surface-soft);
   }
 
-  .portfolio-index-card__media::after {
+  :global(.portfolio-index-card__media::after) {
     position: absolute;
     inset: 35% 0 0;
     background: linear-gradient(transparent, rgba(0, 0, 0, 0.68));
@@ -309,19 +315,19 @@ const getShootDate = (slug: string) => {
     pointer-events: none;
   }
 
-  .portfolio-index-card__media img {
+  :global(.portfolio-index-card__media img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 420ms ease;
   }
 
-  .portfolio-index-card:hover .portfolio-index-card__media img,
-  .portfolio-index-card:focus-within .portfolio-index-card__media img {
+  :global(.portfolio-index-card:hover .portfolio-index-card__media img),
+  :global(.portfolio-index-card:focus-within .portfolio-index-card__media img) {
     transform: scale(1.025);
   }
 
-  .portfolio-index-card__title {
+  :global(.portfolio-index-card__title) {
     position: absolute;
     z-index: 2;
     right: 0;
@@ -334,13 +340,13 @@ const getShootDate = (slug: string) => {
     pointer-events: none;
   }
 
-  .portfolio-index-card__title span {
+  :global(.portfolio-index-card__title span) {
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
   }
 
-  .portfolio-index-card__title h3 {
+  :global(.portfolio-index-card__title h3) {
     color: #fff;
     font-family: var(--font-heading);
     font-size: clamp(1.2rem, 1.8vw, 1.55rem);
@@ -378,8 +384,8 @@ const getShootDate = (slug: string) => {
     gap: clamp(8px, 1.2vw, 16px);
   }
 
-  .portfolio-live-detail__photo { overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radius-md); background: var(--color-surface-soft); }
-  .portfolio-live-detail__photo img { width: 100%; height: 100%; object-fit: cover; }
+  :global(.portfolio-live-detail__photo) { overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radius-md); background: var(--color-surface-soft); }
+  :global(.portfolio-live-detail__photo img) { width: 100%; height: 100%; object-fit: cover; }
 
   .portfolio-empty,
   .portfolio-index-unavailable {
