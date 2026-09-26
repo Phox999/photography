@@ -71,7 +71,7 @@ export function loadPublicSiteContent(): Promise<PublicSiteContent> {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 8000);
     try {
-      const response = await fetch('/api/site-content', { signal: controller.signal, credentials: 'omit' });
+      const response = await fetch('/api/site-content', { signal: controller.signal, credentials: 'omit', cache: 'no-store' });
       if (!response.ok) return staticSiteContent();
       return validatePublicSiteContent(await response.json()) ?? staticSiteContent();
     } catch { return staticSiteContent(); }

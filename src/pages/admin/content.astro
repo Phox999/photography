@@ -18,7 +18,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
         <section class="admin-card"><fieldset><legend>網站公告</legend><label class="admin-check"><input type="checkbox" id="announcement-enabled" />在前台顯示公告</label><div class="admin-field" style="margin-top:20px"><label for="announcement">公告內容</label><textarea id="announcement" maxlength="500" rows="4" placeholder="例如：近期合作安排或拍攝時程提醒。" aria-describedby="announcement-help"></textarea><p class="admin-help" id="announcement-help">純文字內容，最多 500 字。啟用公告時必須填寫內容。</p><span class="admin-count" id="announcement-count">0 / 500</span></div></fieldset></section>
         <section class="admin-card"><fieldset><legend>常見問題</legend><p class="admin-help" style="margin-bottom:20px">最多 12 題，可調整順序。每題標題最多 160 字，回答最多 1,200 字。</p><div class="admin-faq-items" id="content-faq-list"></div><p class="admin-help" id="faq-empty" hidden>目前沒有常見問題。發布後，前台會隱藏常見問題區塊。</p><button class="admin-button admin-button--quiet" type="button" id="content-add-faq" style="margin-top:20px">＋ 新增問題</button><p class="admin-status" id="faq-status" role="status" aria-live="polite"></p></fieldset></section>
       </div>
-      <aside class="admin-card admin-publish-card" aria-labelledby="publish-heading"><span class="admin-eyebrow">發布設定</span><h2 id="publish-heading">發布網站更新</h2><p class="admin-help">發布後會更新首頁主視覺、網站公告與常見問題。前台可能需等待約 1–3 分鐘更新。</p><p class="admin-meta" id="content-version" style="margin-top:18px"></p><p class="admin-help" id="content-dirty">內容尚未變更。</p><button type="submit" class="admin-button" id="content-publish">發布更新</button><p class="admin-status" id="content-save-status" role="status" aria-live="polite"></p><hr style="border:0;border-top:1px solid var(--adm-line);margin:22px 0" /><h3>公告預覽</h3><p class="admin-preview-text" id="announcement-preview">前台公告未啟用。</p><a class="admin-text-link" href="/" target="_blank" rel="noopener">開啟前台網站</a></aside>
+      <aside class="admin-card admin-publish-card" aria-labelledby="publish-heading"><span class="admin-eyebrow">發布設定</span><h2 id="publish-heading">發布網站更新</h2><p class="admin-help">發布後首頁會套用最新內容與照片順序；若頁面已開啟，請重新整理。</p><p class="admin-meta" id="content-version" style="margin-top:18px"></p><p class="admin-help" id="content-dirty">內容尚未變更。</p><button type="submit" class="admin-button" id="content-publish">發布更新</button><p class="admin-status" id="content-save-status" role="status" aria-live="polite"></p><hr style="border:0;border-top:1px solid var(--adm-line);margin:22px 0" /><h3>公告預覽</h3><p class="admin-preview-text" id="announcement-preview">前台公告未啟用。</p><a class="admin-text-link" href="/" target="_blank" rel="noopener">開啟前台網站</a></aside>
     </div>
   </form>
 </AdminLayout>
@@ -57,6 +57,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   let original = '';
   let busy = false;
   let uploading = false;
+  let draggingHeroIndex: number | null = null;
   let serial = 0;
   function message(element: HTMLElement, value: string, error = false) { element.textContent = value; element.dataset.error = String(error); }
   function readFaqs(): Faq[] {
@@ -156,20 +157,23 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     heroPreview.replaceChildren();
     heroImages.forEach((image, index) => {
       const card = document.createElement('div'); card.className = 'admin-hero-image-card';
+      card.draggable = !busy && !uploading;
+      card.dataset.heroIndex = String(index);
+      card.setAttribute('aria-label', `首頁輪播第 ${index + 1} 張照片，可拖曳排序`);
       const preview = document.createElement('img'); preview.src = image.url; preview.alt = `首頁輪播第 ${index + 1} 張照片`; preview.loading = index < 3 ? 'eager' : 'lazy';
       card.append(preview);
       const actions = document.createElement('div'); actions.className = 'admin-hero-image-actions';
-      const order = document.createElement('span'); order.textContent = `${index + 1} / ${heroImages.length}`; actions.append(order);
-      for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '移除']]) {
+      const order = document.createElement('span'); order.className = 'admin-hero-image-order'; order.textContent = `⠿ 拖曳排序 · ${index + 1} / ${heroImages.length}`; actions.append(order);
+      for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '刪除']]) {
         const button = document.createElement('button'); button.type = 'button'; button.dataset.heroAction = action; button.dataset.heroIndex = String(index); button.textContent = label;
         button.disabled = uploading || busy || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1) || (action === 'remove' && heroImages.length <= 1);
-        button.setAttribute('aria-label', action === 'remove' ? `移除輪播第 ${index + 1} 張照片` : `將輪播第 ${index + 1} 張照片${action === 'up' ? '上移' : '下移'}`);
+        button.setAttribute('aria-label', action === 'remove' ? `從首頁輪播刪除第 ${index + 1} 張照片` : `將輪播第 ${index + 1} 張照片${action === 'up' ? '上移' : '下移'}`);
         actions.append(button);
       }
       card.append(actions);
       heroPreview.append(card);
     });
-    $('#hero-image-caption').textContent = `目前 ${heroImages.length} 張；可上移、下移或移除。發布後套用至首頁。`;
+    $('#hero-image-caption').textContent = `目前 ${heroImages.length} 張；拖曳照片即可排序，也可用按鈕調整或刪除。發布後套用至首頁。`;
     updateState();
   }
   async function uploadHeroFile(file: File, retryAuth = true): Promise<HeroImage> {
@@ -204,6 +208,41 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     finally { uploading = false; updateState(); }
   }
   heroUpload.addEventListener('click', () => void uploadHero());
+  heroPreview.addEventListener('dragstart', (event) => {
+    const card = event.target instanceof Element ? event.target.closest<HTMLElement>('.admin-hero-image-card') : null;
+    const index = Number(card?.dataset.heroIndex);
+    if (!card || busy || uploading || !Number.isInteger(index) || !heroImages[index]) { event.preventDefault(); return; }
+    draggingHeroIndex = index;
+    card.classList.add('is-dragging');
+    if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', String(index)); }
+  });
+  heroPreview.addEventListener('dragover', (event) => {
+    const card = event.target instanceof Element ? event.target.closest<HTMLElement>('.admin-hero-image-card') : null;
+    if (draggingHeroIndex === null || !card) return;
+    event.preventDefault();
+    heroPreview.querySelectorAll('.is-drop-target').forEach((item) => item.classList.remove('is-drop-target'));
+    if (Number(card.dataset.heroIndex) !== draggingHeroIndex) card.classList.add('is-drop-target');
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  });
+  heroPreview.addEventListener('drop', (event) => {
+    const card = event.target instanceof Element ? event.target.closest<HTMLElement>('.admin-hero-image-card') : null;
+    const targetIndex = Number(card?.dataset.heroIndex);
+    if (draggingHeroIndex === null || !card || !Number.isInteger(targetIndex)) return;
+    event.preventDefault();
+    const sourceIndex = draggingHeroIndex;
+    if (sourceIndex !== targetIndex) {
+      const [image] = heroImages.splice(sourceIndex, 1);
+      heroImages.splice(targetIndex, 0, image);
+      renderHeroImages();
+      message($('#hero-image-status'), '照片順序已更新；發布後會依照目前順序顯示。');
+    }
+    draggingHeroIndex = null;
+    updateState();
+  });
+  heroPreview.addEventListener('dragend', () => {
+    draggingHeroIndex = null;
+    heroPreview.querySelectorAll('.is-dragging, .is-drop-target').forEach((item) => item.classList.remove('is-dragging', 'is-drop-target'));
+  });
   heroPreview.addEventListener('click', (event) => {
     const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-hero-action]') : null;
     const index = Number(button?.dataset.heroIndex);
@@ -251,12 +290,15 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     const value = readContent();
     if ((value.announcement_enabled && !value.announcement.trim()) || value.faqs.some((faq) => !faq.question.trim() || !faq.answer.trim())) { message(saveStatus, '啟用的公告與每一題問答都需要填寫有效內容。', true); return; }
     if (JSON.stringify(value) === original) { message(saveStatus, '內容尚未變更。'); return; }
-    if (!window.confirm(`確認發布首頁主視覺（${value.hero_image_paths.length || originalHeroImages.length} 張輪播照片）、公告與 ${value.faqs.length} 題常見問題？前台可能需等待約 1–3 分鐘更新。`)) return;
+    if (!window.confirm(`確認發布首頁主視覺（${value.hero_image_paths.length || originalHeroImages.length} 張輪播照片）、公告與 ${value.faqs.length} 題常見問題？照片順序會依預覽中的排列保存。`)) return;
     setBusy(true); message(saveStatus, '正在發布…');
     try {
       const result = await requestAdmin<{ content: Content }>('/api/admin/content', { method: 'PATCH', body: { ...value, version: loaded.version } });
+      if (JSON.stringify(result.content.hero_image_paths) !== JSON.stringify(value.hero_image_paths)) {
+        throw new Error('網站已收到更新，但讀回的照片順序與預覽不同。請重新載入確認後再發布。');
+      }
       applyContent(result.content);
-      message(saveStatus, '已發布，前台可能需等待約 1–3 分鐘更新；無法連線時保留內建內容。');
+      message(saveStatus, '已發布；首頁重新整理後會顯示最新照片順序。');
     } catch (error) {
       message(saveStatus, adminErrorMessage(error), true);
       if (error instanceof AdminApiError && error.status === 401) message(saveStatus, '登入已逾時。請先複製尚未發布的內容，再重新登入。', true);

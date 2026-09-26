@@ -558,10 +558,14 @@ p {
   overflow-wrap: anywhere;
 }
 .admin-content-grid {
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
   gap: 26px;
   align-items: start;
+}
+.admin-content-grid > * {
+  min-width: 0;
 }
 .admin-content-form {
   display: grid;
@@ -623,10 +627,27 @@ p {
   overflow: hidden;
   border-radius: calc(var(--adm-radius) - 6px);
   background: #fff;
+  cursor: grab;
+  transition: opacity .16s ease, outline-color .16s ease, transform .16s ease;
 }
 .admin-hero-preview .admin-hero-image-card img {
   aspect-ratio: 1;
   border-radius: 0;
+}
+.admin-hero-image-card:active {
+  cursor: grabbing;
+}
+.admin-hero-image-card.is-dragging {
+  opacity: .42;
+}
+.admin-hero-image-card.is-drop-target {
+  outline: 3px solid var(--adm-primary-fill);
+  outline-offset: 2px;
+  transform: translateY(-2px);
+}
+.admin-hero-image-card:focus-within {
+  outline: 2px solid var(--adm-primary-fill);
+  outline-offset: 2px;
 }
 .admin-hero-image-actions {
   display: flex;
@@ -642,6 +663,10 @@ p {
   width: 100%;
   text-align: center;
 }
+.admin-hero-image-order {
+  user-select: none;
+  cursor: grab;
+}
 .admin-hero-image-actions button {
   min-height: 28px;
   padding: 4px 6px;
@@ -655,6 +680,10 @@ p {
 .admin-hero-image-actions button:disabled {
   opacity: .45;
   cursor: default;
+}
+.admin-hero-image-actions button[data-hero-action="remove"] {
+  color: var(--adm-danger);
+  border-color: rgba(162, 52, 53, .28);
 }
 .admin-hero-preview figcaption {
   padding: 10px 4px 4px;
@@ -702,10 +731,19 @@ p {
 .admin-publish-card {
   position: sticky;
   top: 24px;
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .admin-publish-card .admin-button {
   width: 100%;
+  max-width: 100%;
   margin-top: 12px;
+}
+.admin-publish-card .admin-help,
+.admin-publish-card .admin-status,
+.admin-publish-card .admin-preview-text {
+  overflow-wrap: anywhere;
 }
 .admin-publish-card h2 {
   font-size: 18px;

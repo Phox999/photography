@@ -19,6 +19,8 @@ export const onRequest = endpoint(async (context) => {
       || heroPaths.some((path) => !isValidHeroImagePath(path))) {
       throw new HttpError(503, '網站內容暫時無法載入。', 'content_unavailable');
     }
+    // Content edits include carousel ordering; a cached response can make a
+    // newly published sequence appear to jump back after the editor saves.
     return json({
       announcement: content.announcement,
       faqs: content.faqs.map(({ question, answer }) => ({ question, answer })),
@@ -28,7 +30,7 @@ export const onRequest = endpoint(async (context) => {
         ? path.slice('static:'.length)
         : `${config.url}/storage/v1/object/public/site-hero/${path}`),
       version: content.version,
-    }, 200, { 'Cache-Control': 'public, max-age=60, stale-while-revalidate=120' });
+    }, 200, { 'Cache-Control': 'no-store' });
   } catch {
     // Static content remains readable if the database is unavailable or unconfigured.
     // Never leak configuration details or fall back to a privileged server key.
