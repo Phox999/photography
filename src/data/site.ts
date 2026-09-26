@@ -2,7 +2,7 @@ export const siteConfig = {
   brandName: 'phox999 photography',
   googleFormUrl: 'https://forms.gle/8V17E3gPVf3NdEaY8',
   inquiryUrl: '/#contact',
-  adminUrl: '/admin/',
+  adminUrl: '/admin/login/',
   portfolioUrl: '/portfolio/',
   aboutUrl: '/about/',
   instagramUrl: 'https://www.instagram.com/phox999_/',
@@ -11,10 +11,10 @@ export const siteConfig = {
 };
 
 export const navItems = [
-  { label: '作品集', href: '/#portfolio' },
-  { label: '合作方式', href: '/#plans' },
+  { label: '作品集', href: '/portfolio/' },
+  { label: '合作方式', href: '/cooperation/' },
   { label: '關於我', href: '/about/' },
-  { label: '常見問題', href: '/#faq' },
+  { label: '拍攝花絮', href: '/behind-scenes/' },
 ];
 
 export const portfolioFilters = ['全部', '外拍', '棚拍'];
@@ -108,15 +108,6 @@ export const portfolioGalleryItems = [
   { title: '拍攝花絮 05', image: '/assets/behind-05.jpg', layout: 'gallery-item--small' },
   { title: '拍攝花絮 06', image: '/assets/behind-06.jpg', layout: 'gallery-item--wide' },
   { title: '形象主視覺', image: '/assets/hero.jpg', layout: 'gallery-item--wide' },
-];
-
-export const behindScenesItems = [
-  { title: '拍攝溝通', image: '/assets/behind-01.png' },
-  { title: '自然互動', image: '/assets/behind-01.png' },
-  { title: '場景調整', image: '/assets/behind-01.png' },
-  { title: '姿態引導', image: '/assets/behind-01.png' },
-  { title: '光線確認', image: '/assets/behind-01.png' },
-  { title: '成片討論', image: '/assets/behind-01.png' },
 ];
 
 export const faqItems = [

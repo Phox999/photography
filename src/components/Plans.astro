@@ -1,47 +1,200 @@
 ---
 import { siteConfig } from '../data/site';
 
+interface Props {
+  id?: string;
+  detailed?: boolean;
+  description?: string;
+}
+
+const { id = 'plans', detailed = false, description } = Astro.props;
+
 const plans = [
   {
+    key: 'standard',
     icon: '/assets/icons/plan-standard.png',
     title: '一般互惠',
-    subtitle: '適合第一次合作，或想拍一組完整人像作品',
-    bullets: ['約 2–3 小時', '1–2 套服裝', '交付約 40–80 張照片'],
+    subtitle: '第一次合作，或想完成一組人像作品',
+    bullets: ['約 2–3 小時', '1–2 套服裝，事前確認', '交付約 40–80 張照片'],
+    details: [
+      ['交付時間', '一般拍攝後 2–3 週，依當月拍攝量調整。'],
+      ['拍攝費用', '互惠拍攝本身不收取拍攝費。'],
+      ['額外支出', '棚租、場地、道具等分攤方式會事前討論。'],
+      ['修圖與原始檔', '修圖範圍、調整次數與原始檔是否提供，需個案確認。'],
+      ['發表與使用', '公開時間、平台、標註及使用範圍事前確認。'],
+    ],
   },
   {
+    key: 'themed',
     icon: '/assets/icons/plan-theme.png',
     title: '主題企劃',
-    subtitle: '適合已有明確主題、服裝或場景想法',
+    subtitle: '已有主題、服裝或場景方向',
     bullets: ['時間與場景共同規劃', '服裝與風格拍攝前確認', '交付數量依企劃內容討論'],
+    details: [
+      ['交付時間', '依企劃內容與拍攝量確認。'],
+      ['拍攝費用', '互惠拍攝本身不收取拍攝費。'],
+      ['額外支出', '場地、造型、道具等支出會事前確認。'],
+      ['修圖與原始檔', '依企劃確認修圖範圍與檔案規格。'],
+      ['發表與使用', '依本次企劃確認雙方使用方式。'],
+    ],
   },
 ];
 ---
 
-<section class="section container" id="plans" aria-labelledby="plans-title">
+<section
+  class:list={['section', 'container', 'plans-section', detailed && 'plans-section--detailed']}
+  id={id}
+  aria-labelledby={`${id}-title`}
+>
   <div class="section-heading">
     <p class="eyebrow">COLLABORATION</p>
-    <h2 id="plans-title">合作方式</h2>
+    <h2 id={`${id}-title`}>合作方式</h2>
+    {description && <p class="plans-description">{description}</p>}
   </div>
 
   <div class="plan-grid">
-    {
-      plans.map((plan) => (
-        <article class="plan-card">
-          <img class="plan-card__icon" src={plan.icon} alt="" aria-hidden="true" />
-          <h3>{plan.title}</h3>
-          <p class="plan-card__subtitle">{plan.subtitle}</p>
+    {plans.map((plan) => (
+      <article class="plan-card">
+        <img class="plan-card__icon" src={plan.icon} alt="" aria-hidden="true" />
+        <h3>{plan.title}</h3>
+        <p class="plan-card__subtitle">{plan.subtitle}</p>
 
-          <ul>
-            {plan.bullets.map((bullet) => <li>{bullet}</li>)}
-          </ul>
+        <ul>
+          {plan.bullets.map((bullet) => <li>{bullet}</li>)}
+        </ul>
 
-          <a class="button button--secondary" href={siteConfig.inquiryUrl}>
-            立即預約
-          </a>
-        </article>
-      ))
-    }
+        <a class="button button--primary" href={siteConfig.inquiryUrl}>
+          填寫合作意向
+        </a>
+
+        {detailed && (
+          <details class="plan-card__terms">
+            <summary>交付與合作細節</summary>
+            <dl>
+              {plan.details.map(([label, value]) => (
+                <div><dt>{label}</dt><dd>{value}</dd></div>
+              ))}
+            </dl>
+          </details>
+        )}
+      </article>
+    ))}
   </div>
 
   <p class="section-note">互惠合作不收拍攝費；棚租、場地與道具等額外支出會事前討論。</p>
 </section>
+
+<style>
+  .plans-section--detailed {
+    padding-block: 0;
+  }
+
+  .plans-section--detailed .section-heading {
+    text-align: center;
+  }
+
+  .plans-description {
+    max-width: 38em;
+    margin: 18px auto 0;
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+
+  .plans-section--detailed .plan-grid {
+    width: min(100%, 1120px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+    margin-inline: auto;
+  }
+
+  .plans-section--detailed .plan-card {
+    min-width: 0;
+    min-height: 0;
+    align-items: center;
+    border: 0;
+    border-radius: 36px;
+    padding: clamp(32px, 3.8vw, 48px);
+    text-align: center;
+  }
+
+  .plans-section--detailed .plan-card__icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 24px;
+    object-fit: contain;
+  }
+
+  .plans-section--detailed .plan-card__subtitle {
+    max-width: 24em;
+    margin: 18px 0 0;
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.8;
+    text-wrap: balance;
+  }
+
+  .plans-section--detailed .plan-card ul {
+    display: grid;
+    width: 100%;
+    gap: 10px;
+    margin: 28px 0 32px;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1.8;
+    list-style: none;
+  }
+
+  .plans-section--detailed .plan-card .button {
+    width: 100%;
+    min-height: 52px;
+    margin-top: auto;
+  }
+
+  .plan-card__terms {
+    width: 100%;
+    margin-top: 18px;
+  }
+
+  .plan-card__terms summary {
+    width: fit-content;
+    min-height: 44px;
+    margin-inline: auto;
+    padding-block: 10px;
+    color: var(--color-primary-dark);
+    font-size: 0.89rem;
+    cursor: pointer;
+  }
+
+  .plan-card__terms dl {
+    display: grid;
+    gap: 18px;
+    margin: 14px 0 0;
+    text-align: left;
+  }
+
+  .plan-card__terms dt {
+    margin-bottom: 4px;
+    color: var(--color-text);
+    font-size: 0.89rem;
+    font-weight: 700;
+  }
+
+  .plan-card__terms dd {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.89rem;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 760px) {
+    .plans-section--detailed .plan-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .plans-section--detailed .plan-card {
+      padding: 32px 24px;
+    }
+  }
+</style>

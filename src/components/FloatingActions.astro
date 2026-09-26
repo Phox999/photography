@@ -1,0 +1,95 @@
+---
+import SupportAssistant from './SupportAssistant.astro';
+---
+
+<div class="floating-actions" role="group" aria-label="快捷功能">
+  <SupportAssistant />
+  <a class="floating-actions__top" href="#top" aria-label="回到頁首" title="回到頁首" data-floating-top hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />
+    </svg>
+  </a>
+</div>
+
+<script>
+  const backToTop = document.querySelector<HTMLAnchorElement>('[data-floating-top]');
+
+  if (backToTop) {
+    const updateBackToTop = () => {
+      backToTop.hidden = window.scrollY < 360;
+    };
+
+    window.addEventListener('scroll', updateBackToTop, { passive: true });
+    updateBackToTop();
+  }
+</script>
+
+<style>
+  .floating-actions {
+    position: fixed;
+    z-index: 50;
+    right: clamp(16px, 3vw, 32px);
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    justify-items: end;
+    gap: 12px;
+  }
+
+  .floating-actions__top {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(123, 171, 192, .16);
+    background: rgba(255, 255, 255, .96);
+    color: var(--color-primary-dark);
+    box-shadow: 0 10px 30px rgba(34, 58, 72, .12);
+    text-decoration: none;
+    backdrop-filter: blur(12px);
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+  }
+
+  .floating-actions__top {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+  }
+
+  .floating-actions__top:hover {
+    background: var(--color-primary);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .floating-actions__top:focus-visible {
+    outline: 3px solid var(--color-primary-dark);
+    outline-offset: 3px;
+  }
+
+  .floating-actions__top svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .floating-actions__top[hidden] {
+    display: none;
+  }
+
+  @media (max-width: 520px) {
+    .floating-actions {
+      right: 14px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      gap: 10px;
+    }
+
+    .floating-actions__top {
+      width: 50px;
+      height: 50px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .floating-actions__top {
+      transition: none;
+    }
+  }
+</style>

@@ -3,6 +3,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { portfolioCatalog, portfolioCategories } from '../../data/portfolioCatalog';
+
+const countFor = (category: string) =>
+  portfolioCatalog.filter((item) => category === '全部' || item.category === category).length;
+const getShootDate = (slug: string) => {
+  const date = slug.match(/^(\d{2})(\d{2})(\d{2})/);
+  return date ? `20${date[1]}-${date[2]}-${date[3]}` : '';
+};
 ---
 
 <BaseLayout
@@ -11,93 +18,470 @@ import { portfolioCatalog, portfolioCategories } from '../../data/portfolioCatal
 >
   <Header />
 
-  <main class="portfolio-index-page" data-portfolio-archive>
-    <section class="portfolio-index-hero container">
-      <p class="eyebrow">PORTFOLIO ARCHIVE</p>
-      <h1>全部作品</h1>
-      <p>從每次合作中精選一段完整的影像敘事。選擇系列，查看 30–40 張作品與拍攝氛圍。</p>
+  <main class="portfolio-index-page inner-page" id="main-content" tabindex="-1" data-portfolio-archive>
+    <section class="portfolio-index-hero container inner-heading" aria-labelledby="portfolio-title">
+      <p class="eyebrow">PORTFOLIO</p>
+      <h1 id="portfolio-title">全部作品</h1>
+      <p class="inner-intro">慢慢看，找到喜歡的畫面與下一次拍攝的方向。</p>
     </section>
 
     <section class="portfolio-index-content container" aria-labelledby="portfolio-archive-title">
-      <div class="portfolio-index-toolbar">
-        <h2 id="portfolio-archive-title">作品系列</h2>
+      {portfolioCatalog.length > 0 ? (
+        <>
+          <div class="archive-controls inner-panel">
+            <div class="portfolio-index-toolbar">
+              <div><p class="eyebrow">COLLECTIONS</p><h2 id="portfolio-archive-title">作品系列</h2></div>
+              <div class="portfolio-filter" role="group" aria-label="篩選作品系列">
+                {portfolioCategories.map((category, index) => (
+                  <button
+                    class={`portfolio-filter__button ${index === 0 ? 'is-active' : ''}`}
+                    type="button"
+                    aria-pressed={index === 0 ? 'true' : 'false'}
+                    aria-label={`${category}，${countFor(category)} 組作品`}
+                    aria-controls="portfolio-archive-grid"
+                    data-archive-filter
+                    data-filter={category}
+                  >
+                    {category}<span class="portfolio-filter__count" aria-hidden="true">{countFor(category)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        <div class="portfolio-filter" aria-label="篩選作品系列">
-          {
-            portfolioCategories.map((category, index) => (
-              <button
-                class={`portfolio-filter__button ${index === 0 ? 'is-active' : ''}`}
-                type="button"
-                aria-pressed={index === 0 ? 'true' : 'false'}
-                data-archive-filter
-                data-filter={category}
+            <div class="archive-tools">
+              <div class="archive-search">
+                <label class="archive-search__field" for="archive-search-input">
+                  <span>搜尋作品</span>
+                  <input type="search" id="archive-search-input" placeholder="輸入作品名稱、場景或風格" autocomplete="off" maxlength="160" data-archive-search />
+                </label>
+                <label class="archive-search__sort" for="archive-sort">
+                  <span>排列方式</span>
+                  <select id="archive-sort" data-archive-sort>
+                    <option value="default">原始編排</option>
+                    <option value="date-desc">拍攝時間（新到舊）</option>
+                    <option value="date-asc">拍攝時間（舊到新）</option>
+                    <option value="title">名稱順序</option>
+                  </select>
+                </label>
+                <button type="button" class="archive-reset" data-archive-reset>清除條件</button>
+              </div>
+            </div>
+          </div>
+
+          <p class="portfolio-index-result" role="status" aria-live="polite" aria-atomic="true" data-archive-result>
+            全部 · {portfolioCatalog.length} 組作品
+          </p>
+
+          <div class="portfolio-index-grid" id="portfolio-archive-grid">
+            {portfolioCatalog.map((collection, index) => (
+              <article
+                class="portfolio-index-card"
+                data-archive-card
+                data-category={collection.category}
+                data-title={collection.title}
+                data-description={collection.description}
+                data-date={getShootDate(collection.slug)}
+                data-original-index={index}
               >
-                {category}
-              </button>
-            ))
-          }
+                <a href={collection.href} aria-label={`瀏覽${collection.title}系列作品`}>
+                  <div class="portfolio-index-card__media">
+                    <img
+                      src={collection.cover}
+                      alt={`${collection.title}作品封面`}
+                      loading={index < 3 ? 'eager' : 'lazy'}
+                      decoding="async"
+                    />
+                    <div class="portfolio-index-card__title">
+                      <span>{collection.category}</span>
+                      <h3>{collection.title}</h3>
+                    </div>
+                  </div>
+                </a>
+              </article>
+            ))}
+          </div>
+
+          <div class="portfolio-empty" data-archive-empty hidden>
+            <p>找不到符合條件的系列。</p>
+            <button type="button" class="archive-reset" data-archive-reset>清除條件，查看全部作品</button>
+          </div>
+        </>
+      ) : (
+        <div class="portfolio-index-unavailable inner-panel">
+          <p class="portfolio-index-unavailable__title">作品正在整理中。</p>
+          <p>也可以到 Instagram 瀏覽公開照片。</p>
+          <a class="button button--primary" href="https://www.instagram.com/phox999_/" target="_blank" rel="noopener noreferrer">前往 Instagram</a>
         </div>
+      )}
+    </section>
+
+    <section class="inner-next container" aria-labelledby="archive-next-title">
+      <div>
+        <p class="eyebrow">NEXT PROJECT</p>
+        <h2 id="archive-next-title">找到喜歡的方向了嗎？</h2>
+        <p>把畫面與想法整理在一起，從這裡開始下一次拍攝。</p>
       </div>
-
-      <div class="portfolio-index-grid">
-        {
-          portfolioCatalog.map((collection, index) => (
-            <article class="portfolio-index-card" data-archive-card data-category={collection.category}>
-              <a href={collection.href} aria-label={`查看${collection.title}完整作品`}>
-                <div class="portfolio-index-card__media">
-                  <img
-                    src={collection.cover}
-                    alt={`${collection.title}作品封面`}
-                    loading={index < 6 ? 'eager' : 'lazy'}
-                  />
-                  <span>{collection.images.length} 張精選</span>
-                </div>
-
-                <div class="portfolio-index-card__body">
-                  <p>{collection.category}</p>
-                  <h3>{collection.title}</h3>
-                  <span>{collection.description}</span>
-                </div>
-              </a>
-            </article>
-          ))
-        }
+      <div class="inner-actions">
+        <a class="button button--primary" href="/cooperation/">了解合作方式</a>
+        <a class="button button--secondary" href="/#contact">填寫合作意向</a>
       </div>
-
-      <p class="portfolio-empty" data-archive-empty hidden>目前沒有符合這個分類的系列。</p>
     </section>
   </main>
 
   <Footer />
+</BaseLayout>
 
-  <script>
-    const archive = document.querySelector('[data-portfolio-archive]');
+<style>
+  .portfolio-index-page {
+    background: linear-gradient(180deg, #f4f9fb 0, #fff 30rem);
+  }
 
-    if (archive) {
-      const buttons = Array.from(archive.querySelectorAll('[data-archive-filter]'));
-      const cards = Array.from(archive.querySelectorAll('[data-archive-card]'));
-      const empty = archive.querySelector('[data-archive-empty]');
+  .portfolio-index-hero {
+    padding-bottom: clamp(36px, 5vw, 60px);
+  }
+
+  .portfolio-index-content {
+    padding-bottom: clamp(52px, 7vw, 88px);
+  }
+
+  .archive-controls {
+    margin-bottom: 24px;
+    padding: clamp(20px, 3vw, 34px);
+  }
+
+  .portfolio-index-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-bottom: 18px;
+  }
+
+  .portfolio-index-toolbar h2 {
+    font-family: var(--font-heading);
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  }
+
+  .portfolio-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .portfolio-filter__button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: #fff;
+    padding: 8px 18px;
+    color: var(--color-primary-dark);
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: var(--shadow-soft);
+    cursor: pointer;
+  }
+
+  .portfolio-filter__button.is-active {
+    background: var(--color-primary);
+    color: #fff;
+    box-shadow: 0 10px 26px rgba(49, 129, 162, .2);
+  }
+
+  .portfolio-filter__count {
+    font-family: 'Outfit', var(--font-body), sans-serif;
+    font-size: 0.84em;
+    opacity: 0.8;
+  }
+
+  .archive-tools {
+    margin: 0;
+  }
+
+  .archive-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 180px auto;
+    gap: 14px;
+    align-items: end;
+    margin: 0;
+    padding: 0;
+  }
+
+  .archive-search label {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .archive-search input,
+  .archive-search select {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    border: 1px solid #dce5e9;
+    border-radius: var(--radius-md);
+    background: #fff;
+    padding: 9px 12px;
+    color: var(--color-text);
+    font: inherit;
+  }
+
+  .archive-search input:focus-visible,
+  .archive-search select:focus-visible {
+    border-color: #889ba3;
+    outline: 2px solid #889ba3;
+    outline-offset: 2px;
+  }
+
+  .archive-reset {
+    min-height: 46px;
+    border: 1px solid #dce5e9;
+    border-radius: var(--radius-pill);
+    background: #fff;
+    padding: 9px 16px;
+    color: var(--color-muted);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .archive-reset:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary-dark);
+  }
+
+  .portfolio-index-result {
+    margin-bottom: 18px;
+    color: var(--color-muted);
+    font-size: 0.95rem;
+  }
+
+  .portfolio-index-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 28px);
+  }
+
+  .portfolio-index-card {
+    min-width: 0;
+  }
+
+  .portfolio-index-card[hidden] {
+    display: none;
+  }
+
+  .portfolio-index-card > a {
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: #fff;
+    box-shadow: var(--shadow-card);
+  }
+
+  .portfolio-index-card__media {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+    background: var(--color-surface-soft);
+  }
+
+  .portfolio-index-card__media::after {
+    position: absolute;
+    inset: 35% 0 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.68));
+    content: '';
+    pointer-events: none;
+  }
+
+  .portfolio-index-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 420ms ease;
+  }
+
+  .portfolio-index-card:hover .portfolio-index-card__media img,
+  .portfolio-index-card:focus-within .portfolio-index-card__media img {
+    transform: scale(1.025);
+  }
+
+  .portfolio-index-card__title {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    gap: 4px;
+    padding: 42px 22px 20px;
+    color: #fff;
+    pointer-events: none;
+  }
+
+  .portfolio-index-card__title span {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  .portfolio-index-card__title h3 {
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .portfolio-empty,
+  .portfolio-index-unavailable {
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-soft);
+    padding: clamp(24px, 4vw, 40px);
+    color: var(--color-muted);
+  }
+
+  .portfolio-empty p,
+  .portfolio-index-unavailable__title {
+    color: var(--color-text);
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .portfolio-empty .archive-reset {
+    margin-top: 14px;
+  }
+
+  .portfolio-index-unavailable > p + p {
+    margin-top: 8px;
+  }
+
+  .portfolio-index-unavailable .button {
+    margin-top: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .portfolio-index-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .archive-search {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .archive-search__field {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .portfolio-index-toolbar {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .archive-search {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .archive-search__field {
+      grid-column: auto;
+    }
+
+    .portfolio-index-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .portfolio-index-card__media img {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const archive = document.querySelector<HTMLElement>('[data-portfolio-archive]');
+
+  if (archive) {
+    const buttons = Array.from(archive.querySelectorAll<HTMLButtonElement>('[data-archive-filter]'));
+    const cards = Array.from(archive.querySelectorAll<HTMLElement>('[data-archive-card]'));
+    const grid = archive.querySelector<HTMLElement>('#portfolio-archive-grid');
+    const empty = archive.querySelector<HTMLElement>('[data-archive-empty]');
+    const result = archive.querySelector<HTMLElement>('[data-archive-result]');
+    const search = archive.querySelector<HTMLInputElement>('[data-archive-search]');
+    const sort = archive.querySelector<HTMLSelectElement>('[data-archive-sort]');
+    let category = '全部';
+
+    const apply = () => {
+      const query = (search?.value || '').trim().toLocaleLowerCase('zh-Hant');
+      const order = sort?.value || 'default';
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const matchesCategory = category === '全部' || card.dataset.category === category;
+        const searchable = `${card.dataset.title || ''} ${card.dataset.description || ''} ${card.dataset.category || ''}`.toLocaleLowerCase('zh-Hant');
+        const visible = matchesCategory && (!query || searchable.includes(query));
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+
+      if (grid) {
+        const sorted = [...cards].sort((left, right) => {
+          if (order === 'title') {
+            return (left.dataset.title || '').localeCompare(right.dataset.title || '', 'zh-Hant', { numeric: true });
+          }
+          if (order === 'date-desc' || order === 'date-asc') {
+            const leftDate = left.dataset.date || '';
+            const rightDate = right.dataset.date || '';
+            if (!leftDate && rightDate) return 1;
+            if (leftDate && !rightDate) return -1;
+            return order === 'date-desc'
+              ? rightDate.localeCompare(leftDate)
+              : leftDate.localeCompare(rightDate);
+          }
+          return Number(left.dataset.originalIndex) - Number(right.dataset.originalIndex);
+        });
+        sorted.forEach((card) => grid.append(card));
+      }
 
       buttons.forEach((button) => {
-        button.addEventListener('click', () => {
-          const filter = button.getAttribute('data-filter') || '全部';
-          let visibleCount = 0;
-
-          cards.forEach((card) => {
-            const visible = filter === '全部' || card.getAttribute('data-category') === filter;
-            card.toggleAttribute('hidden', !visible);
-            if (visible) visibleCount += 1;
-          });
-
-          buttons.forEach((item) => {
-            const active = item.getAttribute('data-filter') === filter;
-            item.classList.toggle('is-active', active);
-            item.setAttribute('aria-pressed', String(active));
-          });
-
-          if (empty instanceof HTMLElement) empty.hidden = visibleCount > 0;
-        });
+        const active = button.dataset.filter === category;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
       });
-    }
-  </script>
-</BaseLayout>
+
+      if (empty) empty.hidden = visibleCount > 0;
+      if (result) result.textContent = `${category}${query ? ` · 搜尋「${query}」` : ''} · ${visibleCount} 組作品`;
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        category = button.dataset.filter || '全部';
+        apply();
+      });
+    });
+
+    search?.addEventListener('input', apply);
+    sort?.addEventListener('change', apply);
+    archive.querySelectorAll<HTMLButtonElement>('[data-archive-reset]').forEach((button) => {
+      button.addEventListener('click', () => {
+        category = '全部';
+        if (search) search.value = '';
+        if (sort) sort.value = 'default';
+        apply();
+      });
+    });
+
+    apply();
+  }
+</script>

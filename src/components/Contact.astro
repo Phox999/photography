@@ -1,14 +1,21 @@
+---
+import { siteConfig } from '../data/site';
+
+const shootStyles = [
+  { id: 'coast', title: '海邊日光', image: '/assets/hero.webp' },
+  { id: 'sunlight', title: '午後光影', image: '/assets/hero-02.webp' },
+  { id: 'city', title: '都會漫步', image: '/assets/hero-03.webp' },
+  { id: 'night', title: '夜色敘事', image: '/assets/hero-04.webp' },
+];
+---
+
 <section class="section contact-section" id="contact" aria-labelledby="contact-title">
   <div class="container contact-layout">
-    <div class="contact-copy">
+    <header class="contact-copy">
       <p class="eyebrow">CONTACT</p>
-      <h2 id="contact-title">來一起創作吧！</h2>
-      <p>
-        如果你有想嘗試的風格、服裝或主題，可以先留下合作意向。
-        我會依主題、檔期與合作適配度回覆是否能安排。
-      </p>
-
-    </div>
+      <h2 id="contact-title">一鍵申請，下一步開始拍攝。</h2>
+      <p>挑幾張喜歡的照片，聊聊拍攝想法。</p>
+    </header>
 
     <form class="contact-form" data-inquiry-form>
       <label class="hidden-field" aria-hidden="true">
@@ -16,68 +23,163 @@
         <input name="website" type="text" autocomplete="off" tabindex="-1" />
       </label>
 
-      <div class="form-grid">
-        <div class="form-field">
-          <label for="name">姓名 / 昵稱</label>
-          <input id="name" name="name" type="text" autocomplete="name" required />
-        </div>
+      <p class="form-intro">選填項目已標示，確認內容後才會送出。</p>
 
-        <div class="form-field">
-          <label for="collaboration_type">合作類型</label>
-          <select id="collaboration_type" name="collaboration_type" required>
-            <option value="">請選擇</option>
-            <option value="輕量體驗(2hr)">輕量體驗(2hr)</option>
-            <option value="標準方案(3hr)">標準方案(3hr)</option>
-            <option value="主題合作">主題合作</option>
-          </select>
-        </div>
+      <div class="contact-editor" data-contact-editor>
+        <section class="contact-form-section" aria-labelledby="contact-idea-title">
+          <h3 id="contact-idea-title">這次想拍什麼</h3>
+          <fieldset class="contact-style-select">
+            <legend>喜歡的拍攝風格 <span>選填，可複選</span></legend>
+            <div class="contact-style-grid">
+              {shootStyles.map((style) => (
+                <button class="contact-style" type="button" aria-pressed="false" data-contact-style={style.id} data-style-title={style.title}>
+                  <img src={style.image} alt="" width="360" height="240" loading="lazy" decoding="async" />
+                  <span>{style.title}</span>
+                  <span class="contact-style__check" aria-hidden="true">✓</span>
+                </button>
+              ))}
+            </div>
+            <div class="contact-style-footer">
+              <p data-style-status aria-live="polite">選擇項目已標示，確認內容後才會送出。</p>
+              <a href="#portfolio">回到作品集挑選參考</a>
+            </div>
+          </fieldset>
 
-        <div class="form-field">
-          <label for="contact_method">聯絡方式</label>
-          <select id="contact_method" name="contact_method" required>
-            <option value="">請選擇</option>
-            <option value="Instagram">Instagram</option>
-            <option value="Line">Line</option>
-            <option value="Facebook">Facebook</option>
-            <option value="Threads">Threads</option>
-            <option value="手機">手機</option>
-            <option value="其他">其他</option>
-          </select>
-        </div>
+          <section class="contact-reference-card" aria-labelledby="reference-title">
+            <h4 id="reference-title">加入自己的參考 <span>選填</span></h4>
+            <div class="contact-reference-grid">
+              <div class="form-field">
+                <label for="reference-images">參考照片</label>
+                <div class="reference-file-picker">
+                  <input class="reference-file-input" id="reference-images" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="reference-images-help reference-status" data-reference-images />
+                  <label class="reference-file-picker__button" for="reference-images">選擇照片</label>
+                  <span class="reference-file-picker__names" data-reference-file-names aria-live="polite">尚未選擇檔案</span>
+                </div>
+                <p class="field-help" id="reference-images-help">最多 3 張 JPG、PNG 或 WebP，每張 4 MB。照片只會在此頁預覽，目前不會上傳。</p>
+                <div class="reference-previews" data-reference-previews aria-live="polite"></div>
+                <p class="field-help" id="reference-status" data-reference-status role="status"></p>
+              </div>
+              <div class="form-field">
+                <label for="reference-links">參考連結 <span>選填</span></label>
+                <textarea id="reference-links" name="reference_links" rows="4" maxlength="1000" placeholder="https://..."></textarea>
+                <p class="field-help">每行一個完整的 http:// 或 https:// 連結，最多 3 個。</p>
+              </div>
+            </div>
+          </section>
 
-        <div class="form-field">
-          <label for="contact_account">聯絡帳號</label>
-          <input id="contact_account" name="contact_account" type="text" autocomplete="off" required />
-        </div>
+          <details class="brief-import">
+            <summary>帶入已整理的拍攝規劃 <span>選填</span></summary>
+            <div class="brief-import__content">
+              <label for="brief-summary">拍攝規劃摘要</label>
+              <textarea id="brief-summary" rows="3" maxlength="2000" placeholder="貼上已整理的拍攝規劃摘要"></textarea>
+              <button class="button button--secondary" type="button" data-apply-brief>套用規劃摘要</button>
+              <p data-brief-status role="status" aria-live="polite"></p>
+            </div>
+          </details>
 
+          <div class="form-grid contact-details-grid">
+            <div class="form-field">
+              <label for="collaboration_type">合作類型</label>
+              <select id="collaboration_type" name="collaboration_type" required>
+                <option value="">請選擇</option>
+                <option value="輕量體驗(2hr)">一般互惠｜約 2 小時</option>
+                <option value="標準方案(3hr)">一般互惠｜約 3 小時</option>
+                <option value="主題合作">主題企劃</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="preferred_date">偏好日期 <span>選填</span></label>
+              <input id="preferred_date" name="preferred_date" type="text" autocomplete="off" placeholder="未確定可留白；檔期需再確認" />
+            </div>
+          </div>
 
+          <div class="form-field">
+            <label for="description">拍攝想法</label>
+            <textarea id="description" name="description" rows="5" maxlength="2000" placeholder="想嘗試的主題、場景，或想一起討論的方向。" required></textarea>
+            <p class="field-help">拍攝想法與參考連結合計最多 2,000 字。</p>
+          </div>
+        </section>
 
-        <div class="form-field">
-          <label for="preferred_date">偏好日期</label>
-          <input id="preferred_date" name="preferred_date" type="text" autocomplete="off" placeholder="例如：8/3、8/10 下午" />
-        </div>
+        <section class="contact-form-section contact-form-section--details" aria-labelledby="contact-details-title">
+          <h3 id="contact-details-title">你的聯絡方式</h3>
+          <div class="form-grid">
+            <div class="form-field form-field--wide">
+              <label for="name">姓名／暱稱</label>
+              <input id="name" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div class="form-field">
+              <label for="contact_method">聯絡方式</label>
+              <select id="contact_method" name="contact_method" required>
+                <option value="">請選擇</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Line">LINE</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Threads">Threads</option>
+                <option value="手機">手機</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="contact_account">聯絡帳號／連結</label>
+              <input id="contact_account" name="contact_account" type="text" autocomplete="off" required />
+              <p class="field-help">填入可搜尋的帳號、連結或電話。</p>
+            </div>
+          </div>
+
+          <label class="checkbox-field">
+            <input name="consent" type="checkbox" required />
+            <span>我同意以上資料用於本次合作聯繫與檔期確認。</span>
+          </label>
+
+          <div class="form-footer">
+            <button class="button button--primary" type="submit">確認合作內容</button>
+          </div>
+        </section>
       </div>
 
-      <div class="form-field">
-        <label for="description">想拍攝的風格 / 主題</label>
-        <textarea
-          id="description"
-          name="description"
-          rows="5"
-          maxlength="2000"
-          placeholder="可以寫主題、服裝、地點、想呈現的感覺，或附上作品 / moodboard 連結。"
-          required
-        ></textarea>
-      </div>
+      <section class="contact-review" data-contact-review hidden aria-labelledby="contact-review-title">
+        <div class="contact-review__heading">
+          <h3 id="contact-review-title" tabindex="-1">確認這次的拍攝想法</h3>
+          <p>內容還沒送出，可以返回修改。</p>
+        </div>
+        <dl class="contact-review__details">
+          <div><dt>姓名／暱稱</dt><dd data-review-name></dd></div>
+          <div><dt>聯絡方式</dt><dd data-review-contact></dd></div>
+          <div><dt>合作類型</dt><dd data-review-type></dd></div>
+          <div><dt>偏好日期</dt><dd data-review-date></dd></div>
+        </dl>
+        <div class="contact-review__section" data-review-styles hidden>
+          <h4>喜歡的拍攝風格</h4>
+          <p data-review-style-list></p>
+        </div>
+        <div class="contact-review__section" data-review-references hidden>
+          <h4>加入的參考</h4>
+          <p data-review-file-list></p>
+          <ul data-review-link-list></ul>
+          <p class="field-help">照片僅在此頁預覽，尚未上傳。</p>
+        </div>
+        <div class="contact-review__section">
+          <h4>拍攝想法</h4>
+          <p data-review-description></p>
+        </div>
+        <div class="contact-review__actions">
+          <button class="button button--secondary" type="button" data-edit-inquiry>返回修改</button>
+          <button class="button button--primary" type="button" data-confirm-inquiry>確認送出合作意向</button>
+        </div>
+      </section>
 
-      <label class="checkbox-field">
-        <input name="consent" type="checkbox" required />
-        <span>我同意資料僅用於本次合作聯繫與檔期確認。</span>
-      </label>
-
-      <div class="form-footer">
-        <button class="button button--primary" type="submit">送出合作意向</button>
-        <p class="form-status" role="status" data-inquiry-status></p>
+      <p class="contact-expectation">拍攝內容與日期，以雙方確認為準。</p>
+      <p class="form-status" role="status" aria-live="polite" data-inquiry-status></p>
+      <div class="contact-links" aria-label="其他聯絡方式">
+        <a href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1" class="contact-icon__dot"/></svg>
+        </a>
+        <a href={siteConfig.mailtoUrl} aria-label="Email" title="Email">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+        </a>
+        <a href={siteConfig.googleFormUrl} target="_blank" rel="noopener noreferrer" aria-label="Google 表單" title="Google 表單">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg>
+        </a>
       </div>
     </form>
   </div>
@@ -87,52 +189,220 @@
   const inquiryForm = document.querySelector('[data-inquiry-form]');
 
   if (inquiryForm instanceof HTMLFormElement) {
+    const editor = inquiryForm.querySelector('[data-contact-editor]');
+    const review = inquiryForm.querySelector('[data-contact-review]');
     const status = inquiryForm.querySelector('[data-inquiry-status]');
+    const styleButtons = Array.from(inquiryForm.querySelectorAll('[data-contact-style]'));
+    const styleStatus = inquiryForm.querySelector('[data-style-status]');
+    const referenceInput = inquiryForm.querySelector('[data-reference-images]');
+    const referenceFileNames = inquiryForm.querySelector('[data-reference-file-names]');
+    const referencePreviews = inquiryForm.querySelector('[data-reference-previews]');
+    const referenceStatus = inquiryForm.querySelector('[data-reference-status]');
+    const briefInput = inquiryForm.querySelector('#brief-summary');
+    const description = inquiryForm.querySelector('#description');
+    const referenceLinks = inquiryForm.querySelector('#reference-links');
+    const confirmButton = inquiryForm.querySelector('[data-confirm-inquiry]');
+    let referenceFiles = [];
+    let pending = false;
 
-    inquiryForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
+    const selectedStyles = () => styleButtons
+      .filter((button) => button.getAttribute('aria-pressed') === 'true')
+      .map((button) => button.getAttribute('data-style-title'))
+      .filter(Boolean);
 
-      const submitButton = inquiryForm.querySelector('button[type="submit"]');
+    const selectedLinks = () => String(referenceLinks?.value || '')
+      .split('\n')
+      .map((link) => link.trim())
+      .filter(Boolean);
+
+    const updateStyleStatus = () => {
+      const selected = selectedStyles();
+      if (styleStatus) {
+        styleStatus.textContent = selected.length ? `已選 ${selected.length} 張：${selected.join('、')}。再次點選可取消。` : '選擇項目已標示，確認內容後才會送出。';
+      }
+    };
+
+    const showEditor = () => {
+      if (pending) return;
+      if (editor) editor.hidden = false;
+      if (review) review.hidden = true;
+      inquiryForm.querySelector('[type="submit"]')?.focus();
+    };
+
+    const setReviewText = (selector, value) => {
+      const target = inquiryForm.querySelector(selector);
+      if (target) target.textContent = value || '未填寫';
+    };
+
+    const fillReview = () => {
       const formData = new FormData(inquiryForm);
+      setReviewText('[data-review-name]', String(formData.get('name') || ''));
+      setReviewText('[data-review-contact]', `${formData.get('contact_method') || ''}｜${formData.get('contact_account') || ''}`);
+      setReviewText('[data-review-type]', String(formData.get('collaboration_type') || ''));
+      setReviewText('[data-review-date]', String(formData.get('preferred_date') || ''));
+      setReviewText('[data-review-description]', String(description?.value || ''));
+
+      const styles = selectedStyles();
+      const stylesPanel = inquiryForm.querySelector('[data-review-styles]');
+      const stylesText = inquiryForm.querySelector('[data-review-style-list]');
+      if (stylesPanel) stylesPanel.hidden = styles.length === 0;
+      if (stylesText) stylesText.textContent = styles.join('、');
+
+      const links = selectedLinks();
+      const referencesPanel = inquiryForm.querySelector('[data-review-references]');
+      const fileText = inquiryForm.querySelector('[data-review-file-list]');
+      const linkList = inquiryForm.querySelector('[data-review-link-list]');
+      if (referencesPanel) referencesPanel.hidden = links.length === 0 && referenceFiles.length === 0;
+      if (fileText) fileText.textContent = referenceFiles.length ? `照片名稱：${referenceFiles.map((file) => file.name).join('、')}` : '';
+      if (linkList) {
+        linkList.replaceChildren();
+        links.forEach((url) => {
+          const item = document.createElement('li');
+          item.textContent = url;
+          linkList.appendChild(item);
+        });
+      }
+      if (editor) editor.hidden = true;
+      if (review) review.hidden = false;
+      inquiryForm.querySelector('#contact-review-title')?.focus();
+    };
+
+    const clearPreviews = () => {
+      if (referencePreviews) referencePreviews.replaceChildren();
+      referenceFiles.forEach((file) => { if (file.previewUrl) URL.revokeObjectURL(file.previewUrl); });
+      referenceFiles = [];
+      if (referenceFileNames) referenceFileNames.textContent = '尚未選擇檔案';
+    };
+
+    const renderPreviews = () => {
+      if (!referencePreviews) return;
+      referencePreviews.replaceChildren();
+      referenceFiles.forEach((file) => {
+        const figure = document.createElement('figure');
+        const image = document.createElement('img');
+        image.src = file.previewUrl;
+        image.alt = `參考照片預覽：${file.name}`;
+        const caption = document.createElement('figcaption');
+        caption.textContent = file.name;
+        figure.append(image, caption);
+        referencePreviews.appendChild(figure);
+      });
+    };
+
+    styleButtons.forEach((button) => button.addEventListener('click', () => {
+      if (pending) return;
+      const isSelected = button.getAttribute('aria-pressed') === 'true';
+      button.setAttribute('aria-pressed', String(!isSelected));
+      updateStyleStatus();
+    }));
+
+    referenceInput?.addEventListener('change', () => {
+      if (!(referenceInput instanceof HTMLInputElement) || !referenceStatus) return;
+      const files = Array.from(referenceInput.files || []);
+      const accepted = files.slice(0, 3).filter((file) => /image\/(jpeg|png|webp)/.test(file.type) && file.size <= 4 * 1024 * 1024);
+      clearPreviews();
+      referenceFiles = accepted.map((file) => ({ name: file.name, previewUrl: URL.createObjectURL(file) }));
+      if (referenceFileNames) referenceFileNames.textContent = accepted.length ? accepted.map((file) => file.name).join('、') : '尚未選擇檔案';
+      renderPreviews();
+      if (files.length > 3 || accepted.length !== files.length) {
+        referenceStatus.textContent = '最多選 3 張 JPG、PNG 或 WebP，每張不可超過 4 MB。';
+      } else {
+        referenceStatus.textContent = accepted.length ? `已選 ${accepted.length} 張照片供本頁預覽。` : '';
+      }
+      if (files.length > 3 || accepted.length !== files.length) referenceInput.value = '';
+    });
+
+    inquiryForm.querySelector('[data-apply-brief]')?.addEventListener('click', () => {
+      if (!(briefInput instanceof HTMLTextAreaElement) || !(description instanceof HTMLTextAreaElement)) return;
+      const brief = briefInput.value.trim();
+      if (!brief) {
+        inquiryForm.querySelector('[data-brief-status]')?.replaceChildren('請先貼上拍攝規劃摘要。');
+        return;
+      }
+      const merged = [description.value.trim(), brief].filter(Boolean).join('\n\n');
+      if (merged.length > 2000) {
+        inquiryForm.querySelector('[data-brief-status]')?.replaceChildren('合併後超過 2,000 字，請先精簡摘要。');
+        return;
+      }
+      description.value = merged;
+      briefInput.value = '';
+      inquiryForm.querySelector('[data-brief-status]')?.replaceChildren('已套用到拍攝想法，尚未送出。');
+    });
+
+    inquiryForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (pending) return;
+      const links = selectedLinks();
+      if (links.length > 3 || links.some((link) => !/^https?:\/\//i.test(link))) {
+        if (status) status.textContent = '參考連結請使用完整的 http:// 或 https:// 網址，每份最多 3 個。';
+        referenceLinks?.focus();
+        return;
+      }
+      fillReview();
+      if (status) status.textContent = '';
+    });
+
+    inquiryForm.querySelector('[data-edit-inquiry]')?.addEventListener('click', showEditor);
+
+    confirmButton?.addEventListener('click', async () => {
+      if (pending) return;
+      const formData = new FormData(inquiryForm);
+      const detailParts = [
+        String(formData.get('description') || '').trim(),
+        selectedStyles().length ? `偏好風格：${selectedStyles().join('、')}` : '',
+        selectedLinks().length ? `參考連結：\n${selectedLinks().join('\n')}` : '',
+      ].filter(Boolean);
+      const descriptionText = detailParts.join('\n\n');
+
+      if (descriptionText.length > 2000) {
+        if (status) status.textContent = '拍攝想法、風格與參考連結合計超過 2,000 字，請返回精簡內容。';
+        return;
+      }
+
       const payload = Object.fromEntries(formData.entries());
+      payload.description = descriptionText;
+      delete payload.reference_links;
+      delete payload[''];
 
-      if (submitButton instanceof HTMLButtonElement) {
-        submitButton.disabled = true;
-      }
-
-      if (status) {
-        status.textContent = '送出中...';
-      }
+      pending = true;
+      if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = true;
+      if (status) status.textContent = '送出中…';
 
       try {
         const response = await fetch('/api/inquiries', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-
         const result = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google Form 聯絡。');
-        }
+        if (!response.ok) throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
 
         inquiryForm.reset();
-
+        styleButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
+        updateStyleStatus();
+        clearPreviews();
+        if (editor) editor.hidden = false;
+        if (review) review.hidden = true;
         if (status) {
-          status.textContent = '已收到合作意向，我會再回覆確認檔期。';
+          const receiptUrl = result?.receipt?.url;
+          if (typeof receiptUrl === 'string' && /^\/cooperation-status\/#token=[a-f0-9]{64}$/i.test(receiptUrl)) {
+            status.replaceChildren(document.createTextNode('已收到合作意向。'));
+            const link = document.createElement('a');
+            link.href = receiptUrl;
+            link.textContent = '查看這次合作進度';
+            status.append(' ', link);
+          } else {
+            status.textContent = '已收到合作意向，我會再回覆確認檔期。';
+          }
         }
       } catch (error) {
-        if (status) {
-          status.textContent = error instanceof Error ? error.message : '目前無法送出，請改用 Instagram 或 Google Form 聯絡。';
-        }
+        if (status) status.textContent = error instanceof Error ? error.message : '目前無法送出，請改用 Instagram 或 Google 表單聯絡。';
       } finally {
-        if (submitButton instanceof HTMLButtonElement) {
-          submitButton.disabled = false;
-        }
+        pending = false;
+        if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = false;
       }
     });
+
+    window.addEventListener('pagehide', clearPreviews);
   }
 </script>

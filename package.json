@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:worker": "npm run build && node scripts/prepare-worker-assets.mjs",
     "images:webp": "node scripts/convert-webp.mjs",
     "preview": "astro preview"
   },

@@ -1,0 +1,56 @@
+---
+const tools = [
+  {
+    number: '01',
+    title: '找到喜歡的風格',
+    text: '用光線與場景，找到拍攝靈感。',
+    href: '/portfolio/',
+    image: '/assets/hero-02.webp',
+    alt: '午後樹影中的人像',
+  },
+  {
+    number: '02',
+    title: '整理我的靈感板',
+    text: '收下喜歡的照片，記下你的想法。',
+    href: '#portfolio',
+    image: '/assets/hero-03.webp',
+    alt: '城市空間中的人像拍攝',
+  },
+  {
+    number: '03',
+    title: '準備好，一起拍',
+    text: '從拍攝準備到交件，一次掌握。',
+    href: '/cooperation/#process',
+    image: '/assets/hero.webp',
+    alt: '海邊自然光人像',
+  },
+];
+
+const cooperationLink = { label: '查看如何合作', href: '/cooperation/' };
+---
+
+<section class="section explore-tools container" id="inspiration" aria-labelledby="explore-tools-title">
+  <div class="section-heading">
+    <p class="eyebrow">CREATE TOGETHER</p>
+    <h2 id="explore-tools-title">下一次，換你入鏡。</h2>
+  </div>
+
+  <div class="explore-tools__grid">
+    {tools.map((tool) => (
+      <a class="tool-entry" href={tool.href} data-reveal>
+        <div class="tool-entry__image">
+          <img src={tool.image} alt={tool.alt} width="768" height="512" loading="lazy" decoding="async" />
+          <span class="tool-entry__number" aria-hidden="true">{tool.number}</span>
+        </div>
+        <div class="tool-entry__content">
+          <h3>{tool.title}</h3>
+          <p>{tool.text}</p>
+        </div>
+      </a>
+    ))}
+  </div>
+
+  <nav class="explore-tools__links" aria-label="拍攝資源">
+    <a href={cooperationLink.href}>{cooperationLink.label}</a>
+  </nav>
+</section>

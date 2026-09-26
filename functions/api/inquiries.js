@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-
-const MAX_PAYLOAD_BYTES = 20 * 1024;
+import { endpoint, json, getSecretConfig } from '../../server/auth.js';
+import { readInquirySubmission, referenceLinks, validateReferenceImages, persistInquiry } from '../../server/inquiry-references.js';
+import { prepareSubmission } from '../../server/inquiry-workflow.js';
 
 const contactMethods = new Set(['Instagram', 'Line', 'Facebook', 'Threads', '手機', '其他']);
 const collaborationTypes = new Set(['輕量體驗(2hr)', '標準方案(3hr)', '主題合作']);
@@ -13,15 +13,6 @@ const fieldLimits = {
   preferred_date: 200,
   description: 2000,
 };
-
-const json = (data, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
-  });
 
 const normalizeText = (value) => {
   if (typeof value !== 'string') return '';
@@ -45,67 +36,18 @@ const validateLength = (name, value) => {
   return value.length > limit ? `${name} 欄位不可超過 ${limit} 字。` : null;
 };
 
-const createSupabaseClient = (env) =>
-  createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-export async function onRequestPost(context) {
+export const onRequest = endpoint(async (context) => {
   const { request, env } = context;
-  const contentLength = Number(request.headers.get('content-length') || 0);
-
-  if (contentLength > MAX_PAYLOAD_BYTES) {
-    return json(
-      {
-        success: false,
-        message: '提交資料過大。',
-      },
-      413,
-    );
-  }
-
-  if (!env.SUPABASE_URL || !env.SUPABASE_SECRET_KEY) {
-    return json(
-      {
-        success: false,
-        message: '伺服器設定尚未完成。',
-      },
-      500,
-    );
-  }
-
-  let body;
-
-  try {
-    body = await request.json();
-  } catch {
-    return json(
-      {
-        success: false,
-        message: '提交資料格式不正確。',
-      },
-      400,
-    );
-  }
-
-  if (!body || typeof body !== 'object') {
-    return json(
-      {
-        success: false,
-        message: '提交資料格式不正確。',
-      },
-      400,
-    );
-  }
+  if (request.method !== 'POST') return json({ success: false, message: '不支援此操作方式。' }, 405, { Allow: 'POST' });
+  const origin = request.headers.get('origin');
+  if ((origin && origin !== new URL(request.url).origin) || request.headers.get('sec-fetch-site') === 'cross-site') return json({ success: false, message: '請從本站表單操作。' }, 403);
+  const { body, files } = await readInquirySubmission(request);
 
   if (normalizeText(body.website)) {
     return json({
-      success: true,
-      message: '合作意向已送出。',
-    });
+      success: false,
+      message: '提交資料格式不正確。',
+    }, 400);
   }
 
   const payload = {
@@ -173,29 +115,17 @@ export async function onRequestPost(context) {
     );
   }
 
-  const supabase = createSupabaseClient(env);
-  const { error } = await supabase.from('collaboration_requests').insert(payload);
-
-  if (error) {
-    console.error('Supabase insert failed', {
-      code: error.code,
-      message: error.message,
-    });
-
-    return json(
-      {
-        success: false,
-        message: '資料送出失敗，請稍後再試。',
-      },
-      500,
-    );
-  }
+  payload.reference_links = referenceLinks(body.reference_links);
+  const images = await validateReferenceImages(files);
+  const workflow = await prepareSubmission(body, payload, images);
+  const receipt = await persistInquiry(getSecretConfig(env), payload, images, workflow);
 
   return json(
     {
       success: true,
       message: '合作意向已送出，我會盡快與你聯絡。',
+      receipt,
     },
     201,
   );
-}
+});

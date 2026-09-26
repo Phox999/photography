@@ -1,9 +1,14 @@
 ---
 import '../styles/global.css';
+import '../styles/shell-refresh.css';
+import '../styles/inner-refresh.css';
+import FloatingActions from '../components/FloatingActions.astro';
 
 const {
   title = 'phox999 photography｜互惠人像攝影合作',
   description = 'phox999 photography 提供自然、真實、有故事感的人像互惠攝影合作，適合想累積形象作品、個人品牌內容或社群照片的你。',
+  noindex = false,
+  referrer,
 } = Astro.props;
 ---
 
@@ -13,13 +18,34 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
+    {referrer && <meta name="referrer" content={referrer} />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content="/assets/hero.jpg" />
     <meta property="og:type" content="website" />
     <title>{title}</title>
   </head>
-  <body>
+  <body id="top">
+    {!noindex && <aside class="public-announcement" data-public-announcement role="status" hidden></aside>}
     <slot />
+    {!noindex && <FloatingActions />}
   </body>
 </html>
+
+<style>
+  .public-announcement { position: fixed; z-index: 19; top: clamp(92px, 8vw, 112px); left: 50%; width: min(calc(100% - 36px), 760px); max-height: 112px; overflow: auto; padding: 12px 22px; transform: translateX(-50%); border: 1px solid rgb(255 255 255 / .9); border-radius: var(--radius-pill); background: rgb(255 255 255 / .94); color: var(--color-muted); box-shadow: var(--shadow-card); backdrop-filter: blur(16px); text-align: center; font-size: .92rem; font-weight: 600; line-height: 1.6; }
+  @media (max-width: 760px) { .public-announcement { top: 92px; padding: 10px 16px; border-radius: var(--radius-lg); font-size: .84rem; } }
+</style>
+
+<script>
+  import { loadPublicSiteContent } from '../lib/site-content';
+  const notice = document.querySelector<HTMLElement>('[data-public-announcement]');
+  if (notice) {
+    const content = await loadPublicSiteContent();
+    if (content.announcement.trim()) {
+      notice.textContent = content.announcement;
+      notice.hidden = false;
+    }
+  }
+</script>

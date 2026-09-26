@@ -6,12 +6,10 @@ import Footer from './Footer.astro';
 interface Props {
   title: string;
   description: string;
-  category: string;
   images: string[];
-  totalImages: number;
 }
 
-const { title, description, category, images, totalImages } = Astro.props;
+const { title, description, images } = Astro.props;
 ---
 
 <Layout title={`${title}｜phox999 photography`}>
@@ -23,7 +21,6 @@ const { title, description, category, images, totalImages } = Astro.props;
       <p class="eyebrow">PORTFOLIO</p>
       <h1>{title}</h1>
       <p class="portfolio-detail__description">{description}</p>
-      <p class="portfolio-detail__meta">{category} · 精選 {images.length} 張 / 全系列 {totalImages} 張</p>
     </section>
 
     <section

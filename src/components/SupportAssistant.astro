@@ -1,0 +1,226 @@
+---
+import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
+---
+
+<button class="utility-button support-launcher" type="button" data-support-launcher aria-haspopup="dialog" aria-controls="support-dialog" aria-expanded="false" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11.5c0-4 3.6-7.2 8-7.2s8 3.2 8 7.2-3.6 7.2-8 7.2c-1 0-2-.2-2.9-.5L4 20l1.2-3.3A6.8 6.8 0 0 1 4 11.5Z"/><path d="M8 10.5h8M8 14h5"/></svg>
+  <span>有拍攝問題嗎？</span>
+</button>
+
+<dialog class="support-dialog" id="support-dialog" data-support-dialog aria-labelledby="support-title">
+  <div class="support-panel">
+    <header class="support-header">
+      <h2 id="support-title">合作小幫手 <span>自動回覆</span></h2>
+      <button class="support-close" type="button" data-support-close aria-label="關閉合作小幫手" autofocus>×</button>
+    </header>
+    <div class="support-body" data-support-scroll>
+      <div class="support-quick" aria-label="常見拍攝問題">
+        {supportQuickTopics.map(id => { const topic = supportTopics.find(item => item.id === id); return topic && <button type="button" data-support-topic={id}>{topic.label}</button>; })}
+      </div>
+      <details class="support-more">
+        <summary>查看其他問題</summary>
+        <div class="support-quick">{supportTopics.filter(topic => !supportQuickTopics.includes(topic.id)).map(topic => <button type="button" data-support-topic={topic.id}>{topic.label}</button>)}</div>
+      </details>
+      <ol class="support-messages" data-support-messages role="log" aria-label="本頁問答" aria-live="polite" aria-relevant="additions"></ol>
+    </div>
+    <form class="support-form" data-support-form>
+      <div class="support-input-row"><input id="support-question" name="question" type="text" maxlength="240" aria-label="輸入拍攝問題" placeholder="例如：第一次拍攝要準備什麼？" autocomplete="off" enterkeyhint="send" required /><button type="submit" aria-label="送出問題">送出</button></div>
+    </form>
+  </div>
+</dialog>
+
+<style>
+  .support-launcher { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 11px 17px; border-radius: var(--radius-pill); background: rgba(255,255,255,.72); color: #113746; border: 1px solid rgba(255,255,255,.88); box-shadow: 0 7px 22px rgb(37 92 113 / .13); font: 600 .89rem/1.4 var(--font-body); cursor: pointer; -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); }
+  .support-launcher svg { width: 20px; height: 20px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+  .support-launcher:hover { background: #fff; border-color: var(--color-primary); }
+  .support-launcher[hidden] { display: none; }
+  .support-dialog { --support-viewport-height: 100dvh; --support-keyboard-offset: 0px; position: fixed; inset: auto max(20px, env(safe-area-inset-right)) calc(max(20px, env(safe-area-inset-bottom)) + var(--support-keyboard-offset)) auto; width: min(440px, calc(100vw - 32px)); max-width: none; max-height: calc(var(--support-viewport-height) - 40px); margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.88); border-radius: 32px; background: #fff; color: #111; box-shadow: 0 20px 70px rgb(25 53 64 / .2); overflow: hidden; -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); }
+  .support-dialog::backdrop { background: rgb(23 45 54 / .13); }
+  .support-panel { display: flex; flex-direction: column; height: auto; max-height: min(640px, calc(var(--support-viewport-height) - 40px)); min-height: 0; font-family: var(--font-body); }
+  .support-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 1px solid #e5eef2; flex: 0 0 auto; background: #fff; }
+  .support-header h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; font: 600 1.18rem/1.5 var(--font-heading); }
+  .support-header h2 span { padding: 4px 10px; border-radius: var(--radius-control); background: #f0f7fa; color: #365968; font: 500 .78rem/1.5 var(--font-body); }
+  .support-close { width: 44px; height: 44px; flex: 0 0 44px; border: 0; border-radius: 50%; background: #f4f9fb; color: #234c5b; cursor: pointer; font: 400 1.6rem/1 var(--font-body); }
+  .support-body { min-height: 0; flex: 0 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 18px 22px 12px; scrollbar-gutter: stable; background: #f3f5f6; }
+  .support-quick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .support-quick button, .support-messages :global(.support-options button) { max-width: 100%; min-height: 52px; padding: 10px 16px; border: 1px solid #9dcce0; border-radius: var(--radius-pill); color: #215e75; background: #fff; font: 500 .89rem/1.5 var(--font-body); cursor: pointer; text-align: left; overflow-wrap: anywhere; }
+  .support-quick button:hover, .support-messages :global(.support-options button:hover) { background: #eef8fc; }
+  .support-more { margin: 8px 0 0; }
+  .support-more summary { padding: 10px 0; color: #365968; font-size: .89rem; cursor: pointer; min-height: 44px; }
+  .support-more .support-quick { margin-top: 5px; }
+  .support-messages { display: grid; gap: 14px; padding: 0; margin: 18px 0 0; list-style: none; }
+  .support-messages:empty { margin: 0; }
+  .support-messages :global(li) { min-width: 0; width: fit-content; max-width: calc(100% - 20px); justify-self: start; padding: 14px 16px; border: 1px solid #e5eaed; border-radius: var(--radius-control) var(--radius-control) var(--radius-control) 8px; background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); font-size: 1rem; line-height: 1.85; overflow-wrap: anywhere; }
+  .support-messages :global(li.support-message--visitor) { justify-self: end; border-color: #cce8f4; border-radius: var(--radius-control) var(--radius-control) 8px var(--radius-control); background: #def1fa; color: #17495e; }
+  .support-messages :global(li.support-message--assistant) { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 9px; width: 100%; max-width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  .support-messages :global(.support-avatar) { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+  .support-messages :global(.support-reply-content) { min-width: 0; }
+  .support-messages :global(.support-speaker) { display: block; margin: 0 0 5px 2px; color: #397f9b; font-size: .8rem; font-weight: 700; line-height: 1.35; }
+  .support-messages :global(.support-reply-bubble) { padding: 14px 16px; border: 1px solid #e5eaed; border-radius: 20px 20px 20px 7px; background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); }
+  .support-messages :global(p) { white-space: pre-wrap; margin: 0; }
+  .support-messages :global(.support-options), .support-messages :global(.support-links) { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .support-messages :global(.support-links a) { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; min-height: 44px; padding: 9px 16px; border: 1px solid #b7ddec; border-radius: var(--radius-pill); background: #edf8fc; color: #215e75; font: 600 .89rem/1.5 var(--font-body); text-decoration: none; text-align: center; overflow-wrap: anywhere; }
+  .support-messages :global(.support-links a:hover) { border-color: #63badf; background: #dff2fa; }
+  .support-form { padding: 14px 20px 10px; border-top: 1px solid #e5eef2; flex: 0 0 auto; background: #fff; }
+  .support-input-row { display: flex; align-items: stretch; gap: 8px; }
+  .support-input-row input { min-width: 0; width: 100%; height: 52px; padding: 10px 12px; border: 1px solid #bcd5e0; border-radius: var(--radius-control); background: #fff; color: #111; font: 400 1rem/1.5 var(--font-body); }
+  .support-input-row button { min-width: 62px; padding: 9px; border: 0; border-radius: var(--radius-pill); color: #fff; background: #63badf; font: 600 .89rem/1.4 var(--font-body); cursor: pointer; }
+  .support-input-row button:hover { background: var(--color-primary-dark); }
+  .support-dialog :global(:focus-visible), .support-launcher:focus-visible { outline: 3px solid #287b9c; outline-offset: 3px; }
+  @media (min-width: 601px) {
+    .support-dialog::backdrop { background: transparent; }
+  }
+  @media (max-width: 600px) {
+    .support-dialog { inset: auto 8px calc(max(8px, env(safe-area-inset-bottom)) + var(--support-keyboard-offset)) 8px; width: calc(100vw - 16px); max-height: calc(var(--support-viewport-height) - 16px); border-radius: 28px; }
+    .support-panel { max-height: min(640px, calc(var(--support-viewport-height) - 16px)); }
+    .support-header { padding: 16px; }
+    .support-body { padding: 14px 16px; }
+    .support-form { padding: 10px 16px 5px; }
+  }
+  @media (max-height: 480px) {
+    .support-header { padding-top: 8px; padding-bottom: 8px; }
+  }
+  @media print { .support-dialog, .support-launcher { display: none !important; } }
+</style>
+
+<script>
+  import { faqItems } from '../data/site';
+  import { supportContactLinks, type SupportLink, type SupportTopic } from '../data/supportKnowledge';
+  import { loadPublicSiteContent } from '../lib/site-content';
+  import { buildSupportKnowledge, matchSupportQuestion } from '../lib/support-matcher';
+
+  const launcher = document.querySelector<HTMLButtonElement>('[data-support-launcher]');
+  const dialog = document.querySelector<HTMLDialogElement>('[data-support-dialog]');
+  const form = document.querySelector<HTMLFormElement>('[data-support-form]');
+  const input = document.querySelector<HTMLInputElement>('#support-question');
+  const messages = document.querySelector<HTMLOListElement>('[data-support-messages]');
+  const scroller = document.querySelector<HTMLElement>('[data-support-scroll]');
+  const close = document.querySelector<HTMLButtonElement>('[data-support-close]');
+
+  if (launcher && dialog && form && input && messages && typeof dialog.showModal === 'function') {
+    const publicContent = await loadPublicSiteContent();
+    const faqs = publicContent.faqs.length ? publicContent.faqs : faqItems;
+    launcher.hidden = false;
+
+    function scrollToAnswer() { if (scroller) scroller.scrollTop = scroller.scrollHeight; }
+    function appendMessage(text: string, visitor = false): HTMLLIElement {
+      const item = document.createElement('li');
+      const paragraph = document.createElement('p');
+      paragraph.textContent = text;
+      if (visitor) {
+        item.className = 'support-message--visitor';
+        item.append(paragraph);
+      } else {
+        item.className = 'support-message--assistant';
+        const avatar = document.createElement('img');
+        avatar.className = 'support-avatar';
+        avatar.src = '/assets/Profile-pic.jpg';
+        avatar.alt = '';
+        avatar.width = 36;
+        avatar.height = 36;
+        const content = document.createElement('div');
+        content.className = 'support-reply-content';
+        const speaker = document.createElement('span');
+        speaker.className = 'support-speaker';
+        speaker.textContent = '小蔡 · 合作小幫手';
+        const bubble = document.createElement('div');
+        bubble.className = 'support-reply-bubble';
+        bubble.append(paragraph);
+        content.append(speaker, bubble);
+        item.append(avatar, content);
+      }
+      messages!.append(item);
+      while (messages!.children.length > 24) messages!.firstElementChild?.remove();
+      scrollToAnswer();
+      return item;
+    }
+    function addLinks(item: HTMLElement, links: SupportLink[]) {
+      const target = item.querySelector<HTMLElement>('.support-reply-bubble') ?? item;
+      const group = document.createElement('div');
+      group.className = 'support-links';
+      links.forEach(link => {
+        const anchor = document.createElement('a');
+        anchor.textContent = link.label;
+        anchor.href = link.href;
+        if (link.href.startsWith('https://')) { anchor.target = '_blank'; anchor.rel = 'noopener noreferrer'; }
+        group.append(anchor);
+      });
+      target.append(group);
+      scrollToAnswer();
+    }
+    function answerTopic(topic: SupportTopic, showQuestion = true) {
+      if (showQuestion) appendMessage(topic.label, true);
+      addLinks(appendMessage(topic.answer), topic.links);
+    }
+    function showChoices(prompt: string, topics: SupportTopic[]) {
+      const item = appendMessage(prompt);
+      const target = item.querySelector<HTMLElement>('.support-reply-bubble') ?? item;
+      const options = document.createElement('div');
+      options.className = 'support-options';
+      topics.forEach(topic => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = topic.label;
+        button.dataset.supportTopic = topic.id;
+        options.append(button);
+      });
+      target.append(options);
+      scrollToAnswer();
+    }
+    dialog.addEventListener('click', event => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest<HTMLButtonElement>('[data-support-topic]');
+      if (button) {
+        const topic = buildSupportKnowledge(faqs).find(item => item.id === button.dataset.supportTopic);
+        if (topic) answerTopic(topic);
+      }
+      if (target === dialog) {
+        const rect = dialog.getBoundingClientRect();
+        if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+      }
+      // Internal page anchors should navigate after dismissing the modal.
+      if (target.closest('a[href^="/"]')) dialog.close();
+    });
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const question = input.value.trim().slice(0, 240);
+      if (!question) { input.focus(); return; }
+      appendMessage(question, true);
+      input.value = '';
+      const match = matchSupportQuestion(question, faqs);
+      if (match.kind === 'answer') answerTopic(match.topic, false);
+      else if (match.kind === 'choices') showChoices(match.prompt, match.topics);
+      else addLinks(appendMessage('我暫時找不到這題的公開說明。可以改選上方常見問題，或透過以下方式查看合作資訊。'), supportContactLinks);
+    });
+    function updateViewport() {
+      if (!dialog?.open) return;
+      const viewport = window.visualViewport;
+      dialog.style.setProperty('--support-viewport-height', `${viewport?.height ?? window.innerHeight}px`);
+      dialog.style.setProperty('--support-keyboard-offset', `${viewport ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop) : 0}px`);
+    }
+    launcher.addEventListener('click', () => {
+      if (document.querySelector('dialog[open]:not([data-support-dialog])')) return;
+      dialog.showModal();
+      launcher.setAttribute('aria-expanded', 'true');
+      updateViewport();
+    });
+    close?.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('close', () => {
+      launcher.setAttribute('aria-expanded', 'false');
+      if (!launcher.hidden) launcher.focus();
+    });
+    window.visualViewport?.addEventListener('resize', updateViewport);
+    window.visualViewport?.addEventListener('scroll', updateViewport);
+    window.addEventListener('resize', updateViewport, { passive: true });
+    // Observe existing lightbox/dialog state; never put a floating launcher over photos.
+    const observeOtherDialogs = () => {
+      const otherOpen = !!document.querySelector('dialog[open]:not([data-support-dialog])');
+      launcher.hidden = otherOpen;
+      if (otherOpen && dialog.open) dialog.close();
+    };
+    const observer = new MutationObserver(observeOtherDialogs);
+    document.querySelectorAll('dialog:not([data-support-dialog])').forEach(other => observer.observe(other, { attributes: true, attributeFilter: ['open'] }));
+    observeOtherDialogs();
+  }
+</script>

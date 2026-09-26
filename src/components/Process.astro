@@ -1,65 +1,146 @@
 ---
 const steps = [
   {
-    number: '01',
-    icon: '/assets/icons/process/process-01.png',
-    title: '申請合作',
-    text: '填寫合作意向與拍攝方向。',
-  },
-  {
-    number: '02',
-    icon: '/assets/icons/process/process-02.png',
-    title: '確認合作',
-    text: '確認合作內容與時間、地點。',
-  },
-  {
-    number: '03',
     icon: '/assets/icons/process/process-03.png',
-    title: '溝通協作',
-    text: '確認風格、服裝與公開範圍。',
+    title: '討論方向',
+    text: '留下想法，一起確認主題、日期與地點。',
   },
   {
-    number: '04',
     icon: '/assets/icons/process/process-04.png',
-    title: '拍攝日',
-    text: '依討論內容拍攝，現場協助引導。',
+    title: '自在拍攝',
+    text: '事前討論服裝，現場協助動作與表情。',
   },
   {
-    number: '05',
     icon: '/assets/icons/process/process-05.png',
-    title: '成片與發文',
-    text: '交付照片，確認使用與發文方式。',
+    title: '完成作品',
+    text: '確認交付、公開範圍與使用方式。',
   },
 ];
 ---
+<section class="workflow mini-section" id="process" aria-labelledby="process-title">
+  <header class="section-heading workflow__heading">
+    <p class="eyebrow">THE PROCESS</p>
+    <h2 id="process-title">三步，完成一組作品。</h2>
+  </header>
 
-<section class="mini-section process-flow" id="process" aria-labelledby="process-title">
-  <div class="section-heading process-flow__heading">
-    <p class="eyebrow">PROCESS</p>
-    <h2 id="process-title">合作流程</h2>
-    <p class="process-flow__intro">
-      簡單清楚的合作流程，讓我們一起創造安心、愉快且有價值的影像作品。
-    </p>
-  </div>
-
-  <div class="process-flow__list">
-    {
-      steps.map((step) => (
-        <article class="process-flow__card">
-          <div class="process-flow__icon" aria-hidden="true">
-            <img src={step.icon} alt="" loading="lazy" />
-          </div>
-
-          <div class="process-flow__content">
-            <div class="process-flow__heading-row">
-              <span class="process-flow__number">{step.number}</span>
-              <h3>{step.title}</h3>
-            </div>
-
-            <p>{step.text}</p>
-          </div>
-        </article>
-      ))
-    }
-  </div>
+  <ol class="workflow__steps">
+    {steps.map((step, index) => (
+      <li>
+        <span class="workflow__icon" aria-hidden="true">
+          <img src={step.icon} alt="" width="40" height="40" loading="lazy" />
+        </span>
+        <div class="workflow__body">
+          <h3><span class="workflow__number" aria-hidden="true">0{index + 1}</span>{step.title}</h3>
+          <p>{step.text}</p>
+        </div>
+      </li>
+    ))}
+  </ol>
 </section>
+
+<style>
+  .workflow__heading {
+    margin: 0 auto clamp(28px, 4vw, 48px);
+    text-align: center;
+  }
+
+  .workflow__heading h2 {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 3.8vw, 3.25rem);
+    line-height: 1.35;
+  }
+
+  .workflow__steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(18px, 2vw, 28px);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .workflow__steps li {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    padding: clamp(28px, 3vw, 40px) clamp(20px, 2.6vw, 36px);
+    text-align: center;
+    box-shadow: var(--shadow-card);
+  }
+
+  .workflow__icon {
+    display: grid;
+    width: 76px;
+    height: 76px;
+    flex: 0 0 auto;
+    place-items: center;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    background: #eaf7fc;
+  }
+
+  .workflow__icon img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+  }
+
+  .workflow__body h3 {
+    color: var(--color-text);
+    font-family: var(--font-heading);
+    font-size: clamp(1.25rem, 1.7vw, 1.65rem);
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .workflow__number {
+    margin-right: 8px;
+    color: var(--color-primary-dark);
+    font-family: 'Outfit', var(--font-body), sans-serif;
+    font-size: 0.92em;
+    font-weight: 700;
+  }
+
+  .workflow__body p {
+    max-width: 27em;
+    margin-top: 18px;
+    color: var(--color-muted);
+    font-size: clamp(1rem, 1.3vw, 1.16rem);
+    line-height: 1.8;
+  }
+
+  @media (max-width: 760px) {
+    .workflow__steps {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .workflow__steps li {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      align-items: center;
+      gap: 18px;
+      padding: 22px;
+      text-align: left;
+    }
+
+    .workflow__icon {
+      width: 54px;
+      height: 54px;
+      margin: 0;
+    }
+
+    .workflow__icon img {
+      width: 28px;
+      height: 28px;
+    }
+
+    .workflow__body p {
+      margin-top: 6px;
+      font-size: 0.95rem;
+    }
+  }
+</style>

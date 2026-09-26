@@ -28,6 +28,10 @@ npm run build
 npm run preview
 ```
 
+## 管理後台
+
+後台入口為 `/admin/login/`，可管理合作意向、拍攝檔期、網站公告與 FAQ、操作紀錄、私人相簿及合作回饋。Cloudflare Pages Functions、Supabase migrations 與首次管理員設定請依照 [後台啟用說明](docs/admin-setup.md) 完成。
+
 ## Cloudflare Pages
 
 Build command: `npm run build`

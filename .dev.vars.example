@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local Wrangler use only. Never commit real keys.
+SUPABASE_URL="https://YOUR-PROJECT.supabase.co"
+SUPABASE_PUBLISHABLE_KEY="sb_publishable_REPLACE_ME"
+SUPABASE_SECRET_KEY="sb_secret_REPLACE_ME"
+# Only enables HTTP cookies on localhost/127.0.0.1, never on a public hostname.
+AUTH_ALLOW_LOCALHOST="true"

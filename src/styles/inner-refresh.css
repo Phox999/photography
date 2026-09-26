@@ -1,0 +1,461 @@
+/* Shared interiors based on the 3000 preview's page layout. */
+.inner-page.inner-page {
+  --inner-radius: 36px;
+  --inner-shadow: 0 12px 36px rgb(33 59 71 / 0.075);
+  min-width: 0;
+  padding-block: 132px 80px;
+}
+
+.inner-page .container {
+  width: min(calc(100% - 64px), 1200px);
+  max-width: 1200px;
+}
+
+.inner-page .inner-heading {
+  padding-block: 32px 48px;
+  text-align: left;
+}
+
+.inner-page .inner-heading h1 {
+  max-width: 19em;
+  margin: 10px 0 18px;
+  font: 600 clamp(36px, 4.5vw, 60px)/1.3 var(--font-heading);
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+.inner-page .inner-heading > p {
+  margin-inline: 0;
+}
+
+.inner-page .inner-intro {
+  max-width: 38em;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+
+.inner-page .inner-panel,
+.inner-page .inner-next {
+  border: 0;
+  border-radius: var(--inner-radius);
+  background: #fff;
+  box-shadow: var(--inner-shadow);
+}
+
+.inner-page .inner-panel {
+  padding: clamp(24px, 3.4vw, 44px);
+}
+
+.inner-page .inner-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px 40px;
+  margin-top: 48px;
+  padding: clamp(28px, 4vw, 48px);
+}
+
+.inner-page .inner-next h2 {
+  margin: 0;
+  font: 600 clamp(26px, 3vw, 38px)/1.4 var(--font-heading);
+}
+
+.inner-page .inner-next p {
+  max-width: 36em;
+  margin-top: 12px;
+  color: var(--color-muted);
+}
+
+.inner-page .inner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.inner-page .button {
+  min-height: 52px;
+  border-radius: 999px;
+  padding: 13px 26px;
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.inner-page .button--primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.inner-page .button--primary:hover {
+  border-color: var(--color-primary-dark);
+  background: var(--color-primary-dark);
+  color: #fff;
+}
+
+.inner-page .button--secondary {
+  width: auto;
+  margin: 0;
+  background: #fff;
+  color: var(--color-primary-dark);
+}
+
+.inner-page .inner-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.inner-page .inner-tabs a {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d5e8f0;
+  border-radius: 999px;
+  background: #fff;
+  padding: 10px 22px;
+  color: var(--color-primary-dark);
+  font-size: 0.89rem;
+}
+
+.inner-page .inner-tabs a:hover {
+  border-color: var(--color-primary);
+  background: #f2fbff;
+}
+
+.inner-page [hidden] {
+  display: none !important;
+}
+
+/* About page profile and approach cards. */
+.about-page .about-profile {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(32px, 5vw, 68px);
+  align-items: center;
+  overflow: hidden;
+}
+
+.about-profile__portrait {
+  overflow: hidden;
+  aspect-ratio: 1;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--color-surface-soft);
+}
+
+.about-profile__portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-page .about-profile__copy {
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.about-profile__copy h1 {
+  font-size: clamp(2.4rem, 4vw, 3.8rem);
+  line-height: 1.25;
+}
+
+.about-profile__lead {
+  margin-block: 22px 16px;
+  color: var(--color-text);
+  font-size: 1.25rem;
+  line-height: 1.7;
+}
+
+.about-profile__copy .inner-intro {
+  margin-inline: 0;
+}
+
+.about-profile__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px 28px;
+  margin-top: 28px;
+}
+
+.about-profile__facts {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0;
+  border-top: 1px solid var(--color-border);
+  padding-top: 28px;
+}
+
+.about-profile__facts div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 16px;
+}
+
+.about-profile__facts dt {
+  color: var(--color-muted);
+  font-size: 1rem;
+}
+
+.about-profile__facts dd {
+  order: -1;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+}
+
+.about-page .about-approach {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(32px, 6vw, 80px);
+  margin-top: 32px;
+}
+
+.about-approach h2 {
+  margin: 12px 0 20px;
+  font-family: var(--font-heading);
+  font-size: clamp(1.85rem, 3vw, 2.65rem);
+  line-height: 1.45;
+}
+
+.about-approach__steps {
+  display: grid;
+  gap: 26px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-approach__steps li {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 0 20px;
+}
+
+.about-approach__number {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  border-radius: 50%;
+  background: #edf8fc;
+  color: var(--color-primary-dark);
+  font-family: 'Outfit', var(--font-body), sans-serif;
+  font-weight: 700;
+}
+
+.about-approach__steps h3 {
+  grid-column: 2;
+  margin-bottom: 8px;
+  font-size: 1.2rem;
+  line-height: 1.6;
+}
+
+.about-approach__steps p {
+  grid-column: 2;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+/* Cooperation page framing around the existing 4321 plan and availability data. */
+.cooperation-page .page-intro {
+  max-width: 1200px;
+}
+
+.cooperation-page .inner-heading {
+  text-align: center;
+}
+
+.cooperation-page .inner-heading h1,
+.cooperation-page .inner-heading > p {
+  margin-inline: auto;
+}
+
+.cooperation-page .inner-tabs {
+  justify-content: center;
+}
+
+.cooperation-notes {
+  max-width: 880px;
+  margin: 26px auto 0;
+  text-align: center;
+}
+
+.cooperation-note {
+  border-radius: var(--radius-xl);
+  background: #fff;
+  padding: 18px 24px;
+  box-shadow: var(--shadow-card);
+  text-align: left;
+}
+
+.cooperation-note summary {
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cooperation-note p {
+  margin-top: 14px;
+  color: var(--color-muted);
+  line-height: 1.85;
+}
+
+.cooperation-page .dates-section {
+  margin-top: 26px;
+}
+
+.cooperation-availability {
+  margin-top: clamp(48px, 6vw, 80px);
+}
+
+.cooperation-availability .inner-next {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px 48px;
+  align-items: center;
+  justify-content: stretch;
+  text-align: left;
+  background: linear-gradient(120deg, #fff 0%, #f2f9fc 100%);
+}
+
+.cooperation-availability .inner-next p {
+  margin-inline: 0;
+}
+
+.cooperation-availability .inner-next > div > p:last-child {
+  margin-bottom: 0;
+}
+
+.cooperation-availability .inner-next .button {
+  min-width: 190px;
+}
+
+@media (max-width: 760px) {
+  .inner-page.inner-page {
+    padding-block: 106px 56px;
+  }
+
+  .inner-page .container {
+    width: calc(100% - 40px);
+  }
+
+  .inner-page .inner-heading {
+    padding-block: 22px 34px;
+  }
+
+  .inner-page .inner-heading h1 {
+    margin-block: 8px 16px;
+    font-size: clamp(32px, 7.5vw, 44px);
+  }
+
+  .inner-page .inner-panel {
+    padding: 24px;
+  }
+
+  .inner-page .inner-next {
+    margin-top: 32px;
+    padding: 28px 24px;
+    gap: 24px;
+  }
+
+  .inner-page .inner-next h2 {
+    font-size: clamp(25px, 6.2vw, 32px);
+  }
+
+  .inner-page .button {
+    min-height: 48px;
+    padding: 12px 22px;
+  }
+
+  .about-page .about-profile,
+  .about-page .about-approach {
+    grid-template-columns: 1fr;
+  }
+
+  .about-page .about-profile {
+    gap: 30px;
+    padding: 20px;
+  }
+
+  .about-profile__portrait {
+    width: min(100%, 360px);
+    margin-inline: auto;
+  }
+
+  .about-page .about-profile__copy {
+    padding: 4px 4px 12px;
+  }
+
+  .about-profile__lead {
+    font-size: 1.15rem;
+  }
+
+  .about-page .about-approach {
+    margin-top: 24px;
+    gap: 28px;
+    padding: 28px 24px;
+  }
+
+  .about-profile__facts {
+    justify-content: flex-start;
+    gap: 18px 28px;
+  }
+
+  .cooperation-page .inner-heading {
+    padding-bottom: 36px;
+  }
+
+  .cooperation-page .inner-tabs {
+    gap: 10px;
+  }
+
+  .cooperation-page .inner-tabs a {
+    padding-inline: 16px;
+  }
+
+  .cooperation-availability .inner-next {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .cooperation-availability .inner-next .button {
+    justify-self: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inner-page {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  .inner-page.inner-page {
+    padding: 0;
+  }
+
+  .inner-page .container {
+    width: 100%;
+    max-width: none;
+  }
+
+  .inner-page .inner-panel,
+  .inner-page .inner-next {
+    box-shadow: none;
+  }
+}

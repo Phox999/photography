@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import BehindScenes from '../components/BehindScenes.astro';
+import { siteConfig } from '../data/site';
+---
+
+<BaseLayout
+  title="拍攝花絮｜phox999 photography"
+  description="看看不同主題的拍攝記錄，從事前討論、自在拍攝到完成作品。"
+>
+  <Header />
+  <main class="behind-scenes-page inner-page" id="main-content" tabindex="-1">
+    <BehindScenes />
+    <section class="container inner-next behind-scenes-next" aria-labelledby="behind-next-title">
+      <div>
+        <p class="eyebrow">YOUR TURN</p>
+        <h2 id="behind-next-title">有想嘗試的拍攝方向嗎？</h2>
+        <p>帶著主題或參考作品，我們可以從一次討論開始。</p>
+      </div>
+      <a class="button button--primary" href={siteConfig.inquiryUrl}>填寫合作意向</a>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .behind-scenes-page { background: linear-gradient(180deg, #f4f9fb 0, #fff 38rem); }
+  .behind-scenes-next { margin-bottom: clamp(56px, 8vw, 100px); }
+  .behind-scenes-next h2 { margin: 0; font-family: var(--font-heading); font-size: clamp(1.8rem, 3.3vw, 2.6rem); }
+  .behind-scenes-next > div > p:last-child { margin-top: 12px; color: var(--color-muted); line-height: 1.8; }
+</style>

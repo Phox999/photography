@@ -1,256 +1,197 @@
 ---
-import { siteConfig } from '../data/site';
-
-type DateStatus = 'available' | 'soldout';
-
-type DateSlot = {
-  day: number;
-  status: DateStatus;
-};
-
-type DatePage = {
-  year: number;
-  month: number;
-  slots: DateSlot[];
-};
-
-const datePages: DatePage[] = [
-  {
-    year: 2026,
-    month: 9,
-    slots: [
-      { day: 25, status: 'available' },
-      { day: 26, status: 'soldout' },
-      { day: 27, status: 'soldout' },
-      { day: 28, status: 'soldout' },
-    ],
-  },
-  {
-    year: 2026,
-    month: 10,
-    slots: [
-      { day: 3, status: 'available' },
-      { day: 4, status: 'soldout' },
-      { day: 9, status: 'soldout' },
-      { day: 10, status: 'available' },
-      { day: 11, status: 'available' },
-      { day: 17, status: 'available' },
-      { day: 18, status: 'available' },
-      { day: 24, status: 'available' },
-      { day: 25, status: 'available' },
-      { day: 26, status: 'available' },
-      { day: 31, status: 'soldout' },
-    ],
-  },
-  {
-    year: 2026,
-    month: 11,
-    slots: [
-      { day: 1, status: 'available' },
-      { day: 7, status: 'available' },
-      { day: 8, status: 'available' },
-      { day: 14, status: 'available' },
-      { day: 15, status: 'available' },
-      { day: 21, status: 'available' },
-      { day: 22, status: 'available' },
-      { day: 28, status: 'available' },
-      { day: 29, status: 'available' },
-    ],
-  },
-  {
-    year: 2026,
-    month: 12,
-    slots: [
-      { day: 5, status: 'available' },
-      { day: 6, status: 'available' },
-      { day: 12, status: 'available' },
-      { day: 13, status: 'available' },
-      { day: 19, status: 'available' },
-      { day: 20, status: 'available' },
-      { day: 25, status: 'available' },
-      { day: 26, status: 'available' },
-      { day: 27, status: 'available' },
-    ],
-  },
-];
-
-const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
-
-const getCalendarDays = (year: number, month: number) => {
-  const firstDay = new Date(year, month - 1, 1).getDay();
-  const mondayBasedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
-  const totalDays = new Date(year, month, 0).getDate();
-
-  return [
-    ...Array.from({ length: mondayBasedFirstDay }, () => null),
-    ...Array.from({ length: totalDays }, (_, index) => index + 1),
-  ];
-};
-
-const getWeekdayLabel = (year: number, month: number, day: number) => {
-  const weekdayIndex = new Date(year, month - 1, day).getDay();
-  const labels = ['日', '一', '二', '三', '四', '五', '六'];
-
-  return labels[weekdayIndex];
-};
-
-const formatSlot = (page: DatePage, slot: DateSlot) => {
-  return `${page.month}/${slot.day}`;
-};
+interface Props { id?: string; }
+const { id = 'dates' } = Astro.props;
 ---
-
-<section class="section dates-section" id="dates" aria-labelledby="dates-title" data-dates-carousel>
-  <div class="container">
-    <div class="section-heading section-heading--row dates-heading">
-      <div>
-        <p class="eyebrow">AVAILABLE DATES</p>
-        <h2 id="dates-title">開放檔期</h2>
-      </div>
-
-      <div class="date-switcher" role="tablist" aria-label="切換月份">
-        {
-          datePages.map((page, index) => (
-            <button
-              class={`date-switcher__button ${index === 0 ? 'is-active' : ''}`}
-              type="button"
-              role="tab"
-              aria-selected={index === 0 ? 'true' : 'false'}
-              data-date-tab
-              data-date-index={index}
-            >
-              {page.month}月
-            </button>
-          ))
-        }
-      </div>
+<section class="section dates-section availability-section" id={id} aria-labelledby="dates-title" data-availability>
+  <div class="container availability-container">
+    <div class="section-heading availability-heading"><p class="eyebrow">OPEN DATES</p><h2 id="dates-title">開放檔期</h2></div>
+    <div class="availability-months" role="group" aria-label="切換月份" data-calendar-months hidden>
+      <button type="button" data-calendar-month="0" aria-pressed="true">本月</button>
+      <button type="button" data-calendar-month="1" aria-pressed="false">下個月</button>
+      <button type="button" data-calendar-month="2" aria-pressed="false">兩個月後</button>
+      <button type="button" data-calendar-month="3" aria-pressed="false">三個月後</button>
     </div>
-
-    <div class="dates-carousel">
-      <div class="dates-track" data-dates-track>
-        {
-          datePages.map((page, pageIndex) => {
-            const calendarDays = getCalendarDays(page.year, page.month);
-            const slotByDay = new Map(page.slots.map((slot) => [slot.day, slot]));
-            const availableSlots = page.slots.filter((slot) => slot.status === 'available');
-            const soldoutSlots = page.slots.filter((slot) => slot.status === 'soldout');
-
-            return (
-              <article class="dates-page" aria-hidden={pageIndex === 0 ? 'false' : 'true'}>
-                <div class="dates-layout">
-                  <div class="calendar-card">
-                    <h3>{page.year} / {page.month} 月</h3>
-
-                    <div class="calendar-grid calendar-grid--weekdays" aria-hidden="true">
-                      {weekdays.map((weekday) => <span>{weekday}</span>)}
-                    </div>
-
-                    <div class="calendar-grid">
-                      {
-                        calendarDays.map((day) => {
-                          if (!day) {
-                            return <span class="calendar-day calendar-day--empty"></span>;
-                          }
-
-                          const slot = slotByDay.get(day);
-                          const statusClass = slot ? `is-${slot.status}` : '';
-
-                          return (
-                            <span class={`calendar-day ${statusClass}`}>
-                              {day}
-                            </span>
-                          );
-                        })
-                      }
-                    </div>
-                  </div>
-
-                  <div class="date-list-card">
-                    <h3>可預約日期</h3>
-
-                    <div class="date-group">
-                      <p class="date-group__title">可預約</p>
-                      <div class="date-chip-list">
-                        {
-                          availableSlots.length ? (
-                            availableSlots.map((slot) => (
-                              <span class="date-chip is-available">{formatSlot(page, slot)}</span>
-                            ))
-                          ) : (
-                            <span class="date-chip is-empty">本月暫無可預約日期</span>
-                          )
-                        }
-                      </div>
-                    </div>
-
-                    <div class="date-group">
-                      <p class="date-group__title">已被預約</p>
-                      <div class="date-chip-list">
-                        {
-                          soldoutSlots.length ? (
-                            soldoutSlots.map((slot) => (
-                              <span class="date-chip is-soldout">{formatSlot(page, slot)}</span>
-                            ))
-                          ) : (
-                            <span class="date-chip is-empty">尚無完售日期</span>
-                          )
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="cta-card">
-                    <h3>一天只拍攝一場</h3>
-                    <a
-                      class="button button--primary"
-                      href={siteConfig.inquiryUrl}
-                    >
-                      立即預約
-                    </a>
-
-                    <small>提交後我會儘快確認檔期</small>
-                  </div>
-                </div>
-              </article>
-            );
-          })
-        }
+    <div class="availability-layout">
+      <div class="availability-calendar" data-calendar-panel>
+        <h3 id="availability-calendar-title" data-calendar-title>選擇日期</h3>
+        <p class="availability-load" data-calendar-status role="status">正在讀取已公布檔期…</p>
+        <button class="availability-clear" type="button" data-calendar-retry hidden>重新載入</button>
+        <div class="availability-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+        <div class="availability-calendar-grid" role="group" aria-labelledby="availability-calendar-title" data-calendar-grid></div>
+        <p class="availability-legend"><span>● 可洽詢</span><span>— 已公布時段未開放</span><span>空白：未公布</span></p>
+        <noscript><p>請啟用 JavaScript 讀取實際檔期，或直接在合作意向中詢問時間。</p></noscript>
+      </div>
+      <div class="availability-preference">
+        <h3>偏好日期與時段</h3>
+        <div data-date-picker hidden>
+          <div class="availability-label-row"><label for="date-preference">日期 <span>由可洽詢日期選取</span></label><button class="availability-clear" type="button" data-date-clear disabled>清除日期</button></div>
+          <input id="date-preference" type="date" readonly aria-describedby="date-preference-help" />
+          <label class="availability-time-label" for="time-preference">開放時段 <span>台北時間</span></label>
+          <select id="time-preference" aria-describedby="date-preference-help" disabled><option value="">請先選擇可洽詢日期</option></select>
+        </div>
+        <p id="date-preference-help" class="availability-note">只顯示攝影師已公布的時段。未公布不代表有空；選擇時間僅帶入合作意向，尚未完成預約。</p>
+        <a class="button button--primary" href="/#contact" data-date-continue>填寫合作意向</a>
+        <p class="availability-summary" data-date-summary aria-live="polite">日期未定，也可以直接詢問。</p>
       </div>
     </div>
   </div>
 </section>
-
 <script>
-  const datesSection = document.querySelector('[data-dates-carousel]');
-
-  if (datesSection) {
-    const track = datesSection.querySelector('[data-dates-track]');
-    const pages = Array.from(datesSection.querySelectorAll('.dates-page'));
-    const tabButtons = Array.from(datesSection.querySelectorAll('[data-date-tab]'));
-
-    let currentIndex = 0;
-
-    const goToDatePage = (index) => {
-      if (!track || !pages.length) return;
-
-      currentIndex = (index + pages.length) % pages.length;
-      track.style.transform = `translateX(-${currentIndex * 100}%)`;
-
-      pages.forEach((page, pageIndex) => {
-        page.setAttribute('aria-hidden', String(pageIndex !== currentIndex));
-      });
-
-      tabButtons.forEach((button, buttonIndex) => {
-        const isActive = buttonIndex === currentIndex;
-        button.classList.toggle('is-active', isActive);
-        button.setAttribute('aria-selected', String(isActive));
-      });
-    };
-
-    tabButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const index = Number(button.getAttribute('data-date-index'));
-        if (Number.isFinite(index)) goToDatePage(index);
-      });
+  import { openSlotsForDay, parsePublicSlots, slotPreference, slotsForDay, taipeiDate, type PublicSlot } from '../lib/availability';
+  const root = document.querySelector<HTMLElement>('[data-availability]');
+  if (root) {
+    const $ = <T extends Element = HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
+    const dateInput = $<HTMLInputElement>('#date-preference');
+    const timeSelect = $<HTMLSelectElement>('#time-preference');
+    const continueLink = $<HTMLAnchorElement>('[data-date-continue]');
+    const summary = $('[data-date-summary]');
+    const grid = $('[data-calendar-grid]');
+    const loadStatus = $('[data-calendar-status]');
+    const retry = $<HTMLButtonElement>('[data-calendar-retry]');
+    const clear = $<HTMLButtonElement>('[data-date-clear]');
+    const monthButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-calendar-month]'));
+    const [year, month] = taipeiDate().split('-').map(Number);
+    const months = Array.from({ length: 4 }, (_, index) => new Date(Date.UTC(year, month - 1 + index, 1)));
+    let visibleMonth = 0;
+    let slots: PublicSlot[] = [];
+    let loadState: 'loading' | 'ready' | 'error' = 'loading';
+    let loading = false;
+    const dateKey = (value: Date) => value.toISOString().slice(0, 10);
+    function selection() { return slots.find((slot) => slot.id === timeSelect.value && slot.status === 'open' && Date.parse(slot.startsAt) > Date.now()); }
+    function updateSummary() {
+      const slot = selection();
+      summary.textContent = slot ? `偏好時間：${slotPreference(slot)}。實際檔期仍需雙方確認。` : '日期未定，也可以直接詢問。';
+      continueLink.textContent = slot ? '帶入日期與時段' : '填寫合作意向';
+      continueLink.href = slot && !document.querySelector('#preferred_date') ? `/?preferred_date=${encodeURIComponent(slotPreference(slot))}#contact` : '/#contact';
+      clear.disabled = !dateInput.value;
+    }
+    function chooseDate(value = '') {
+      dateInput.value = value;
+      timeSelect.replaceChildren();
+      const open = value && loadState === 'ready' ? openSlotsForDay(slots, value) : [];
+      if (!open.length) { const option = new Option('請先選擇可洽詢日期', ''); timeSelect.add(option); }
+      else for (const slot of open) timeSelect.add(new Option(slotPreference(slot), slot.id));
+      timeSelect.disabled = !open.length;
+      updateSummary(); renderCalendar();
+    }
+    function renderCalendar() {
+      const monthDate = months[visibleMonth];
+      const y = monthDate.getUTCFullYear(); const m = monthDate.getUTCMonth();
+      const leading = (monthDate.getUTCDay() + 6) % 7;
+      const total = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+      $('[data-calendar-title]').textContent = `${y} / ${m + 1} 月`;
+      monthButtons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === visibleMonth)));
+      grid.replaceChildren();
+      for (let index = 0; index < Math.ceil((leading + total) / 7) * 7; index++) {
+        const day = index - leading + 1;
+        if (day < 1 || day > total) { const space = document.createElement('span'); space.className = 'availability-day-space'; space.setAttribute('aria-hidden', 'true'); grid.append(space); continue; }
+        const date = dateKey(new Date(Date.UTC(y, m, day)));
+        const daySlots = loadState === 'ready' ? slotsForDay(slots, date) : [];
+        const open = loadState === 'ready' ? openSlotsForDay(slots, date) : [];
+        const state = open.length ? 'open' : daySlots.length ? 'unavailable' : 'unknown';
+        const button = document.createElement('button'); button.type = 'button'; button.className = `availability-day availability-day--${state}`;
+        button.dataset.calendarDate = date; button.textContent = String(day); button.disabled = !open.length;
+        button.setAttribute('aria-label', `${date}，${date < taipeiDate() ? '已過日期' : state === 'open' ? `${open.length} 個可洽詢時段` : state === 'unavailable' ? '當日已公布時段未開放選取' : loadState === 'error' ? '檔期無法載入' : '未公布檔期'}`);
+        button.setAttribute('aria-pressed', String(dateInput.value === date));
+        if (date === taipeiDate()) button.setAttribute('aria-current', 'date');
+        grid.append(button);
+      }
+      if (loadState === 'ready') {
+        const monthSlots = slots.filter((slot) => slotsForDay([slot], dateKey(monthDate)).length || (taipeiDate(slot.startsAt).slice(0, 7) === dateKey(monthDate).slice(0, 7)));
+        const futureOpen = monthSlots.filter((slot) => slot.status === 'open' && Date.parse(slot.startsAt) > Date.now());
+        loadStatus.textContent = !monthSlots.length ? '本月尚未公布檔期；不代表已額滿或可預約。' : futureOpen.length ? '選擇有圓點的日期，查看可洽詢時段。所有時間皆為台北時間。' : '本月已公布的時段目前均未開放選取；其餘日期尚未公布。';
+      }
+    }
+    async function loadAvailability() {
+      if (loading) return;
+      loading = true;
+      loadState = 'loading'; slots = []; chooseDate(); retry.hidden = true; loadStatus.textContent = '正在讀取已公布檔期…';
+      const controller = new AbortController(); const timeout = window.setTimeout(() => controller.abort(), 12000);
+      try {
+        const from = dateKey(months[0]); const to = dateKey(new Date(Date.UTC(year, month + 3, 0)));
+        const response = await fetch(`/api/availability?${new URLSearchParams({ from, to })}`, { cache: 'no-store', credentials: 'omit', signal: controller.signal });
+        if (!response.ok) throw new Error('availability unavailable');
+        slots = parsePublicSlots(await response.json()); loadState = 'ready';
+      } catch { loadState = 'error'; slots = []; loadStatus.textContent = '檔期暫時無法載入，請重試或直接詢問。這不代表目前有空檔。'; retry.hidden = false; }
+      finally { loading = false; window.clearTimeout(timeout); renderCalendar(); }
+    }
+    monthButtons.forEach((button, i) => { button.textContent = `${months[i].getUTCMonth() + 1}月`; button.addEventListener('click', () => { visibleMonth = i; renderCalendar(); }); });
+    grid.addEventListener('click', (event) => {
+      const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-calendar-date]') : null;
+      if (!button || button.disabled || !button.dataset.calendarDate) return;
+      chooseDate(button.dataset.calendarDate); grid.querySelector<HTMLButtonElement>(`[data-calendar-date="${dateInput.value}"]`)?.focus({ preventScroll: true });
     });
+    clear.addEventListener('click', () => chooseDate()); timeSelect.addEventListener('change', updateSummary); retry.addEventListener('click', loadAvailability);
+    continueLink.addEventListener('click', (event) => {
+      const slot = selection(); const preferred = document.querySelector<HTMLInputElement>('#preferred_date');
+      if (timeSelect.value && !slot) { event.preventDefault(); chooseDate(); summary.textContent = '這個時段已開始，請重新選擇。'; return; }
+      if (!slot || !preferred) return;
+      const value = slotPreference(slot);
+      if (preferred.disabled) { event.preventDefault(); summary.textContent = '合作意向正在送出，請稍後再調整時間。'; return; }
+      const existing = preferred.value.trim(); const next = existing.split('、').includes(value) ? existing : [existing, value].filter(Boolean).join('、');
+      if (preferred.maxLength >= 0 && next.length > preferred.maxLength) { event.preventDefault(); summary.textContent = '偏好日期欄位已達字數上限，請在表單直接調整。'; return; }
+      preferred.value = next; preferred.dispatchEvent(new Event('input', { bubbles: true }));
+      summary.textContent = `已帶入 ${value}，尚未完成預約。`;
+    });
+    $('[data-calendar-months]').hidden = false; $('[data-date-picker]').hidden = false;
+    void loadAvailability();
   }
 </script>
+
+<style is:global>
+  .availability-section { padding-block: 64px 56px; }
+  .availability-section .availability-container { width: min(calc(100% - 64px), 1120px); max-width: 1120px; }
+  .availability-section .availability-heading { display: block; margin: 0 0 28px; text-align: center; }
+  .availability-section .availability-heading .eyebrow { margin-bottom: 8px; }
+  .availability-section .availability-heading h2 { margin: 0; }
+  .availability-months { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(100%, 624px); margin: 0 auto 36px; padding: 8px; gap: 6px; border: 0; border-radius: var(--radius-pill); background: var(--color-surface); box-shadow: var(--shadow-card); }
+  .availability-months[hidden], .availability-preference [data-date-picker][hidden] { display: none; }
+  .availability-months button { min-width: 0; min-height: 52px; padding: 10px 12px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text); font: 600 1.05rem/1.4 var(--font-body); cursor: pointer; }
+  .availability-months button:hover { background: var(--color-surface-soft); }
+  .availability-months button[aria-pressed='true'], .availability-months button[aria-pressed='true']:hover { background: var(--color-primary); color: white; }
+  .availability-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; align-items: stretch; }
+  .availability-calendar, .availability-preference { min-width: 0; width: 100%; margin: 0; padding: 36px; border: 0; border-radius: 36px; background: var(--color-surface); box-shadow: var(--shadow-card); }
+  .availability-calendar h3, .availability-preference h3 { margin: 0; color: var(--color-text); font: 700 clamp(1.3rem, 2vw, 1.6rem)/1.5 var(--font-heading); }
+  .availability-calendar h3 { margin-bottom: 28px; }
+  .availability-weekdays, .availability-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px 4px; justify-items: center; }
+  .availability-weekdays { margin-bottom: 12px; }
+  .availability-weekdays span { display: grid; place-items: center; min-height: 32px; color: var(--color-muted); font-size: .95rem; font-weight: 600; }
+  .availability-day, .availability-day-space { display: grid; place-items: center; width: min(100%, 44px); height: auto; aspect-ratio: 1; min-width: 0; min-height: 0; }
+  .availability-day { padding: 0; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text); font: 500 1rem/1 var(--font-body); cursor: pointer; }
+  .availability-day:hover:not(:disabled) { background: var(--color-surface-soft); }
+  .availability-day[aria-current='date'] { box-shadow: inset 0 0 0 2px var(--color-primary); font-weight: 700; }
+  .availability-day[aria-pressed='true'], .availability-day[aria-pressed='true']:hover { background: var(--color-primary); color: white; font-weight: 700; }
+  .availability-day:disabled { color: var(--color-muted); opacity: .4; cursor: default; }
+  .availability-months button:focus-visible, .availability-day:focus-visible, .availability-clear:focus-visible { outline: 2px solid var(--color-primary-dark); outline-offset: 3px; }
+  .availability-preference { display: flex; flex-direction: column; gap: 20px; }
+  .availability-label-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .availability-preference label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; color: var(--color-text); font-weight: 700; }
+  .availability-preference label span { color: var(--color-muted); font-size: .95rem; font-weight: 400; }
+  .availability-preference .availability-time-label { margin-top: 20px; }
+  .availability-clear { min-height: 44px; padding: 8px 12px; border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-muted); font: inherit; font-size: .9rem; cursor: pointer; }
+  .availability-clear:hover:not(:disabled) { background: var(--color-surface-soft); }
+  .availability-clear:disabled { opacity: .45; cursor: default; }
+  .availability-preference input, .availability-preference select { display: block; min-width: 0; width: 100%; max-width: 100%; min-height: 50px; margin-top: 10px; padding: 11px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: var(--color-surface); color: var(--color-text); font: inherit; }
+  .availability-preference input:focus-visible, .availability-preference select:focus-visible { outline: 2px solid var(--color-primary-dark); outline-offset: 3px; }
+  .availability-preference .availability-note, .availability-preference .availability-summary { margin: 0; color: var(--color-muted); font-size: .95rem; line-height: 1.7; }
+  .availability-preference .button { width: 100%; margin-top: auto; background: var(--color-primary); color: white; }
+  .availability-preference .button:hover { background: var(--color-primary-dark); color: white; }
+  @media (max-width: 1100px) { .availability-layout { gap: 24px; } .availability-calendar, .availability-preference { padding: 28px; } }
+  @media (max-width: 820px) {
+    .availability-section { padding-block: 48px; }
+    .availability-section .availability-container { width: calc(100% - 40px); }
+    .availability-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    .availability-calendar, .availability-preference { padding: 24px; border-radius: 28px; }
+    .availability-months { margin-bottom: 28px; }
+    .availability-months button { min-height: 44px; padding-inline: 8px; font-size: 1rem; }
+    .availability-day { width: min(100%, 44px); }
+  }
+  .availability-load, .availability-legend { color: var(--color-muted); font-size: .86rem; line-height: 1.7; }
+  .availability-load { min-height: 3.4em; margin: -12px 0 18px; }
+  .availability-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 20px 0 0; }
+  .availability-day { position: relative; }
+  .availability-day--open::after { content: ''; position: absolute; bottom: 5px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+  .availability-day--unavailable::after { content: ''; position: absolute; bottom: 5px; width: 9px; height: 1px; background: currentColor; }
+  .availability-day--unavailable:disabled { opacity: .7; }
+  .availability-calendar [hidden] { display: none; }
+</style>

@@ -1,0 +1,86 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="合作回饋" current="feedback">
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / FEEDBACK</span><h1>讓每次合作，都留下回應。</h1><p>回饋先保留於後台。只有已同意公開、並經你核准的顯示名稱與合作經驗，才會出現在前台。</p></div><button type="button" class="admin-button admin-button--quiet" data-feedback-reload>重新載入</button></header>
+  <section class="admin-card feedback-controls" aria-label="篩選合作回饋"><label for="feedback-filter">處理狀態</label><select id="feedback-filter"><option value="pending">待確認</option><option value="approved">已公開</option><option value="declined">不公開</option><option value="all">全部</option></select><a class="admin-text-link" href="/feedback/" target="_blank" rel="noopener noreferrer">查看前台</a></section>
+  <p class="admin-status" role="status" aria-live="polite" data-feedback-admin-status>正在載入回饋…</p>
+  <div class="feedback-admin-list" data-feedback-admin-list></div>
+  <nav class="feedback-pagination" aria-label="回饋分頁"><button class="admin-button admin-button--quiet" type="button" data-feedback-prev disabled>上一頁</button><span data-feedback-page>第 1 頁</span><button class="admin-button admin-button--quiet" type="button" data-feedback-next disabled>下一頁</button></nav>
+</AdminLayout>
+<script>
+  import { requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate } from '../../lib/admin-client';
+  type Feedback = { id: string; name: string; contact: string; experience: string; improvement: string; allow_publication: boolean; status: 'pending'|'approved'|'declined'; created_at: string; version: number };
+  const list = document.querySelector<HTMLElement>('[data-feedback-admin-list]')!;
+  const status = document.querySelector<HTMLElement>('[data-feedback-admin-status]')!;
+  const filter = document.querySelector<HTMLSelectElement>('#feedback-filter')!;
+  const previous = document.querySelector<HTMLButtonElement>('[data-feedback-prev]')!;
+  const next = document.querySelector<HTMLButtonElement>('[data-feedback-next]')!;
+  const reload = document.querySelector<HTMLButtonElement>('[data-feedback-reload]')!;
+  const pageLabel = document.querySelector<HTMLElement>('[data-feedback-page]')!;
+  let page = 1, busy = false, hasMore = false;
+  function lock(value: boolean) {
+    busy = value; filter.disabled = value; reload.disabled = value;
+    previous.disabled = value || page <= 1; next.disabled = value || !hasMore;
+    list.querySelectorAll<HTMLButtonElement>('button').forEach(button => { button.disabled = value || button.dataset.unavailable === 'true'; });
+  }
+  function render(items: Feedback[]) {
+    list.replaceChildren();
+    for (const item of items) {
+      const article = document.createElement('article'); article.className = 'admin-card feedback-admin-item';
+      const heading = document.createElement('h2'); heading.textContent = item.name;
+      const meta = document.createElement('p'); meta.className = 'admin-help'; meta.textContent = `${formatAdminDate(item.created_at)} · ${{pending:'待確認',approved:'已公開',declined:'不公開'}[item.status]}`;
+      const text = document.createElement('p'); text.className = 'feedback-experience'; text.textContent = item.experience;
+      const privateInfo = document.createElement('details');
+      const summary = document.createElement('summary'); summary.textContent = '工作室內部資料';
+      const contact = document.createElement('p'); contact.textContent = `聯絡方式：${item.contact}`;
+      const improvement = document.createElement('p'); improvement.textContent = `改善建議：${item.improvement || '未填寫'}`;
+      privateInfo.append(summary, contact, improvement);
+      const consent = document.createElement('p'); consent.className = 'admin-help'; consent.textContent = item.allow_publication ? '已同意公開顯示名稱與合作經驗。' : '未同意公開，僅供工作室閱讀。';
+      const actions = document.createElement('div'); actions.className = 'feedback-review-actions';
+      for (const [value, label] of [['approved','核准公開'],['declined','不公開'],['pending','移回待確認']] as const) {
+        if (value === item.status) continue;
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'admin-button admin-button--quiet admin-button--small'; button.textContent = label;
+        button.disabled = value === 'approved' && !item.allow_publication; button.dataset.unavailable = String(button.disabled);
+        button.addEventListener('click', async () => {
+          if (busy) return;
+          if (value === 'approved' && !window.confirm(`確認公開「${item.name}」的顯示名稱與合作經驗？聯絡方式及改善建議不會公開。`)) return;
+          lock(true); status.textContent = '正在更新…';
+          try {
+            await requestAdmin('/api/admin/feedback', { method: 'PATCH', body: { id: item.id, status: value, version: item.version } });
+            await load();
+          } catch (error) { status.textContent = adminErrorMessage(error); }
+          finally { lock(false); }
+        });
+        actions.append(button);
+      }
+      article.append(heading, meta, text, privateInfo, consent, actions); list.append(article);
+    }
+  }
+  async function load() {
+    lock(true); status.textContent = '正在載入回饋…';
+    try {
+      await requireAdminSession();
+      const data = await requestAdmin<{items:Feedback[];page:number;hasMore:boolean}>(`/api/admin/feedback?status=${encodeURIComponent(filter.value)}&page=${page}`);
+      if (!Array.isArray(data.items)) throw new Error('invalid response');
+      hasMore = data.hasMore; render(data.items); pageLabel.textContent = `第 ${page} 頁`;
+      status.textContent = data.items.length ? `本頁 ${data.items.length} 則回饋。` : '目前沒有符合條件的回饋。';
+    } catch (error) { status.textContent = adminErrorMessage(error); hasMore = false; list.replaceChildren(); }
+    finally { lock(false); }
+  }
+  filter.addEventListener('change', () => { page = 1; void load(); });
+  reload.addEventListener('click', () => { void load(); });
+  previous.addEventListener('click', () => { if (!busy && page > 1) { page--; void load(); } });
+  next.addEventListener('click', () => { if (!busy && hasMore) { page++; void load(); } });
+  void load();
+</script>
+<style>
+  .feedback-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .feedback-controls select { padding: 10px 16px; border: 1px solid var(--adm-line); border-radius: 12px; background: white; color: #171717; }
+  .feedback-admin-list { display: grid; gap: 20px; }
+  .feedback-admin-item { display: grid; gap: 16px; }
+  .feedback-experience, .feedback-admin-item details p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; }
+  .feedback-admin-item summary { cursor: pointer; padding: 8px 0; }
+  .feedback-review-actions, .feedback-pagination { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .feedback-pagination { justify-content: center; margin-top: 28px; }
+</style>

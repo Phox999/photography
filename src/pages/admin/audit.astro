@@ -1,0 +1,63 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="操作紀錄" current="audit">
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / ACTIVITY</span><h1>每一次更新，都有紀錄。</h1><p>追蹤合作狀態與網站內容的管理操作，協助確認更新時間與執行者。</p></div><button class="admin-button admin-button--quiet" type="button" id="audit-refresh">重新整理</button></header>
+  <p class="admin-notice">紀錄僅供管理員檢視。此頁不提供刪除或修改，識別碼用於追查資料；時間以台北時間顯示。</p>
+  <p class="admin-status" id="audit-status" role="status" aria-live="polite">正在載入操作紀錄…</p>
+  <section class="admin-card admin-list-panel" aria-labelledby="audit-heading" id="audit-region" aria-busy="true">
+    <div class="admin-panel-heading"><h2 id="audit-heading">最近的管理操作</h2><span class="admin-meta" id="audit-total"></span></div>
+    <div class="admin-audit-wrap"><table class="admin-audit-table"><caption class="admin-visually-hidden">管理操作紀錄，依操作時間由新至舊排列</caption><thead><tr><th scope="col">時間</th><th scope="col">操作項目</th><th scope="col">執行者識別碼</th><th scope="col">目標識別碼</th><th scope="col">變更摘要</th></tr></thead><tbody id="audit-rows"></tbody></table></div>
+    <div class="admin-empty" id="audit-empty" hidden><strong>目前沒有操作紀錄</strong><p>儲存合作狀態或發布內容後，紀錄會顯示於此。</p></div>
+    <div class="admin-pagination"><span id="audit-page-label">每頁 20 筆</span><div class="admin-actions"><button class="admin-button admin-button--quiet admin-button--small" type="button" id="audit-prev" disabled>上一頁</button><button class="admin-button admin-button--quiet admin-button--small" type="button" id="audit-next" disabled>下一頁</button></div></div>
+  </section>
+</AdminLayout>
+<script>
+  import { requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate } from '../../lib/admin-client';
+  type AuditItem = { id: string; actor_id: string; action: string; target_id: string | null; metadata: unknown; created_at: string };
+  const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+  const rows = $('#audit-rows');
+  const status = $('#audit-status');
+  const previous = $<HTMLButtonElement>('#audit-prev');
+  const next = $<HTMLButtonElement>('#audit-next');
+  const refresh = $<HTMLButtonElement>('#audit-refresh');
+  let page = Math.max(1, Math.min(100000, Number.parseInt(new URL(window.location.href).searchParams.get('page') || '1', 10) || 1));
+  let total = 0;
+  let busy = false;
+  let ready = false;
+  const actionLabels: Record<string, string> = { 'inquiry.update': '更新合作意向', 'inquiry.updated': '更新合作意向', 'content.update': '發布網站內容', 'content.updated': '發布網站內容', 'content.publish': '發布網站內容', 'auth.login': '管理員登入', 'auth.logout': '管理員登出' };
+  function safeText(value: unknown): string { return typeof value === 'string' ? value.slice(0, 200) : value == null ? '—' : String(value).slice(0, 200); }
+  function formatMetadata(value: unknown): string {
+    if (value == null) return '未提供變更摘要';
+    try { const result = JSON.stringify(value, null, 2) || '未提供變更摘要'; return result.length > 6000 ? `${result.slice(0, 6000)}\n…內容已截短` : result; }
+    catch { return '無法顯示變更摘要'; }
+  }
+  async function loadAudit() {
+    if (!ready || busy) return;
+    busy = true; refresh.disabled = true; previous.disabled = true; next.disabled = true;
+    $('#audit-region').setAttribute('aria-busy', 'true'); status.textContent = '正在載入操作紀錄…'; status.dataset.error = 'false';
+    try {
+      const data = await requestAdmin<{ items: AuditItem[]; total: number; page: number; pageSize: number }>(`/api/admin/audit?page=${page}`);
+      total = data.total; page = data.page; rows.replaceChildren();
+      for (const item of data.items) {
+        const row = document.createElement('tr');
+        const date = document.createElement('td'); date.textContent = formatAdminDate(item.created_at);
+        const action = document.createElement('td'); action.textContent = actionLabels[item.action] || safeText(item.action);
+        const actor = document.createElement('td'); const actorCode = document.createElement('code'); actorCode.textContent = safeText(item.actor_id); actor.append(actorCode);
+        const target = document.createElement('td'); const targetCode = document.createElement('code'); targetCode.textContent = safeText(item.target_id); target.append(targetCode);
+        const metadata = document.createElement('td'); const details = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = '查看摘要'; const pre = document.createElement('pre'); pre.textContent = formatMetadata(item.metadata); details.append(summary, pre); metadata.append(details);
+        row.append(date, action, actor, target, metadata); rows.append(row);
+      }
+      $('#audit-empty').hidden = data.items.length !== 0;
+      $('#audit-total').textContent = `共 ${total} 筆`;
+      $('#audit-page-label').textContent = `第 ${page} / ${Math.max(1, Math.ceil(total / 20))} 頁`;
+      status.textContent = `已載入 ${data.items.length} 筆操作紀錄。`;
+      const url = new URL(window.location.href); if (page > 1) url.searchParams.set('page', String(page)); else url.searchParams.delete('page'); window.history.replaceState({}, '', url);
+    } catch (error) { status.textContent = adminErrorMessage(error); status.dataset.error = 'true'; }
+    finally { busy = false; refresh.disabled = false; previous.disabled = page <= 1; next.disabled = page * 20 >= total; $('#audit-region').setAttribute('aria-busy', 'false'); }
+  }
+  previous.addEventListener('click', () => { if (busy || page <= 1) return; page -= 1; void loadAudit(); });
+  next.addEventListener('click', () => { if (busy || page * 20 >= total) return; page += 1; void loadAudit(); });
+  refresh.addEventListener('click', () => { void loadAudit(); });
+  requireAdminSession().then(() => { ready = true; return loadAudit(); }).catch(() => {});
+</script>

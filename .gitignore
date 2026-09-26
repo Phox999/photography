@@ -3,6 +3,7 @@ node_modules/
 # Astro / build outputs
 .astro/
 dist/
+worker-dist/
 
 # Cloudflare local state
 .wrangler/

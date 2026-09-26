@@ -2,7 +2,8 @@
 import { portfolioCatalog, portfolioCategories } from '../data/portfolioCatalog';
 
 const portfolioItems = portfolioCatalog.slice(0, 12);
-const portfolioFilters = portfolioCategories;
+const countFor = (category: string) =>
+  portfolioItems.filter((item) => category === '全部' || item.category === category).length;
 ---
 
 <section class="section portfolio-section container" id="portfolio" aria-labelledby="portfolio-title" data-portfolio-filter>
@@ -12,117 +13,148 @@ const portfolioFilters = portfolioCategories;
       <h2 id="portfolio-title">作品集</h2>
     </div>
 
-    <div class="portfolio-scroll-controls" aria-label="瀏覽更多作品">
-      <button type="button" aria-label="向左瀏覽作品" data-portfolio-prev>‹</button>
-      <button type="button" aria-label="向右瀏覽作品" data-portfolio-next>›</button>
-    </div>
-
-    <div class="portfolio-heading-actions">
-      <a
-        class="text-link"
-        href="/portfolio/"
-      >
-        查看更多作品
-      </a>
+    <div class="portfolio-scroll-controls" role="group" aria-label="瀏覽更多作品">
+      <button type="button" aria-label="向左瀏覽作品" aria-controls="featured-portfolio" data-portfolio-prev disabled>‹</button>
+      <button type="button" aria-label="向右瀏覽作品" aria-controls="featured-portfolio" data-portfolio-next>›</button>
     </div>
   </div>
 
-  <div class="portfolio-filter" aria-label="篩選作品">
-    {
-      portfolioFilters.map((filter, index) => (
+  <div class="portfolio-toolbar">
+    <div class="portfolio-filter" role="group" aria-label="篩選精選作品">
+      {portfolioCategories.map((filter, index) => (
         <button
           class={`portfolio-filter__button ${index === 0 ? 'is-active' : ''}`}
           type="button"
           aria-pressed={index === 0 ? 'true' : 'false'}
+          aria-controls="featured-portfolio"
+          aria-label={`${filter}，${countFor(filter)} 組作品`}
           data-portfolio-filter-button
           data-filter={filter}
         >
-          {filter}
+          {filter}<span class="portfolio-filter__count" aria-hidden="true">{countFor(filter)}</span>
         </button>
-      ))
-    }
+      ))}
+    </div>
+    <a class="text-link portfolio-more-link" href="/portfolio/">查看全部作品</a>
   </div>
 
-  <div class="portfolio-strip" aria-label="作品分類" data-portfolio-strip>
-    {
-      portfolioItems.map((item) => (
-        <article class="portfolio-card" data-portfolio-card data-tags={item.category}>
-          <a
-            class="portfolio-card__link"
-            href={item.href}
-            aria-label={`查看${item.title}完整作品`}
-          >
-            <img src={item.cover} alt={`${item.title}作品封面`} loading="lazy" />
-          </a>
-        </article>
-      ))
-    }
+  <div class="portfolio-strip" id="featured-portfolio" aria-label="精選作品" data-portfolio-strip>
+    {portfolioItems.map((item) => (
+      <article class="portfolio-card" data-portfolio-card data-tags={item.category}>
+        <a class="portfolio-card__link" href={item.href} aria-label={`查看${item.title}作品`}>
+          <div class="portfolio-card__media">
+            <img src={item.cover} alt={`${item.title}作品封面`} loading="lazy" decoding="async" />
+          </div>
+          <div class="portfolio-card__caption">
+            <h3>{item.title}</h3>
+            <p>{item.category}</p>
+          </div>
+        </a>
+      </article>
+    ))}
   </div>
 
-  <p class="portfolio-empty" data-portfolio-empty hidden>目前沒有符合這個分類的作品。</p>
+  <p class="portfolio-result" role="status" aria-live="polite" aria-atomic="true" data-portfolio-result>
+    精選 {portfolioItems.length} 組作品
+  </p>
+  <p class="portfolio-empty" data-portfolio-empty hidden>目前沒有這個分類的精選作品，請查看全部作品。</p>
 </section>
 
+<style>
+  .portfolio-section { overflow: visible; padding-block: clamp(56px, 6vw, 96px); }
+  .portfolio-section h2 { font-size: clamp(36px, 4vw, 56px); }
+  .portfolio-section > .section-heading--row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .portfolio-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; gap: 12px; flex-wrap: wrap; }
+  .portfolio-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+  .portfolio-filter__button { position: relative; display: inline-flex; width: auto; min-height: 48px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: var(--radius-pill); background: var(--color-surface); padding: 0 22px; color: var(--color-primary-dark); font-size: 18px; text-align: center; box-shadow: var(--shadow-soft); }
+  .portfolio-filter__button.is-active { background: var(--color-primary); color: #fff; box-shadow: 0 10px 26px rgba(49, 129, 162, .2); }
+  .portfolio-filter__count { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .portfolio-scroll-controls { display: flex; gap: 8px; }
+  .portfolio-scroll-controls button { display: grid; width: 52px; height: 52px; place-items: center; border: 1px solid rgba(123, 171, 192, .52); border-radius: 50%; background: #fff; color: var(--color-primary-dark); font: inherit; font-size: 28px; line-height: 1; cursor: pointer; }
+  .portfolio-scroll-controls button:hover:not(:disabled) { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+  .portfolio-scroll-controls button:disabled { opacity: .35; cursor: default; }
+  .portfolio-more-link { display: inline-flex; min-height: 48px; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
+  .portfolio-strip { display: flex; gap: 20px; overflow-x: auto; padding: 5px 5px 16px; margin: 24px -5px 0; scroll-padding-inline: 5px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .portfolio-strip::-webkit-scrollbar { display: none; }
+  .portfolio-card { position: relative; flex: 0 0 calc((100% - 100px) / 6); min-width: 0; scroll-snap-align: start; }
+  .portfolio-card[hidden] { display: none; }
+  .portfolio-card__link { position: relative; display: block; overflow: hidden; border-radius: var(--radius-media, 28px); }
+  .portfolio-card__media { overflow: hidden; aspect-ratio: 1; border-radius: var(--radius-media, 28px); background: var(--color-surface-soft); }
+  .portfolio-card img { width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 240ms ease; }
+  .portfolio-card__link:hover img, .portfolio-card__link:focus-visible img { transform: scale(1.025); }
+  .portfolio-card__caption { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 18px; color: #fff; background: rgb(0 0 0 / .58); text-align: center; opacity: 0; transition: opacity 180ms ease; }
+  .portfolio-card:hover .portfolio-card__caption, .portfolio-card:focus-within .portfolio-card__caption { opacity: 1; }
+  .portfolio-card h3 { position: static; display: block; width: auto; max-width: 100%; margin: 0; padding: 0; border-radius: 0; background: none; color: #fff; font-family: var(--font-heading); font-size: 20px; line-height: 1.5; }
+  .portfolio-card__caption p { display: flex; gap: 12px; margin: 4px 0 0; color: #fff; font-size: 16px; }
+  .portfolio-result { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .portfolio-empty[hidden] { display: none; }
+  @media (max-width: 900px) { .portfolio-card { flex-basis: calc((100% - 40px) / 3); } }
+  @media (max-width: 620px) {
+    .portfolio-section > .section-heading--row { align-items: flex-end; }
+    .portfolio-scroll-controls button { width: 44px; height: 44px; }
+    .portfolio-card { flex-basis: 72%; }
+    .portfolio-toolbar { align-items: center; }
+    .portfolio-filter { width: auto; flex-wrap: wrap; overflow: visible; }
+    .portfolio-filter__button { min-height: 44px; padding-inline: 12px; }
+    .portfolio-more-link { width: auto; font-size: 18px; }
+  }
+  @media (hover: none), (pointer: coarse) {
+    .portfolio-card__caption { justify-content: flex-end; padding: 40px 20px 20px; background: linear-gradient(transparent 30%, rgb(0 0 0 / .68)); opacity: 1; }
+    .portfolio-card h3 { font-size: 18px; }
+    .portfolio-card__caption p { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .portfolio-strip { scroll-behavior: auto; }
+    .portfolio-card img, .portfolio-card__caption { transition: none; }
+    .portfolio-card__link:hover img { transform: none; }
+  }
+</style>
+
 <script>
-  const portfolioSection = document.querySelector('[data-portfolio-filter]');
+  const portfolioSection = document.querySelector<HTMLElement>('[data-portfolio-filter]');
 
   if (portfolioSection) {
-    const buttons = Array.from(portfolioSection.querySelectorAll('[data-portfolio-filter-button]'));
-    const cards = Array.from(portfolioSection.querySelectorAll('[data-portfolio-card]'));
-    const strip = portfolioSection.querySelector('[data-portfolio-strip]');
-    const prevButton = portfolioSection.querySelector('[data-portfolio-prev]');
-    const nextButton = portfolioSection.querySelector('[data-portfolio-next]');
-    const empty = portfolioSection.querySelector('[data-portfolio-empty]');
+    const buttons = Array.from(portfolioSection.querySelectorAll<HTMLButtonElement>('[data-portfolio-filter-button]'));
+    const cards = Array.from(portfolioSection.querySelectorAll<HTMLElement>('[data-portfolio-card]'));
+    const strip = portfolioSection.querySelector<HTMLElement>('[data-portfolio-strip]');
+    const prevButton = portfolioSection.querySelector<HTMLButtonElement>('[data-portfolio-prev]');
+    const nextButton = portfolioSection.querySelector<HTMLButtonElement>('[data-portfolio-next]');
+    const empty = portfolioSection.querySelector<HTMLElement>('[data-portfolio-empty]');
+    const result = portfolioSection.querySelector<HTMLElement>('[data-portfolio-result]');
 
+    const updateControls = () => {
+      if (!strip) return;
+      if (prevButton) prevButton.disabled = strip.scrollLeft <= 2;
+      if (nextButton) nextButton.disabled = strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 2;
+    };
     const getScrollDistance = () => {
-      const firstVisibleCard = cards.find((card) => !card.hasAttribute('hidden'));
-      if (!(strip instanceof HTMLElement) || !(firstVisibleCard instanceof HTMLElement)) return 320;
-
-      const styles = getComputedStyle(strip);
-      const gap = Number.parseFloat(styles.columnGap || styles.gap || '0');
-      return firstVisibleCard.getBoundingClientRect().width + gap;
+      const card = cards.find((item) => !item.hidden);
+      if (!strip || !card) return 320;
+      const gap = Number.parseFloat(getComputedStyle(strip).columnGap) || 0;
+      return card.getBoundingClientRect().width + gap;
     };
-
-    const applyFilter = (activeFilter) => {
+    const applyFilter = (activeFilter: string) => {
       let visibleCount = 0;
-
       cards.forEach((card) => {
-        const tags = String(card.getAttribute('data-tags') || '')
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean);
-        const isVisible = activeFilter === '全部' || tags.includes(activeFilter);
-
-        card.toggleAttribute('hidden', !isVisible);
-
-        if (isVisible) visibleCount += 1;
+        card.hidden = activeFilter !== '全部' && card.dataset.tags !== activeFilter;
+        if (!card.hidden) visibleCount += 1;
       });
-
       buttons.forEach((button) => {
-        const isActive = button.getAttribute('data-filter') === activeFilter;
-        button.classList.toggle('is-active', isActive);
-        button.setAttribute('aria-pressed', String(isActive));
+        const active = button.dataset.filter === activeFilter;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
       });
-
-      if (strip instanceof HTMLElement) strip.scrollTo({ left: 0, behavior: 'smooth' });
-      if (empty instanceof HTMLElement) empty.hidden = visibleCount > 0;
+      strip?.scrollTo({ left: 0, behavior: 'instant' });
+      if (empty) empty.hidden = visibleCount > 0;
+      if (result) result.textContent = `${activeFilter} · 精選 ${visibleCount} 組作品`;
+      updateControls();
     };
 
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => {
-        applyFilter(button.getAttribute('data-filter') || '全部');
-      });
-    });
-
-    prevButton?.addEventListener('click', () => {
-      if (strip instanceof HTMLElement) {
-        strip.scrollBy({ left: -getScrollDistance(), behavior: 'smooth' });
-      }
-    });
-
-    nextButton?.addEventListener('click', () => {
-      if (strip instanceof HTMLElement) {
-        strip.scrollBy({ left: getScrollDistance(), behavior: 'smooth' });
-      }
-    });
+    buttons.forEach((button) => button.addEventListener('click', () => applyFilter(button.dataset.filter || '全部')));
+    prevButton?.addEventListener('click', () => strip?.scrollBy({ left: -getScrollDistance(), behavior: 'smooth' }));
+    nextButton?.addEventListener('click', () => strip?.scrollBy({ left: getScrollDistance(), behavior: 'smooth' }));
+    strip?.addEventListener('scroll', updateControls, { passive: true });
+    if (strip && typeof ResizeObserver !== 'undefined') new ResizeObserver(updateControls).observe(strip);
+    updateControls();
   }
 </script>

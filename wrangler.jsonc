@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "photography",
+  "main": "./worker.js",
+  "compatibility_date": "2026-09-25",
+  "compatibility_flags": [
+    "global_fetch_strictly_public",
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": "./worker-dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "previews": {}
+}

@@ -1,54 +1,7 @@
-# 後台與資料庫設定
+# 網站與後台資料流
 
-這個專案的公開合作表單採用：
+公開合作意向由首頁表單送至 `POST /api/inquiries`，Cloudflare Pages Functions 驗證內容後寫入 Supabase `public.collaboration_requests`，並回傳私人進度連結。現有表單 UI 保留，API 同時支援 3000 版後台使用的收件憑證與私人參考資料流程。
 
-```text
-Astro Static
-→ Contact.astro
-→ POST /api/inquiries
-→ Cloudflare Pages Functions
-→ Supabase public.collaboration_requests
-```
+後台頁面位於 `/admin/`，API 位於 `/api/admin/`，登入使用 `/api/auth/`。管理權限由 Supabase Auth 驗證及 `public.site_admins` 管理員名單共同決定。管理頁不直接連接資料庫。
 
-正式啟用前需要在 Cloudflare 完成以下設定：
-
-1. 在 Supabase 建立 `public.collaboration_requests` 資料表。
-2. 在 Cloudflare Pages 專案設定環境變數：
-   - `SUPABASE_URL`
-   - `SUPABASE_SECRET_KEY`
-3. `SUPABASE_SECRET_KEY` 必須設為 Secret，不要使用 `PUBLIC_` 前綴。
-4. 部署後到首頁底部送出測試資料，再到 Supabase Table Editor 確認新增資料。
-
-公開端點：
-
-- `POST /api/inquiries`：首頁聯絡表單送出資料，唯一公開寫入入口。
-
-公開表單預期資料表：
-
-```sql
-create table if not exists public.collaboration_requests (
-  id uuid primary key default gen_random_uuid(),
-
-  name text not null,
-  contact_method text not null,
-  contact_account text not null,
-
-  collaboration_type text not null,
-  preferred_date text,
-  description text,
-
-  consent boolean not null default false,
-
-  status text not null default 'new'
-    check (status in ('new', 'reviewing', 'contacted', 'closed')),
-
-  created_at timestamptz not null default now()
-);
-```
-
-目前管理端點仍是舊 D1 架構：
-
-- `GET /api/admin/inquiries`
-- `PATCH /api/admin/inquiries/:id`
-
-因此公開表單寫入 Supabase 後，現有 `/admin/` 後台不會自動看到 Supabase 新資料。若要讓後台讀取新資料，需要另外把管理 API 從 D1 改成 Supabase。
+本機 `.dev.vars` 與 Cloudflare Pages Functions 需要 `SUPABASE_URL`、`SUPABASE_PUBLISHABLE_KEY` 和伺服器端 `SUPABASE_SECRET_KEY`。設定與資料庫 migration 步驟請看 [後台啟用與部署](admin-setup.md)。

@@ -1,0 +1,260 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="專屬相簿" current="galleries">
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / CLIENT GALLERIES</span><h1>從選片，到好好交付。</h1><p>為每次合作建立私人相簿，管理邀請、選片紀錄與交件權限。</p></div><button class="admin-button admin-button--quiet" type="button" id="ag-reload">重新載入</button></header>
+  <p class="admin-status" id="ag-status" role="status" aria-live="polite">正在載入相簿…</p>
+  <div class="ag-layout">
+    <aside class="ag-sidebar"><section class="admin-card"><h2>相簿清單</h2><div class="admin-field"><label for="ag-current">選擇相簿</label><select id="ag-current"><option value="">請選擇相簿</option></select></div><p class="admin-help" id="ag-count">尚未載入。</p></section><section class="admin-card"><h2>建立新相簿</h2><form id="ag-create-form"><div class="admin-field"><label for="ag-create-title">相簿名稱</label><input id="ag-create-title" maxlength="120" required placeholder="例如：午後人像合作" /></div><div class="admin-field"><label for="ag-create-limit">可選照片上限</label><input id="ag-create-limit" type="number" min="1" max="200" value="10" required /></div><button type="submit" class="admin-button">建立草稿相簿</button></form><p class="admin-help">草稿不會開放給受邀者。照片準備完成後，再改為「開放選片」。</p></section><a class="admin-text-link" href="/client/" target="_blank" rel="noopener">開啟選片頁</a></aside>
+    <div id="ag-empty" class="admin-card"><span class="admin-eyebrow">PRIVATE ALBUMS</span><h2>讓每一次合作，有自己的空間。</h2><p>先建立相簿，再直接加入預覽照片，確認顯示設定後就能邀請對方選片。</p><p class="admin-help">私人相簿使用受保護的儲存空間，只有持有有效邀請連結的對象可以瀏覽。</p></div>
+    <div id="ag-detail" class="ag-detail" hidden>
+      <section class="admin-card"><h2>相簿設定</h2><p class="admin-meta" id="ag-id"></p><form id="ag-settings-form"><div class="admin-field"><label for="ag-title">相簿名稱</label><input id="ag-title" maxlength="120" required /></div><div class="ag-form-grid"><div class="admin-field"><label for="ag-stage">目前階段</label><select id="ag-stage"><option value="draft">草稿（受邀者無法瀏覽）</option><option value="proofing">開放選片</option><option value="delivered">已交件（停止修改選片）</option></select></div><div class="admin-field"><label for="ag-limit">可選照片上限</label><input id="ag-limit" type="number" min="1" max="200" required /></div></div><label class="admin-check"><input type="checkbox" id="ag-downloads" />允許下載已附交件檔案的照片</label><p class="admin-help">需同時設定「已交件」、開放下載，並附上該照片的交件檔案路徑，前臺才會顯示下載按鈕。</p><button class="admin-button" type="submit">儲存相簿設定</button></form></section>
+      <section class="admin-card"><h2>相片資料</h2>
+        <div class="ag-upload" aria-labelledby="ag-upload-heading">
+          <h3 id="ag-upload-heading">加入預覽照片</h3><p class="admin-help" id="ag-upload-help">每批最多 20 張 JPEG、PNG 或 WebP，每張上限 8 MiB。照片上傳後先隱藏；確認內容後，按「允許顯示」開放給受邀者。</p>
+          <label class="ag-file-label" for="ag-upload-files">選擇預覽照片</label><input id="ag-upload-files" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="ag-upload-help" />
+          <div class="admin-actions"><button type="button" class="admin-button" id="ag-upload-start" disabled>開始上傳</button><button type="button" class="admin-button admin-button--quiet" id="ag-upload-clear" disabled>清除佇列</button></div>
+          <p class="admin-status" id="ag-upload-status" role="status" aria-live="polite"></p><ol class="ag-upload-queue" id="ag-upload-queue" aria-label="照片上傳進度"></ol>
+        </div>
+        <p class="admin-help" id="ag-photo-count"></p><div id="ag-photo-list" class="ag-photo-list"></div>
+        <details class="ag-storage-guide" id="ag-advanced"><summary>進階：使用儲存路徑新增或編輯照片資料</summary><p>若已從私人儲存空間上傳檔案，可在這裡填入物件路徑；也能修改照片名稱、路徑與顯示設定。</p><p id="ag-storage-example"></p><form id="ag-photo-form"><div class="admin-field"><label for="ag-edit-photo">新增或編輯</label><select id="ag-edit-photo"><option value="">新增照片</option></select></div><div class="admin-field"><label for="ag-photo-title">顯示名稱／照片編號</label><input id="ag-photo-title" maxlength="160" required placeholder="例如：PHOTO 001" /></div><div class="admin-field"><label for="ag-photo-preview">私人預覽檔路徑</label><input id="ag-photo-preview" maxlength="500" required spellcheck="false" autocomplete="off" aria-describedby="ag-photo-path-help" /></div><div class="admin-field"><label for="ag-photo-delivery">私人交件檔路徑（可稍後填寫）</label><input id="ag-photo-delivery" maxlength="500" spellcheck="false" autocomplete="off" /></div><p class="admin-help" id="ag-photo-path-help">填 Storage 物件路徑，不填公開網址。路徑必須以目前相簿 ID 開頭，檔名使用英文字母、數字、底線或連字號，搭配支援的圖片副檔名。</p><label class="admin-check"><input type="checkbox" id="ag-photo-approved" checked />在相簿開放後顯示此照片</label><button class="admin-button" id="ag-photo-save" type="submit">新增照片資料</button></form></details>
+      </section>
+      <section class="admin-card"><h2>邀請連結</h2><p class="admin-help">持有連結的人即可依邀請權限存取相簿。請直接傳給指定合作對象，勿公開張貼。每份邀請對應一份最終選片紀錄。</p><form id="ag-invite-form" class="ag-inline-form"><div class="admin-field"><label for="ag-invite-days">有效天數</label><input id="ag-invite-days" type="number" min="1" max="90" value="14" required /></div><button class="admin-button" type="submit">建立邀請連結</button></form><div id="ag-new-invite" class="ag-new-invite" hidden><label for="ag-invite-url">新邀請連結（只在此次顯示）</label><input id="ag-invite-url" type="text" readonly spellcheck="false" autocomplete="off" /><div class="admin-actions"><button class="admin-button admin-button--small" type="button" id="ag-copy-invite">複製邀請連結</button><button class="admin-button admin-button--quiet admin-button--small" type="button" id="ag-hide-invite">清除畫面上的連結</button></div><p class="admin-help" id="ag-invite-expiry"></p></div><div id="ag-invite-list" class="ag-list"></div></section>
+      <section class="admin-card"><h2>已確認的選片</h2><p class="admin-help">顯示受邀者確認送出的內容。沒有送出的頁面草稿不會出現在這裡。</p><div id="ag-selections" class="ag-list"></div></section>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  import { requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate, setUnsavedChanges, confirmDiscardChanges, AdminApiError } from '../../lib/admin-client';
+  type Gallery = { id: string; title: string; status: 'draft'|'proofing'|'delivered'; selection_limit: number; allow_downloads: boolean; created_at: string; updated_at?: string };
+  type Photo = { id: string; title: string; preview_path: string; delivery_path: string|null; approved: boolean };
+  type Invitation = { id: string; expires_at: string; revoked_at: string|null; created_at: string };
+  type Selection = { id: string; invite_id: string; photo_ids: string[]; photo_notes?: Record<string, string>; note: string; submitted_at: string };
+  type Detail = { gallery: Gallery; photos: Photo[]; invites: Invitation[]; selections: Selection[] };
+  type UploadItem = { uploadId: string; galleryId: string; kind: 'preview' | 'delivery'; photoId?: string; title: string; file: File; status: 'queued' | 'uploading' | 'done' | 'failed'; error: string };
+  const $ = <T extends Element = HTMLElement>(id: string) => document.getElementById(id) as T;
+  const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className = '', text = '') => { const node = document.createElement(tag); node.className = className; node.textContent = text; return node; };
+  let detail: Detail|null = null;
+  let busy = false;
+  let uploadQueue: UploadItem[] = [];
+  const dirtyForms = new Set<string>();
+  const labels = { draft: '草稿', proofing: '開放選片', delivered: '已交件' };
+  function say(value: string, error = false) { $('ag-status').textContent = value; $('ag-status').dataset.error = String(error); }
+  function updateDirty() { setUnsavedChanges(dirtyForms.size > 0 || uploadQueue.some(item => item.status !== 'done')); }
+  function clearDirty() { dirtyForms.clear(); updateDirty(); }
+  function clearInvitation() { $<HTMLInputElement>('ag-invite-url').value = ''; $('ag-new-invite').hidden = true; $('ag-invite-expiry').textContent = ''; }
+  function setBusy(value: boolean) { busy = value; document.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('.ag-layout input,.ag-layout select,.ag-layout button,#ag-reload').forEach(node => { node.disabled = value; }); updateUploadControls(); }
+  function updateUploadControls() {
+    $<HTMLButtonElement>('ag-upload-start').disabled = busy || !uploadQueue.some(item => item.status === 'queued' || item.status === 'failed');
+    $<HTMLButtonElement>('ag-upload-clear').disabled = busy || !uploadQueue.length;
+    $('ag-upload-queue').setAttribute('aria-busy', String(uploadQueue.some(item => item.status === 'uploading')));
+  }
+  function uploadMessage(value: string, error = false) { $('ag-upload-status').textContent = value; $('ag-upload-status').dataset.error = String(error); }
+  function renderUploadQueue() {
+    const list = $('ag-upload-queue'); list.replaceChildren();
+    const states = { queued: '等待上傳', uploading: '上傳中…', done: '已完成', failed: '上傳失敗' };
+    for (const item of uploadQueue) {
+      const row = make('li', 'ag-upload-row'); const copy = make('div');
+      copy.append(make('strong', '', item.file.name), make('p', 'admin-help', `${item.kind === 'preview' ? '預覽照片' : `交件照片 · ${item.title}`} · ${(item.file.size / 1048576).toFixed(1)} MiB`));
+      if (item.error) copy.append(make('p', 'ag-upload-error', item.error));
+      const state = make('span', 'admin-pill', states[item.status]); state.dataset.status = item.status;
+      row.append(copy, state);
+      if (item.status === 'failed') { const retry = make('button', 'admin-button admin-button--quiet admin-button--small', '重試'); retry.type = 'button'; retry.disabled = busy; retry.setAttribute('aria-label', `重試上傳 ${item.file.name}`); retry.addEventListener('click', () => void runUploads([item])); row.append(retry); }
+      list.append(row);
+    }
+    updateUploadControls(); updateDirty();
+  }
+  function clearUploads() {
+    uploadQueue = []; $<HTMLInputElement>('ag-upload-files').value = ''; renderUploadQueue(); uploadMessage('');
+  }
+  function queueFiles(files: File[], kind: 'preview' | 'delivery' = 'preview', photo?: Photo) {
+    if (!detail || busy || !files.length) return;
+    if (files.length > 20 || uploadQueue.length + files.length > 20) { uploadMessage('每批最多 20 張照片；請先完成並清除目前的佇列。', true); return; }
+    if (kind === 'delivery' && (!photo || files.length !== 1)) return;
+    const invalid = files.find(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || !file.size || file.size > 8 * 1024 * 1024);
+    if (invalid) { uploadMessage(`「${invalid.name}」無法加入。請選擇 JPEG、PNG 或 WebP，且每張須大於 0、最多 8 MiB。`, true); return; }
+    if (kind === 'delivery' && uploadQueue.some(item => item.photoId === photo?.id && item.status !== 'done')) { uploadMessage('這張照片已有待處理的交件檔案，請先完成或清除佇列。', true); return; }
+    for (const file of files) uploadQueue.push({ uploadId: crypto.randomUUID(), galleryId: detail.gallery.id, kind, ...(photo ? { photoId: photo.id } : {}), title: photo?.title || file.name.replace(/\.[^.]+$/, '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 160) || '未命名照片', file, status: 'queued', error: '' });
+    renderUploadQueue(); uploadMessage(`已加入 ${files.length} 張照片，按「開始上傳」送出。`);
+  }
+  async function uploadFile(item: UploadItem, retryAuth = true): Promise<Photo> {
+    const body = new FormData();
+    body.append('gallery_id', item.galleryId); body.append('upload_id', item.uploadId); body.append('kind', item.kind); body.append('title', item.title); body.append('file', item.file);
+    if (item.photoId) body.append('photo_id', item.photoId);
+    const controller = new AbortController(); const timer = window.setTimeout(() => controller.abort(), 90000);
+    try {
+      const response = await fetch('/api/admin/gallery-upload', { method: 'POST', credentials: 'same-origin', cache: 'no-store', headers: { 'X-Phox-Request': '1' }, body, signal: controller.signal });
+      if (response.status === 401 && retryAuth) { await requestAdmin('/api/auth/refresh', { method: 'POST', body: {}, retryAuth: false }); return await uploadFile(item, false); }
+      let data: { photo?: Photo; code?: string };
+      try { data = await response.json(); } catch { throw new AdminApiError(response.ok ? 502 : response.status); }
+      if (!response.ok) throw new AdminApiError(response.status, typeof data?.code === 'string' ? data.code.slice(0, 80) : '');
+      if (!data?.photo?.id || !data.photo.preview_path?.startsWith(`${item.galleryId}/`) || item.photoId && data.photo.id !== item.photoId) throw new AdminApiError(502);
+      return data.photo;
+    } catch (error) { throw error instanceof AdminApiError ? error : new AdminApiError(0); }
+    finally { window.clearTimeout(timer); }
+  }
+  async function runUploads(candidates = uploadQueue.filter(item => item.status === 'queued' || item.status === 'failed')) {
+    if (busy || !detail || !candidates.length) return;
+    const galleryId = detail.gallery.id;
+    if (candidates.some(item => item.galleryId !== galleryId)) return;
+    setBusy(true); uploadMessage('正在上傳，請保持此頁開啟。');
+    try {
+      for (const item of candidates) {
+        item.status = 'uploading'; item.error = ''; renderUploadQueue();
+        try {
+          const photo = await uploadFile(item);
+          if (!detail || detail.gallery.id !== galleryId) return;
+          const index = detail.photos.findIndex(value => value.id === photo.id);
+          if (index >= 0) detail.photos[index] = photo; else detail.photos.push(photo);
+          if ($<HTMLSelectElement>('ag-edit-photo').value === photo.id) {
+            $<HTMLInputElement>('ag-photo-preview').value = photo.preview_path;
+            $<HTMLInputElement>('ag-photo-delivery').value = photo.delivery_path || '';
+          }
+          item.status = 'done'; renderPhotos();
+        } catch (error) {
+          item.status = 'failed';
+          item.error = error instanceof AdminApiError && error.status === 413 ? '檔案超過上傳大小限制，請改用 8 MiB 以內的圖片。' : adminErrorMessage(error);
+          if (error instanceof AdminApiError && [401, 403].includes(error.status)) { window.dispatchEvent(new CustomEvent('phox999:admin-auth-required', { detail: { status: error.status } })); break; }
+        } finally { renderUploadQueue(); }
+      }
+      const remaining = uploadQueue.filter(item => item.status !== 'done').length;
+      uploadMessage(remaining ? `仍有 ${remaining} 張尚未完成。檔案保留在此頁，可檢查後重試。` : '上傳完成。新預覽照片先保持隱藏，確認後請按「允許顯示」。', remaining > 0);
+    } finally { setBusy(false); renderUploadQueue(); }
+  }
+  function renderPhotos() {
+    if (!detail) return;
+    $('ag-photo-count').textContent = `${detail.photos.length} 張照片資料 · ${detail.photos.filter(photo => photo.approved).length} 張已允許顯示`;
+    const edit = $<HTMLSelectElement>('ag-edit-photo'), selectedPhotoId = edit.value;
+    edit.replaceChildren(new Option('新增照片', ''));
+    const list = $('ag-photo-list'); list.replaceChildren();
+    for (const photo of detail.photos) {
+      edit.append(new Option(photo.title, photo.id));
+      const row = make('div', 'ag-photo-row'); const copy = make('div', 'ag-photo-copy');
+      copy.append(make('strong', '', photo.title), make('p', 'admin-help', `${photo.approved ? '可顯示' : '隱藏'} · ${photo.delivery_path ? '已附交件檔案' : '尚無交件檔案'}`));
+      const actions = make('div', 'ag-photo-actions');
+      const visibility = make('button', 'admin-button admin-button--quiet admin-button--small', photo.approved ? '設為隱藏' : '允許顯示'); visibility.type = 'button'; visibility.disabled = busy;
+      visibility.addEventListener('click', () => { if (detail) void mutation('', { action: 'updatePhoto', id: detail.gallery.id, photoId: photo.id, approved: !photo.approved }, photo.approved ? '照片已設為隱藏。' : '照片已允許在開放的相簿顯示。'); });
+      const label = make('label', 'ag-delivery-label', photo.delivery_path ? '更換交件檔案' : '加入交件檔案'); label.htmlFor = `ag-delivery-${photo.id}`;
+      const file = make('input', 'ag-delivery-file'); file.id = label.htmlFor; file.type = 'file'; file.accept = 'image/jpeg,image/png,image/webp'; file.disabled = busy;
+      file.setAttribute('aria-label', `${label.textContent}：${photo.title}`); file.setAttribute('aria-describedby', 'ag-upload-help');
+      file.addEventListener('change', () => { queueFiles(Array.from(file.files || []), 'delivery', photo); file.value = ''; });
+      actions.append(visibility, label, file); row.append(copy, actions); list.append(row);
+    }
+    edit.value = selectedPhotoId;
+    if (!detail.photos.length) list.append(make('p', 'admin-help', '還沒有照片。從上方選擇預覽照片開始。'));
+  }
+  function clearPhotoForm() {
+    $<HTMLFormElement>('ag-photo-form').reset(); $<HTMLSelectElement>('ag-edit-photo').value = ''; $('ag-photo-save').textContent = '新增照片資料';
+    if (detail) $<HTMLInputElement>('ag-photo-preview').placeholder = `${detail.gallery.id}/photo-001.jpg`;
+  }
+  function renderDetail(value: Detail) {
+    if (detail?.gallery.id !== value.gallery.id) clearUploads();
+    detail = value; clearDirty(); clearPhotoForm();
+    $('ag-empty').hidden = true; $('ag-detail').hidden = false;
+    $('ag-id').textContent = `相簿 ID：${value.gallery.id}`;
+    $<HTMLInputElement>('ag-title').value = value.gallery.title; $<HTMLSelectElement>('ag-stage').value = value.gallery.status; $<HTMLInputElement>('ag-limit').value = String(value.gallery.selection_limit); $<HTMLInputElement>('ag-downloads').checked = value.gallery.allow_downloads;
+    $('ag-storage-example').textContent = `物件路徑格式：${value.gallery.id}/photo-001.jpg`;
+    renderPhotos();
+    const invites = $('ag-invite-list'); invites.replaceChildren();
+    for (const invite of value.invites) {
+      const expired = Date.parse(invite.expires_at) <= Date.now();
+      const row = make('div', 'ag-invite-row'); const copy = make('div'); copy.append(make('strong', '', `邀請 ${invite.id.slice(0, 8)}`), make('p', 'admin-help', `${invite.revoked_at ? '已撤銷' : expired ? '已到期' : '有效中'} · 到期 ${formatAdminDate(invite.expires_at)}`)); row.append(copy);
+      if (!invite.revoked_at && !expired) { const revoke = make('button', 'admin-button admin-button--danger admin-button--small', '撤銷邀請'); revoke.type = 'button'; revoke.addEventListener('click', () => void revokeInvite(invite.id)); row.append(revoke); }
+      invites.append(row);
+    }
+    if (!value.invites.length) invites.append(make('p', 'admin-help', '尚未建立邀請。'));
+    const selections = $('ag-selections'); selections.replaceChildren(); const photoMap = new Map(value.photos.map(photo => [photo.id, photo.title]));
+    for (const selection of value.selections) {
+      const article = make('article', 'ag-selection'); article.append(make('h3', '', `邀請 ${selection.invite_id.slice(0, 8)} · ${selection.photo_ids.length} 張`), make('p', 'admin-meta', formatAdminDate(selection.submitted_at)));
+      const photos = make('ol');
+      for (const id of selection.photo_ids) { const row = make('li'); row.append(make('span', '', photoMap.get(id) || id)); const note = selection.photo_notes?.[id]; if (typeof note === 'string' && note.trim()) row.append(make('p', 'ag-photo-note', note)); photos.append(row); }
+      article.append(photos, make('p', 'ag-selection-note', selection.note || '沒有補充備註。')); selections.append(article);
+    }
+    if (!value.selections.length) selections.append(make('p', 'admin-help', '尚無已確認的選片。'));
+  }
+  async function loadList(preferId = detail?.gallery.id || '') {
+    const response = await requestAdmin<{galleries:Gallery[]}>('/api/admin/galleries');
+    const select = $<HTMLSelectElement>('ag-current'); select.replaceChildren(new Option('請選擇相簿', ''));
+    response.galleries.forEach(gallery => select.append(new Option(`${gallery.title} · ${labels[gallery.status]}`, gallery.id)));
+    $('ag-count').textContent = `共 ${response.galleries.length} 個相簿`;
+    const id = response.galleries.some(gallery => gallery.id === preferId) ? preferId : '';
+    select.value = id;
+    if (id) renderDetail(await requestAdmin<Detail>(`/api/admin/galleries?id=${encodeURIComponent(id)}`));
+    else { detail = null; clearUploads(); $('ag-detail').hidden = true; $('ag-empty').hidden = false; }
+  }
+  async function reload() {
+    if (busy || !confirmDiscardChanges()) return; setBusy(true); clearInvitation(); say('正在載入相簿…');
+    try { await loadList(); clearDirty(); say('相簿已更新。'); } catch (error) { say(adminErrorMessage(error), true); } finally { setBusy(false); }
+  }
+  async function mutation(formId: string, action: Record<string, unknown>, message: string, method: 'POST'|'PATCH' = 'PATCH') {
+    if (busy) return;
+    if (([...dirtyForms].some(id => id !== formId) || action.action === 'create' && uploadQueue.some(item => item.status !== 'done')) && !window.confirm('其他區塊仍有未儲存的輸入或待上傳檔案。繼續此操作會重新載入相簿，確定捨棄其他修改嗎？')) return;
+    setBusy(true); say('正在儲存…');
+    try {
+      const response = await requestAdmin<{result?:{id:string}; invitation?:{id:string;url:string;expiresAt:string}}>('/api/admin/galleries', { method, body: action });
+      if (action.action !== 'issueInvite') clearInvitation();
+      if (response.invitation) {
+        const url = new URL(response.invitation.url, location.origin);
+        if (url.origin !== location.origin || url.pathname !== '/client/' || !/^#token=[a-f0-9]{64}$/i.test(url.hash)) throw new Error('邀請連結格式不正確，請重新建立邀請。');
+        $<HTMLInputElement>('ag-invite-url').value = url.href; $('ag-new-invite').hidden = false; $('ag-invite-expiry').textContent = `有效至 ${formatAdminDate(response.invitation.expiresAt)}。請妥善傳送與保存；重新載入後無法再次取得原連結。`;
+      }
+      await loadList(action.action === 'create' ? response.result?.id || '' : detail?.gallery.id || ''); clearDirty();
+      if (formId === 'ag-create-form') $<HTMLFormElement>(formId).reset();
+      say(message);
+    } catch (error) { say(error instanceof Error && !(error.name === 'AdminApiError') ? error.message : adminErrorMessage(error), true); }
+    finally { setBusy(false); }
+  }
+  async function revokeInvite(inviteId: string) {
+    if (!detail || busy || !window.confirm('撤銷後，這份邀請將無法再次載入相簿或建立新的下載連結。先前開啟的短期照片連結可能仍在有效期間內。確定撤銷嗎？')) return;
+    await mutation('', { action: 'revokeInvite', id: detail.gallery.id, inviteId }, '邀請已撤銷。');
+  }
+  document.querySelectorAll<HTMLFormElement>('.ag-layout form').forEach(form => {
+    form.addEventListener('input', event => { if (form.id !== 'ag-invite-form' && (event.target as HTMLElement).id !== 'ag-edit-photo') { dirtyForms.add(form.id); setUnsavedChanges(true); } });
+  });
+  $<HTMLInputElement>('ag-upload-files').addEventListener('change', event => { const input = event.currentTarget as HTMLInputElement; queueFiles(Array.from(input.files || [])); input.value = ''; });
+  $('ag-upload-start').addEventListener('click', () => void runUploads());
+  $('ag-upload-clear').addEventListener('click', () => { if (busy) return; if (uploadQueue.some(item => item.status !== 'done') && !window.confirm('清除後將移除尚未完成的上傳檔案，確定繼續嗎？')) return; clearUploads(); });
+  $('ag-reload').addEventListener('click', () => void reload());
+  $<HTMLSelectElement>('ag-current').addEventListener('change', async event => {
+    const select = event.currentTarget as HTMLSelectElement; const id = select.value;
+    if (busy || !confirmDiscardChanges()) { select.value = detail?.gallery.id || ''; return; }
+    clearInvitation(); setBusy(true); say('正在載入相簿…');
+    try { if (id) renderDetail(await requestAdmin<Detail>(`/api/admin/galleries?id=${encodeURIComponent(id)}`)); else { detail = null; clearUploads(); $('ag-detail').hidden = true; $('ag-empty').hidden = false; clearDirty(); } say(''); }
+    catch (error) { select.value = detail?.gallery.id || ''; say(adminErrorMessage(error), true); }
+    finally { setBusy(false); }
+  });
+  $<HTMLFormElement>('ag-create-form').addEventListener('submit', event => { event.preventDefault(); const title = $<HTMLInputElement>('ag-create-title').value.trim(); if (!title) return; void mutation('ag-create-form', { action: 'create', title, selectionLimit: Number($<HTMLInputElement>('ag-create-limit').value) }, '相簿草稿已建立。請加入照片，再開放選片。', 'POST'); });
+  $<HTMLFormElement>('ag-settings-form').addEventListener('submit', event => {
+    event.preventDefault(); if (!detail) return;
+    const title = $<HTMLInputElement>('ag-title').value.trim(); if (!title) return;
+    const stage = $<HTMLSelectElement>('ag-stage').value; const allowDownloads = $<HTMLInputElement>('ag-downloads').checked;
+    if (stage === 'delivered' && detail.gallery.status !== 'delivered' && !window.confirm('改為已交件後，受邀者將無法新增或修改選片。確認照片與下載設定已準備完成嗎？')) return;
+    void mutation('ag-settings-form', { action: 'update', id: detail.gallery.id, title, status: stage, selectionLimit: Number($<HTMLInputElement>('ag-limit').value), allowDownloads }, '相簿設定已儲存。');
+  });
+  $<HTMLSelectElement>('ag-edit-photo').addEventListener('change', event => {
+    const select = event.currentTarget as HTMLSelectElement; const id = select.value;
+    if (dirtyForms.has('ag-photo-form') && !window.confirm('要放棄尚未儲存的照片輸入，改為編輯另一張嗎？')) { select.value = select.dataset.previous || ''; return; }
+    dirtyForms.delete('ag-photo-form'); updateDirty(); select.dataset.previous = id;
+    const photo = detail?.photos.find(value => value.id === id);
+    if (!photo) { clearPhotoForm(); return; }
+    $<HTMLInputElement>('ag-photo-title').value = photo.title; $<HTMLInputElement>('ag-photo-preview').value = photo.preview_path; $<HTMLInputElement>('ag-photo-delivery').value = photo.delivery_path || ''; $<HTMLInputElement>('ag-photo-approved').checked = photo.approved; $('ag-photo-save').textContent = '儲存照片資料';
+  });
+  $<HTMLFormElement>('ag-photo-form').addEventListener('submit', event => {
+    event.preventDefault(); if (!detail) return;
+    const photoId = $<HTMLSelectElement>('ag-edit-photo').value; const previewPath = $<HTMLInputElement>('ag-photo-preview').value.trim(); const deliveryPath = $<HTMLInputElement>('ag-photo-delivery').value.trim(); const title = $<HTMLInputElement>('ag-photo-title').value.trim();
+    if (!title || !previewPath.startsWith(`${detail.gallery.id}/`) || (deliveryPath && !deliveryPath.startsWith(`${detail.gallery.id}/`))) { say('照片名稱不可空白；預覽與交件路徑必須以目前相簿 ID 開頭。', true); return; }
+    void mutation('ag-photo-form', { action: photoId ? 'updatePhoto' : 'addPhoto', id: detail.gallery.id, ...(photoId ? { photoId } : {}), title, previewPath, deliveryPath: deliveryPath || null, approved: $<HTMLInputElement>('ag-photo-approved').checked }, '照片資料已儲存。');
+  });
+  $<HTMLFormElement>('ag-invite-form').addEventListener('submit', event => { event.preventDefault(); if (!detail) return; if (detail.gallery.status === 'draft') { say('目前相簿是草稿，邀請者將無法瀏覽。請先完成照片並開放選片。', true); return; } void mutation('ag-invite-form', { action: 'issueInvite', id: detail.gallery.id, expiresInDays: Number($<HTMLInputElement>('ag-invite-days').value) }, '邀請已建立。請使用下方按鈕複製，並直接傳給合作對象。'); });
+  $('ag-copy-invite').addEventListener('click', async () => { const input = $<HTMLInputElement>('ag-invite-url'); if (!input.value) return; try { await navigator.clipboard.writeText(input.value); say('邀請連結已複製。請直接傳給指定合作對象。'); } catch { input.focus(); input.select(); say('瀏覽器未允許自動複製，已選取邀請連結，請手動複製。'); } });
+  $('ag-hide-invite').addEventListener('click', () => { clearInvitation(); say('已清除畫面上的邀請連結；邀請仍有效。'); });
+  window.addEventListener('pagehide', clearInvitation);
+  requireAdminSession().then(reload).catch(() => {});
+</script>
+
+<style is:global>
+  .ag-upload{padding:20px;border:1px dashed var(--adm-line);border-radius:var(--adm-radius);background:var(--adm-surface-soft)}.ag-upload h3{margin:0;font-size:1rem}.ag-file-label{display:block;margin:18px 0 8px;font-size:.85rem;font-weight:600}.ag-upload input[type=file],.ag-delivery-file{display:block;width:100%;max-width:100%;min-width:0;font-size:.78rem;color:var(--adm-muted)}.ag-upload input::file-selector-button,.ag-delivery-file::file-selector-button{margin-right:10px;padding:9px 12px;border:1px solid var(--adm-line);border-radius:8px;background:white;color:var(--adm-ink);cursor:pointer}.ag-upload .admin-actions{margin-top:16px;flex-wrap:wrap}.ag-upload-queue{padding:0;margin:0;list-style:none}.ag-upload-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:14px 0;border-top:1px solid var(--adm-line)}.ag-upload-row strong{display:block;font-size:.82rem;overflow-wrap:anywhere}.ag-upload-row .admin-help{margin:5px 0 0;font-size:.74rem}.ag-upload-row .admin-pill[data-status=done]{background:#edf6ee;color:#246644}.ag-upload-row .admin-pill[data-status=failed]{background:#fdf0ef;color:var(--adm-danger)}.ag-upload-error{font-size:.78rem;color:var(--adm-danger);margin:8px 0 0;overflow-wrap:anywhere}.ag-photo-copy{flex:1;min-width:0}.ag-photo-copy .admin-help{margin:6px 0 0}.ag-photo-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;width:230px;max-width:100%}.ag-photo-actions button{justify-self:start}.ag-delivery-label{font-size:.76rem;color:var(--adm-muted)}.ag-photo-note{margin:5px 0 10px;padding:9px 12px;border-left:2px solid var(--adm-line);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--adm-muted);line-height:1.65}.ag-storage-guide form{margin-top:22px}@media(max-width:520px){.ag-upload{padding:16px}.ag-upload-row{grid-template-columns:minmax(0,1fr) auto}.ag-upload-row button{grid-column:1/-1;justify-self:start}.ag-photo-actions{width:100%}}
+
+  .ag-layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:28px;align-items:start}.ag-sidebar,.ag-detail{display:grid;gap:24px;min-width:0}.ag-sidebar .admin-card,.ag-detail .admin-card{padding:28px}.ag-sidebar h2,.ag-detail h2{font-size:1.35rem;margin-bottom:22px}.ag-layout form>.admin-button{margin-top:18px}.ag-layout .admin-field{margin-bottom:18px}.ag-layout .admin-field select{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--adm-line);border-radius:10px;background:white;color:var(--adm-ink)}.ag-layout .admin-help{margin-top:12px}.ag-form-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}.ag-storage-guide{margin-bottom:22px;padding:16px 20px;background:#f0f8fc;border-radius:14px;font-size:.83rem}.ag-storage-guide summary{cursor:pointer;min-height:32px;color:#235b75;font-weight:600}.ag-storage-guide p{margin:12px 0 0;overflow-wrap:anywhere}.ag-photo-list{margin-top:26px}.ag-photo-row{display:flex;justify-content:space-between;align-items:baseline;gap:15px;padding:13px 0;border-top:1px solid var(--adm-line);font-size:.81rem}.ag-photo-row strong{overflow-wrap:anywhere;min-width:0}.ag-photo-row span{color:var(--adm-muted);font-size:.74rem;flex-shrink:0}.ag-inline-form{display:flex;align-items:end;gap:18px;margin-top:20px}.ag-inline-form .admin-field{margin:0;flex:1}.ag-inline-form .admin-button{margin:0!important}.ag-new-invite{margin-top:24px;background:#edf8fc;padding:20px;border-radius:16px}.ag-new-invite label{display:block;font-size:.82rem;font-weight:600;margin-bottom:8px}.ag-new-invite input{width:100%;padding:12px;border:1px solid #bbd9e6;border-radius:10px;background:white;font-size:.78rem}.ag-new-invite .admin-actions{margin-top:14px;flex-wrap:wrap}.ag-list{margin-top:24px}.ag-invite-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 0;border-top:1px solid var(--adm-line);font-size:.86rem}.ag-invite-row .admin-help{margin:5px 0 0}.ag-selection{padding:22px 0;border-top:1px solid var(--adm-line)}.ag-selection h3{font-size:1rem}.ag-selection ol{padding-left:22px;font-size:.86rem;line-height:1.9}.ag-selection-note{padding:16px;background:#f4f9fb;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.85rem}#ag-id{overflow-wrap:anywhere;font-size:.75rem;margin-bottom:22px}@media(max-width:1000px){.ag-layout{grid-template-columns:240px minmax(0,1fr);gap:20px}.ag-sidebar .admin-card,.ag-detail .admin-card{padding:22px}.ag-form-grid{grid-template-columns:minmax(0,1fr);gap:0}.ag-inline-form{align-items:stretch;flex-direction:column}.ag-photo-row{flex-direction:column;gap:4px}}@media(max-width:760px){.ag-layout{grid-template-columns:minmax(0,1fr)}.ag-sidebar{grid-template-columns:1fr 1fr}.ag-sidebar>a{grid-column:1/-1}.ag-invite-row{align-items:flex-start;flex-direction:column}}@media(max-width:520px){.ag-sidebar{grid-template-columns:minmax(0,1fr)}.ag-sidebar .admin-card,.ag-detail .admin-card{padding:20px}.ag-new-invite{padding:16px}}
+</style>

@@ -1,0 +1,73 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="管理員登入" login={true}>
+  <div class="admin-login">
+    <section class="admin-login__intro">
+      <div><span class="admin-eyebrow">PRIVATE STUDIO / PHOX999</span><h1>工作室管理</h1><p>整理每一份合作意向，讓拍攝之前的溝通，也有清楚的節奏。</p></div>
+      <span class="admin-login__signature">Phox999 photography</span>
+    </section>
+    <section class="admin-login__form" aria-labelledby="login-heading">
+      <h2 id="login-heading">管理員登入</h2><p>登入後管理合作申請與網站內容。</p>
+      <form id="admin-login-form" method="post" action="/api/auth/login">
+        <div class="admin-field"><label for="login-email">電子郵件</label><input id="login-email" name="email" type="email" autocomplete="username" maxlength="254" required inputmode="email" autocapitalize="none" spellcheck="false" /></div>
+        <div class="admin-field"><label for="login-password">密碼</label><div class="admin-password"><input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="256" required /><button id="login-password-toggle" type="button" aria-label="顯示密碼" aria-pressed="false">顯示</button></div></div>
+        <button class="admin-button" id="login-submit" type="submit">登入工作室</button>
+      </form>
+      <p class="admin-status" id="login-status" role="status" aria-live="polite">正在確認登入狀態…</p>
+      <p class="admin-login__note">帳號由網站管理員開通，未提供公開註冊。<br />忘記密碼或無法登入？請聯絡網站管理員協助重設。</p>
+    </section>
+  </div>
+</AdminLayout>
+<script>
+  import { requestAdmin, AdminApiError, adminErrorMessage } from '../../lib/admin-client';
+  const form = document.querySelector<HTMLFormElement>('#admin-login-form');
+  const email = document.querySelector<HTMLInputElement>('#login-email');
+  const password = document.querySelector<HTMLInputElement>('#login-password');
+  const toggle = document.querySelector<HTMLButtonElement>('#login-password-toggle');
+  const submit = document.querySelector<HTMLButtonElement>('#login-submit');
+  const status = document.querySelector<HTMLElement>('#login-status');
+  let submitting = false;
+  toggle?.addEventListener('click', () => {
+    if (!password || !toggle) return;
+    const visible = password.type === 'password';
+    password.type = visible ? 'text' : 'password';
+    toggle.textContent = visible ? '隱藏' : '顯示';
+    toggle.setAttribute('aria-label', visible ? '隱藏密碼' : '顯示密碼');
+    toggle.setAttribute('aria-pressed', String(visible));
+  });
+  // An existing session is checked once; login submission waits to avoid session races.
+  requestAdmin('/api/auth/session').then(() => window.location.replace('/admin/')).catch((error) => {
+    if (status && error instanceof AdminApiError && error.status === 401) status.textContent = '';
+    if (status && error instanceof AdminApiError && error.status !== 401) {
+      status.textContent = error.status === 403 ? '目前帳號沒有管理權限，請使用已授權的管理員帳號登入。' : adminErrorMessage(error);
+      status.dataset.error = 'true';
+    }
+  });
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (submitting || !form.reportValidity() || !email || !password || !submit || !status) return;
+    submitting = true;
+    submit.disabled = true;
+    submit.textContent = '登入中…';
+    status.dataset.error = 'false';
+    status.textContent = '正在驗證帳號…';
+    try {
+      await requestAdmin('/api/auth/login', { method: 'POST', body: { email: email.value.trim(), password: password.value }, retryAuth: false });
+      password.value = '';
+      window.location.replace('/admin/');
+    } catch (error) {
+      status.dataset.error = 'true';
+      const message = error instanceof AdminApiError && [400, 401, 403].includes(error.status) ? '無法登入，請確認帳號、密碼與管理權限。' : adminErrorMessage(error);
+      const diagnosticCode = new URLSearchParams(window.location.search).get('diagnostics') === '1'
+        && error instanceof AdminApiError && error.status === 503 && error.code ? `（${error.code}）` : '';
+      status.textContent = `${message}${diagnosticCode}`;
+      password.value = '';
+      password.focus();
+    } finally {
+      submitting = false;
+      submit.disabled = false;
+      submit.textContent = '登入工作室';
+    }
+  });
+</script>

@@ -1,0 +1,157 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { siteConfig } from '../data/site';
+import '../styles/inner-pages.css';
+---
+<BaseLayout title="合作進度｜phox999 photography" description="使用私人收件連結，查看本次合作意向與拍攝確認單。" noindex={true} referrer="no-referrer">
+  <Header />
+  <main id="main-content" class="cooperation-page inner-page" tabindex="-1">
+    <div class="container cooperation-container">
+      <header class="inner-heading cooperation-heading"><p class="inner-kicker">這次的合作</p><h1>從想法，到一起拍。</h1><p class="inner-intro">在這裡查看收件進度，以及雙方確認的拍攝安排。</p></header>
+      <section class="cooperation-card cooperation-gate" data-progress-gate aria-labelledby="progress-gate-title"><h2 id="progress-gate-title" data-gate-title>請從私人收件連結進入</h2><p data-gate-message>開啟送出合作意向後保存的完整連結，即可查看本次進度。</p><div class="cooperation-actions"><a class="button button--primary" href={siteConfig.mailtoUrl}>聯繫攝影師</a><button class="button button--secondary" type="button" data-progress-retry hidden>重新載入</button></div></section>
+      <p class="cooperation-message" data-progress-message role="status" aria-live="polite"></p>
+      <div data-progress-content hidden>
+        <section class="cooperation-card" aria-labelledby="progress-title">
+          <div class="cooperation-card-heading"><div><p class="cooperation-eyebrow" data-progress-reference></p><h2 id="progress-title">合作進度</h2></div><span class="cooperation-pill" data-progress-pill></span></div>
+          <p class="cooperation-muted" data-progress-created></p>
+          <ol class="cooperation-timeline" aria-label="處理進度"><li data-progress-step="new"><span>01</span>收到意向</li><li data-progress-step="reviewing"><span>02</span>查看內容</li><li data-progress-step="contacted"><span>03</span>聯繫討論</li><li data-progress-step="closed"><span>04</span>本次結束</li></ol>
+          <p data-progress-explanation></p><button class="cooperation-text-button" type="button" data-progress-refresh>更新進度</button>
+        </section>
+        <section class="cooperation-card cooperation-summary" aria-labelledby="summary-title"><h2 id="summary-title">你送來的拍攝想法</h2><dl class="cooperation-details"><div><dt>姓名／暱稱</dt><dd data-summary-name></dd></div><div><dt>合作類型</dt><dd data-summary-type></dd></div><div><dt>偏好日期</dt><dd data-summary-date></dd></div></dl><p class="cooperation-copy" data-summary-description></p><div data-summary-links-wrap hidden><h3>參考連結</h3><ul class="cooperation-links" data-summary-links></ul></div></section>
+        <section class="cooperation-card cooperation-confirmation" data-confirmation hidden aria-labelledby="confirmation-title"><div class="cooperation-card-heading"><div><p class="cooperation-eyebrow">拍攝確認單</p><h2 id="confirmation-title">把這一天，留給拍攝。</h2></div><span class="cooperation-pill">安排已確認</span></div><p class="cooperation-muted" data-confirmation-version></p><dl class="cooperation-details confirmation-details"><div><dt>收件編號</dt><dd data-confirmation-reference></dd></div><div><dt>拍攝時間</dt><dd data-confirmation-time></dd></div><div><dt>集合地點</dt><dd data-confirmation-location></dd></div><div data-confirmation-map-wrap hidden><dt>集合地圖</dt><dd><a data-confirmation-map target="_blank" rel="noopener noreferrer">查看地圖</a></dd></div><div><dt>服裝準備</dt><dd data-confirmation-wardrobe></dd></div><div><dt>攜帶物品</dt><dd data-confirmation-bring></dd></div><div><dt>雨備安排</dt><dd data-confirmation-rain></dd></div><div><dt>交件約定</dt><dd data-confirmation-delivery></dd></div><div><dt>公開方式</dt><dd data-confirmation-publication></dd></div></dl><p class="cooperation-muted">如需調整，請聯繫攝影師再次確認；行事曆檔案不會自動同步後續變更。</p><div class="cooperation-actions confirmation-actions"><button class="button button--secondary" type="button" data-confirmation-print>列印確認單</button><button class="button button--primary" type="button" data-confirmation-calendar>加入行事曆</button></div></section>
+        <p class="cooperation-private">私人連結僅供本次合作使用，請勿公開分享。</p>
+      </div>
+      <noscript><p class="cooperation-card">請開啟 JavaScript 查看合作進度，或直接聯繫攝影師確認。</p></noscript>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+<script>
+  import { tokenFromFragment, progressFromResponse, formatShootTime, confirmationCalendar, safeWebLink, type CooperationProgress } from '../lib/inquiry-workflow';
+  const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+  const hadFragment = Boolean(window.location.hash);
+  let token = tokenFromFragment(window.location.hash);
+  // The credential is kept only in this page's memory; it is never sent in a URL.
+  if (window.location.hash || new URLSearchParams(window.location.search).has('token')) window.history.replaceState(null, '', new URL(window.location.pathname, window.location.origin).href);
+  let data: CooperationProgress | null = null;
+  let busy = false;
+  let controller: AbortController | null = null;
+  let downloadURL = '';
+  const write = (selector: string, value: string) => { $(selector).textContent = value; };
+  const statusNames = { new: '已收到', reviewing: '查看中', contacted: '已聯繫', closed: '本次結束' };
+  const explanations = { new: '已收到你的想法，攝影師會依主題與檔期查看。', reviewing: '正在查看拍攝方向與檔期，請留意你留下的聯絡方式。', contacted: '已開始聯繫討論；確定的拍攝安排會列在下方確認單。', closed: '本次合作意向已結束。如有新的想法，歡迎再聯繫。' };
+  function gate(title: string, message: string, retry = false) {
+    $('[data-progress-gate]').hidden = false; $('[data-progress-content]').hidden = true;
+    write('[data-gate-title]', title); write('[data-gate-message]', message); $('[data-progress-retry]').hidden = !retry;
+  }
+  function render(progress: CooperationProgress) {
+    $('[data-progress-gate]').hidden = true; $('[data-progress-content]').hidden = false;
+    write('[data-progress-reference]', `收件編號 ${progress.reference}`);
+    write('[data-progress-created]', `收件時間 ${formatShootTime(progress.createdAt)}（台北時間）`);
+    write('[data-progress-pill]', statusNames[progress.status]); write('[data-progress-explanation]', explanations[progress.status]);
+    const steps = ['new', 'reviewing', 'contacted', 'closed'];
+    document.querySelectorAll<HTMLElement>('[data-progress-step]').forEach(step => {
+      const current = step.dataset.progressStep === progress.status;
+      step.dataset.active = String(current || step.dataset.progressStep === 'new' || progress.status !== 'closed' && steps.indexOf(step.dataset.progressStep || '') < steps.indexOf(progress.status));
+      if (current) step.setAttribute('aria-current', 'step'); else step.removeAttribute('aria-current');
+    });
+    write('[data-summary-name]', progress.summary.name); write('[data-summary-type]', progress.summary.collaborationType);
+    write('[data-summary-date]', progress.summary.preferredDate || '一起討論'); write('[data-summary-description]', progress.summary.description);
+    const links = $('[data-summary-links]'); links.replaceChildren();
+    progress.summary.referenceLinks.forEach(link => { const li = document.createElement('li'); const anchor = document.createElement('a'); anchor.href = safeWebLink(link); anchor.target = '_blank'; anchor.rel = 'noopener noreferrer'; anchor.textContent = new URL(link).hostname; anchor.setAttribute('aria-label', `開啟參考：${link}`); li.appendChild(anchor); links.appendChild(li); });
+    $('[data-summary-links-wrap]').hidden = !progress.summary.referenceLinks.length;
+    const confirmation = progress.confirmation;
+    $('[data-confirmation]').hidden = !confirmation;
+    document.body.dataset.shootConfirmed = confirmation ? 'true' : 'false';
+    if (confirmation) {
+      write('[data-confirmation-version]', `第 ${confirmation.version} 版 · 更新於 ${formatShootTime(confirmation.updatedAt)}（台北時間）`);
+      write('[data-confirmation-reference]', progress.reference);
+      write('[data-confirmation-time]', `${formatShootTime(confirmation.startsAt)} — ${formatShootTime(confirmation.endsAt)}（台北時間）`);
+      write('[data-confirmation-location]', confirmation.location || '請與攝影師確認集合位置');
+      const map = safeWebLink(confirmation.mapUrl); $('[data-confirmation-map-wrap]').hidden = !map;
+      const anchor = $<HTMLAnchorElement>('[data-confirmation-map]'); if (map) anchor.href = map; else anchor.removeAttribute('href');
+      write('[data-confirmation-wardrobe]', confirmation.wardrobe || '依雙方討論'); write('[data-confirmation-bring]', confirmation.bring || '依雙方討論');
+      write('[data-confirmation-rain]', confirmation.rainPlan || '請與攝影師確認'); write('[data-confirmation-delivery]', confirmation.deliveryNote || '請與攝影師確認'); write('[data-confirmation-publication]', confirmation.publicationNote || '請與攝影師確認');
+    }
+  }
+  async function load() {
+    if (!token || busy) return;
+    busy = true; controller = new AbortController(); const activeController = controller;
+    const timer = window.setTimeout(() => activeController.abort(), 20_000);
+    $<HTMLButtonElement>('[data-progress-refresh]').disabled = true; $<HTMLButtonElement>('[data-progress-retry]').disabled = true;
+    write('[data-progress-message]', '正在讀取合作進度…');
+    try {
+      const response = await fetch('/api/cooperation', { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }, credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: activeController.signal });
+      if ([401, 403, 404, 410].includes(response.status)) {
+        token = ''; data = null; document.body.dataset.shootConfirmed = 'false';
+        gate('這個私人連結已無法使用', '連結可能已失效或被撤銷，請聯繫攝影師確認本次進度。'); write('[data-progress-message]', ''); return;
+      }
+      if (!response.ok) throw new Error('unavailable');
+      const parsed = progressFromResponse(await response.json());
+      if (!parsed) throw new Error('malformed');
+      data = parsed; render(data); write('[data-progress-message]', '進度已更新。');
+    } catch {
+      if (data) write('[data-progress-message]', '暫時無法更新，畫面保留上次資料。請稍後重試。');
+      else { gate('暫時無法讀取進度', '請稍後重新載入；若仍無法開啟，請聯繫攝影師。', true); write('[data-progress-message]', ''); }
+    } finally {
+      window.clearTimeout(timer); busy = false; controller = null;
+      $<HTMLButtonElement>('[data-progress-refresh]').disabled = false; $<HTMLButtonElement>('[data-progress-retry]').disabled = false;
+    }
+  }
+  $('[data-progress-refresh]').addEventListener('click', () => void load());
+  $('[data-progress-retry]').addEventListener('click', () => void load());
+  $('[data-confirmation-print]').addEventListener('click', () => { if (data?.confirmation && confirmationCalendar(data)) window.print(); });
+  $('[data-confirmation-calendar]').addEventListener('click', () => {
+    const calendar = data && confirmationCalendar(data); if (!calendar || !data) return;
+    if (downloadURL) URL.revokeObjectURL(downloadURL);
+    downloadURL = URL.createObjectURL(new Blob([calendar], { type: 'text/calendar;charset=utf-8' }));
+    const anchor = document.createElement('a'); anchor.href = downloadURL; anchor.download = `phox999-${data.reference.replace(/[^a-zA-Z0-9-]/g, '')}.ics`; document.body.appendChild(anchor); anchor.click(); anchor.remove();
+    write('[data-progress-message]', '已下載拍攝行事曆檔。請開啟檔案加入自己的行事曆；後續變更需重新下載。');
+  });
+  window.addEventListener('pagehide', () => { controller?.abort(); if (downloadURL) URL.revokeObjectURL(downloadURL); downloadURL = ''; });
+  if (token) { gate('正在讀取合作進度', '請稍候。'); void load(); }
+  else if (hadFragment) gate('私人連結不完整', '請重新開啟收件時保存的完整私人連結，或聯繫攝影師。');
+</script>
+<style>
+  .cooperation-page { padding-bottom: 80px; }
+  .cooperation-container { max-width: 1040px; }
+  .cooperation-heading { margin-bottom: 36px; }
+  .cooperation-card { padding: clamp(24px, 4vw, 40px); margin-bottom: 24px; border-radius: 32px; background: #fff; box-shadow: var(--shadow-card); min-width: 0; }
+  .cooperation-card h2 { font-size: clamp(1.4rem, 3vw, 1.85rem); line-height: 1.5; }
+  .cooperation-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
+  .cooperation-card p { line-height: 1.85; }
+  .cooperation-card-heading { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .cooperation-eyebrow, .cooperation-muted, .cooperation-private { color: var(--color-muted); font-size: .9375rem; }
+  .cooperation-eyebrow { margin-bottom: 5px; overflow-wrap: anywhere; }
+  .cooperation-pill { display: inline-flex; padding: 8px 16px; background: #e7f5fb; color: #246b88; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+  .cooperation-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+  .cooperation-gate > p { margin-top: 14px; color: var(--color-muted); }
+  .cooperation-message { margin: 18px 0; min-height: 24px; color: var(--color-muted); }
+  .cooperation-timeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 26px 0; }
+  .cooperation-timeline li { display: grid; gap: 12px; color: #647883; border-top: 3px solid #e8f0f4; padding-top: 14px; font-size: .9375rem; }
+  .cooperation-timeline span { font-family: var(--font-heading); font-weight: 700; }
+  .cooperation-timeline li[data-active='true'] { border-color: #63badf; color: #246b88; }
+  .cooperation-timeline li[aria-current='step'] { font-weight: 700; }
+  .cooperation-text-button { display: inline-flex; align-items: center; justify-content: center; background: #edf7fc; border: 0; border-radius: 999px; padding: 10px 20px; margin-top: 16px; min-height: 44px; color: var(--color-primary-dark); font: inherit; cursor: pointer; }
+  .cooperation-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 32px; margin: 24px 0; }
+  .cooperation-details dt { color: var(--color-muted); font-size: .9375rem; margin-bottom: 7px; }
+  .cooperation-details dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; }
+  .cooperation-copy { white-space: pre-wrap; overflow-wrap: anywhere; margin: 24px 0; }
+  .cooperation-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .cooperation-links :global(a), .cooperation-details a { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: 999px; background: #edf7fc; color: var(--color-primary-dark); text-decoration: none; overflow-wrap: anywhere; }
+  .cooperation-private { text-align: center; line-height: 1.8; }
+  .cooperation-page [hidden] { display: none !important; }
+  @media (max-width: 600px) { .cooperation-details { grid-template-columns: 1fr; } .cooperation-timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; } .cooperation-actions .button { width: 100%; } }
+  @media print {
+    :global(body) { background: #fff !important; }
+    :global(body > *:not(.cooperation-page)), .cooperation-heading, .cooperation-gate, .cooperation-message, .cooperation-card:not(.cooperation-confirmation), .cooperation-private, .confirmation-actions { display: none !important; }
+    .cooperation-page { padding: 0 !important; margin: 0 !important; }
+    .cooperation-container { width: 100%; max-width: none; padding: 0; }
+    .cooperation-confirmation { box-shadow: none; border-radius: 0; margin: 0; padding: 12mm; }
+    .cooperation-details > div { break-inside: avoid; }
+    :global(body:not([data-shoot-confirmed='true'])) .cooperation-page { display: none !important; }
+    .cooperation-details a::after { content: ' (' attr(href) ')'; font-size: .8rem; }
+  }
+</style>

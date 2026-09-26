@@ -1,0 +1,496 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="合作管理" current="inquiries">
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / INQUIRIES</span><h1>讓每一次合作，有跡可循。</h1><p>檢視站內表單送出的合作意向，更新處理進度與內部備註。</p></div><button type="button" class="admin-button admin-button--quiet" id="inquiry-refresh">重新整理</button></header>
+  <dl class="admin-stats" aria-label="合作意向統計">
+    <div class="admin-stat"><dt>全部申請</dt><dd data-count="total">—</dd></div>
+    <div class="admin-stat"><dt>待處理</dt><dd data-count="new">—</dd></div>
+    <div class="admin-stat"><dt>評估中</dt><dd data-count="reviewing">—</dd></div>
+    <div class="admin-stat"><dt>已聯繫</dt><dd data-count="contacted">—</dd></div>
+    <div class="admin-stat"><dt>已結案</dt><dd data-count="closed">—</dd></div>
+  </dl>
+  <p class="admin-status" id="overview-status" role="status" aria-live="polite"></p>
+  <p class="admin-help" style="margin-bottom:20px">統計涵蓋站內合作表單；Google 表單的回覆需至 Google 表單管理。</p>
+  <div class="admin-filters" role="search" aria-label="搜尋合作意向">
+    <div class="admin-field"><label for="inquiry-query">搜尋申請</label><input type="search" id="inquiry-query" placeholder="姓名或聯絡帳號" maxlength="120" autocomplete="off" /></div>
+    <div class="admin-field"><label for="inquiry-filter">處理狀態</label><select id="inquiry-filter"><option value="all">全部狀態</option><option value="new">待處理</option><option value="reviewing">評估中</option><option value="contacted">已聯繫</option><option value="closed">已結案</option></select></div>
+    <button type="button" class="admin-button admin-button--quiet" id="inquiry-reset">清除篩選</button>
+  </div>
+  <p class="admin-status" id="inquiry-status" role="status" aria-live="polite"></p>
+  <div class="admin-inquiries">
+    <section class="admin-card admin-list-panel" aria-labelledby="inquiry-list-heading" id="inquiry-list-region" aria-busy="true">
+      <div class="admin-panel-heading"><h2 id="inquiry-list-heading">合作意向</h2><span class="admin-meta" id="inquiry-total">載入中</span></div>
+      <ul class="admin-inquiry-list" id="inquiry-list"></ul>
+      <div class="admin-empty" id="inquiry-empty"><strong>正在載入</strong><p>確認權限後，申請內容會顯示在這裡。</p></div>
+      <div class="admin-pagination"><span id="inquiry-page-label">每頁 20 筆</span><div class="admin-actions"><button type="button" class="admin-button admin-button--quiet admin-button--small" id="inquiry-prev" disabled>上一頁</button><button type="button" class="admin-button admin-button--quiet admin-button--small" id="inquiry-next" disabled>下一頁</button></div></div>
+    </section>
+    <aside class="admin-card admin-detail" aria-labelledby="inquiry-detail-title">
+      <div id="inquiry-detail-empty" class="admin-empty"><strong>先選擇一份合作意向</strong><p>查看拍攝想法與聯絡資訊，並記錄下一步。</p></div>
+      <div id="inquiry-detail" hidden>
+        <div class="admin-detail__top"><div><span class="admin-eyebrow">INQUIRY DETAILS</span><h2 id="inquiry-detail-title" tabindex="-1"></h2></div><span class="admin-pill" id="detail-badge"></span></div>
+        <dl><dt>申請時間</dt><dd id="detail-created"></dd><dt>聯絡方式</dt><dd id="detail-contact-method"></dd><dt>聯絡帳號</dt><dd id="detail-contact"></dd><dt>合作類型</dt><dd id="detail-type"></dd><dt>希望日期</dt><dd id="detail-date"></dd><dt>個資同意</dt><dd id="detail-consent"></dd></dl>
+        <h3>拍攝想法</h3><p class="admin-detail-description" id="detail-description"></p>
+        <section class="admin-references" id="detail-references" aria-labelledby="detail-references-heading" aria-busy="false">
+          <div class="admin-references__heading"><h3 id="detail-references-heading">參考資料</h3><button type="button" class="admin-button admin-button--quiet admin-button--small" id="detail-references-refresh">重新整理參考資料</button></div>
+          <p class="admin-help">照片僅限管理員檢視；檢視連結有效 5 分鐘，過期時可重新整理。</p>
+          <p class="admin-status" id="detail-references-status" role="status" aria-live="polite"></p>
+          <div id="detail-reference-images-section" hidden><h4>參考照片</h4><ul class="admin-reference-images" id="detail-reference-images"></ul></div>
+          <div id="detail-reference-links-section" hidden><h4>參考連結</h4><ul class="admin-reference-links" id="detail-reference-links"></ul></div>
+        </section>
+        <hr />
+        <form id="inquiry-edit-form" method="post" action="/api/admin/inquiries">
+          <div class="admin-field"><label for="detail-status">處理狀態</label><select id="detail-status"><option value="new">待處理</option><option value="reviewing">評估中</option><option value="contacted">已聯繫</option><option value="closed">已結案</option></select></div>
+          <div class="admin-field"><label for="detail-notes">內部備註</label><textarea id="detail-notes" maxlength="4000" rows="5" aria-describedby="detail-notes-help"></textarea><p class="admin-help" id="detail-notes-help">僅管理員可見，最多 4,000 字。請保留合作所需資訊。</p></div>
+          <div class="admin-actions"><button type="submit" class="admin-button" id="detail-save">儲存變更</button><button type="button" class="admin-button admin-button--quiet" id="detail-reload">重新載入</button></div>
+        </form>
+        <p class="admin-status" id="detail-save-status" role="status" aria-live="polite"></p><p class="admin-help" id="detail-updated"></p>
+        <details class="admin-confirmation" id="shoot-confirmation">
+          <summary><span><strong>拍攝確認</strong><small>時間、集合地點與行前準備</small></span><span class="admin-pill" id="confirmation-badge">尚未載入</span></summary>
+          <div class="admin-confirmation__body" id="confirmation-region" aria-busy="false">
+            <p class="admin-help">草稿僅管理員可見。確認後，對方可透過申請回條查看拍攝資訊。</p>
+            <form id="confirmation-form" method="post" action="/api/admin/inquiries">
+              <div class="admin-field"><label for="confirmation-slot">拍攝時段</label><select id="confirmation-slot" disabled><option value="">尚未選擇時段</option></select><p class="admin-help" id="confirmation-slot-help">草稿選取時段後會暫時保留；確認拍攝後正式預約。</p></div>
+              <div class="admin-field"><label for="confirmation-location">集合地點</label><input id="confirmation-location" maxlength="300" autocomplete="off" disabled /></div>
+              <div class="admin-field"><label for="confirmation-map-url">地圖連結（選填）</label><input id="confirmation-map-url" type="url" maxlength="2048" placeholder="https://…" autocomplete="off" disabled /></div>
+              <div class="admin-field"><label for="confirmation-wardrobe">服裝建議</label><textarea id="confirmation-wardrobe" maxlength="2000" rows="3" disabled></textarea></div>
+              <div class="admin-field"><label for="confirmation-bring">攜帶物品</label><textarea id="confirmation-bring" maxlength="2000" rows="3" disabled></textarea></div>
+              <div class="admin-field"><label for="confirmation-rain-plan">雨天備案</label><textarea id="confirmation-rain-plan" maxlength="2000" rows="3" disabled></textarea></div>
+              <div class="admin-field"><label for="confirmation-delivery-note">交付說明</label><textarea id="confirmation-delivery-note" maxlength="2000" rows="3" disabled></textarea></div>
+              <div class="admin-field"><label for="confirmation-publication-note">公開約定</label><textarea id="confirmation-publication-note" maxlength="2000" rows="3" disabled></textarea></div>
+              <div class="admin-actions"><button type="submit" class="admin-button" id="confirmation-confirm" disabled>確認拍攝</button><button type="button" class="admin-button admin-button--quiet" id="confirmation-draft" disabled>儲存為草稿</button><button type="button" class="admin-button admin-button--quiet" id="confirmation-reload">重新載入確認內容</button></div>
+            </form>
+            <p class="admin-status" id="confirmation-status" role="status" aria-live="polite"></p><p class="admin-help" id="confirmation-updated"></p>
+          </div>
+        </details>
+      </div>
+    </aside>
+  </div>
+</AdminLayout>
+<style>
+  .admin-references { margin-top: 24px; padding: 18px; border: 1px solid var(--adm-line); border-radius: var(--adm-radius); background: var(--adm-white); min-width: 0; }
+  .admin-references__heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .admin-references__heading h3 { margin: 0; }
+  .admin-references h4 { margin: 18px 0 10px; font-size: 13px; }
+  .admin-reference-images { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: 12px; padding: 0; margin: 0; list-style: none; }
+  .admin-reference-images :global(li) { min-width: 0; padding: 8px; border: 1px solid var(--adm-line); border-radius: var(--adm-radius); background: var(--adm-white); }
+  .admin-reference-images :global(a) { display: block; font-size: 12px; overflow-wrap: anywhere; }
+  .admin-reference-images :global(img) { display: block; width: 100%; height: 150px; object-fit: contain; margin-bottom: 8px; border-radius: 6px; background: var(--adm-surface-soft); }
+  .admin-reference-images :global(p) { margin: 8px 0 0; font-size: 12px; color: var(--adm-danger); }
+  .admin-reference-links { padding-left: 20px; margin: 0; }
+  .admin-reference-links :global(li + li) { margin-top: 8px; }
+  .admin-reference-links :global(a) { overflow-wrap: anywhere; font-size: 13px; }
+  .admin-confirmation { margin-top: 24px; border: 1px solid var(--adm-line); border-radius: var(--adm-radius); background: var(--adm-white); min-width: 0; }
+  .admin-confirmation summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px; cursor: pointer; list-style: none; }
+  .admin-confirmation summary::-webkit-details-marker { display: none; }
+  .admin-confirmation summary::after { content: '+'; font-size: 21px; color: var(--adm-muted); }
+  .admin-confirmation[open] summary::after { content: '−'; }
+  .admin-confirmation summary > span:first-child { flex: 1; min-width: 0; }
+  .admin-confirmation summary strong { display: block; font-size: 15px; }
+  .admin-confirmation summary small { display: block; margin-top: 5px; font-size: 12px; color: var(--adm-muted); }
+  .admin-confirmation summary:focus-visible { outline: 2px solid var(--adm-ink); outline-offset: 3px; border-radius: var(--adm-radius); }
+  .admin-confirmation__body { padding: 0 18px 18px; min-width: 0; }
+  .admin-confirmation__body form { margin-top: 18px; }
+  .admin-confirmation .admin-actions { flex-wrap: wrap; }
+  .admin-confirmation select, .admin-confirmation input, .admin-confirmation textarea { max-width: 100%; min-width: 0; }
+  .admin-confirmation .admin-pill[data-status="confirmed"] { color: #246644; background: #edf6ee; }
+</style>
+<script>
+  import { requestAdmin, requireAdminSession, adminErrorMessage, formatAdminDate, setUnsavedChanges, confirmDiscardChanges, AdminApiError } from '../../lib/admin-client';
+  type Status = 'new' | 'reviewing' | 'contacted' | 'closed';
+  type Inquiry = { id: string; name: string; contact_method: string; contact_account: string; collaboration_type: string; preferred_date: string | null; description: string; consent: boolean; status: Status; admin_notes: string | null; created_at: string; updated_at: string; version: number };
+  type InquiryList = { items: Inquiry[]; total: number; page: number; pageSize: number };
+  type InquiryReferences = { reference_links: string[]; reference_images: { name: string; type: string; size: number; url: string }[]; expires_in: number };
+  type ShootConfirmation = { version: number; status: 'draft' | 'confirmed'; slotId: string | null; startsAt: string | null; endsAt: string | null; location: string; mapUrl: string; wardrobe: string; bring: string; rainPlan: string; deliveryNote: string; publicationNote: string; updatedAt: string };
+  type ShootSlot = { id: string; startsAt: string; endsAt: string; status: string; inquiryId: string | null; version: number };
+  const labels: Record<Status, string> = { new: '待處理', reviewing: '評估中', contacted: '已聯繫', closed: '已結案' };
+  const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+  const query = $<HTMLInputElement>('#inquiry-query');
+  const filter = $<HTMLSelectElement>('#inquiry-filter');
+  const list = $('#inquiry-list');
+  const empty = $('#inquiry-empty');
+  const status = $('#inquiry-status');
+  const saveStatus = $('#detail-save-status');
+  const notes = $<HTMLTextAreaElement>('#detail-notes');
+  const statusInput = $<HTMLSelectElement>('#detail-status');
+  const saveButton = $<HTMLButtonElement>('#detail-save');
+  const references = $('#detail-references');
+  const referencesStatus = $('#detail-references-status');
+  const referencesRefresh = $<HTMLButtonElement>('#detail-references-refresh');
+  const referenceImages = $('#detail-reference-images');
+  const referenceLinks = $('#detail-reference-links');
+  const confirmationPanel = $<HTMLDetailsElement>('#shoot-confirmation');
+  const confirmationForm = $<HTMLFormElement>('#confirmation-form');
+  const confirmationStatus = $('#confirmation-status');
+  const confirmationSlot = $<HTMLSelectElement>('#confirmation-slot');
+  const confirmationFields = {
+    location: $<HTMLInputElement>('#confirmation-location'), mapUrl: $<HTMLInputElement>('#confirmation-map-url'),
+    wardrobe: $<HTMLTextAreaElement>('#confirmation-wardrobe'), bring: $<HTMLTextAreaElement>('#confirmation-bring'),
+    rainPlan: $<HTMLTextAreaElement>('#confirmation-rain-plan'), deliveryNote: $<HTMLTextAreaElement>('#confirmation-delivery-note'),
+    publicationNote: $<HTMLTextAreaElement>('#confirmation-publication-note'),
+  };
+  const url = new URL(window.location.href);
+  const linkedId = url.searchParams.get('id') || '';
+  let linkedInquiryId: string | null = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(linkedId) ? linkedId.toLowerCase() : null;
+  let page = Math.max(1, Math.min(100000, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1));
+  let appliedQuery = (url.searchParams.get('q') || '').trim().slice(0, 120);
+  let appliedStatus = url.searchParams.get('status') || 'all';
+  if (appliedStatus !== 'all' && !Object.hasOwn(labels, appliedStatus)) appliedStatus = 'all';
+  query.value = appliedQuery;
+  filter.value = appliedStatus;
+  let items: Inquiry[] = [];
+  let selected: Inquiry | null = null;
+  let total = 0;
+  let loading = false;
+  let saving = false;
+  let ready = false;
+  let generation = 0;
+  let searchTimer = 0;
+  let listError = false;
+  let referencesGeneration = 0;
+  let referencesExpiryTimer = 0;
+  let confirmation: ShootConfirmation | null = null;
+  let confirmationSlots: ShootSlot[] = [];
+  let confirmationLoaded = false;
+  let confirmationLoading = false;
+  let confirmationSaving = false;
+  let confirmationGeneration = 0;
+  let confirmationSnapshot = '';
+  function message(element: HTMLElement, text: string, error = false) { element.textContent = text; element.dataset.error = String(error); }
+  function confirmationValues() { return { slotId: confirmationSlot.value || null, ...Object.fromEntries(Object.entries(confirmationFields).map(([key, input]) => [key, input.value])) }; }
+  function confirmationDirty() { return confirmationLoaded && JSON.stringify(confirmationValues()) !== confirmationSnapshot; }
+  function updateDirty() { setUnsavedChanges(Boolean(selected && (notes.value !== (selected.admin_notes || '') || statusInput.value !== selected.status || confirmationDirty()))); }
+  function busySaving() { return saving || confirmationSaving; }
+  function updateConfirmationControls() {
+    const disabled = !confirmationLoaded || confirmationLoading || confirmationSaving;
+    confirmationSlot.disabled = disabled;
+    for (const input of Object.values(confirmationFields)) input.disabled = disabled;
+    $<HTMLButtonElement>('#confirmation-confirm').disabled = disabled || saving;
+    $<HTMLButtonElement>('#confirmation-draft').disabled = disabled || saving;
+    $<HTMLButtonElement>('#confirmation-reload').disabled = confirmationLoading || busySaving();
+    $('#confirmation-region').setAttribute('aria-busy', String(confirmationLoading || confirmationSaving));
+  }
+  function resetConfirmation() {
+    ++confirmationGeneration;
+    confirmation = null; confirmationSlots = []; confirmationLoaded = false; confirmationLoading = false; confirmationSnapshot = '';
+    confirmationPanel.open = false;
+    confirmationSlot.replaceChildren();
+    for (const input of Object.values(confirmationFields)) input.value = '';
+    $('#confirmation-badge').textContent = '尚未載入'; $('#confirmation-badge').dataset.status = '';
+    $('#confirmation-updated').textContent = '';
+    message(confirmationStatus, ''); updateConfirmationControls();
+  }
+  function renderConfirmation() {
+    confirmationSlot.replaceChildren();
+    const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = '尚未選擇時段'; confirmationSlot.append(placeholder);
+    const eligible = confirmationSlots.filter((slot) => slot.status !== 'closed' && (slot.inquiryId === selected?.id || !slot.inquiryId && ['open', 'held'].includes(slot.status)));
+    for (const slot of eligible) {
+      const option = document.createElement('option'); option.value = slot.id;
+      option.textContent = `${formatAdminDate(slot.startsAt)} — ${formatAdminDate(slot.endsAt)}${slot.inquiryId === selected?.id ? ' · 本次合作' : slot.status === 'held' ? ' · 暫留' : ''}`;
+      confirmationSlot.append(option);
+    }
+    if (confirmation?.slotId && !eligible.some((slot) => slot.id === confirmation!.slotId)) {
+      const option = document.createElement('option'); option.value = confirmation.slotId; option.disabled = true;
+      option.textContent = `${formatAdminDate(confirmation.startsAt)} · 原時段目前不可用，請重新選擇`; confirmationSlot.append(option);
+    }
+    confirmationSlot.value = confirmation?.slotId || '';
+    for (const [key, input] of Object.entries(confirmationFields)) input.value = confirmation?.[key as keyof typeof confirmationFields] || '';
+    $('#confirmation-badge').textContent = confirmation?.status === 'confirmed' ? '已確認' : confirmation ? '草稿' : '尚未建立';
+    $('#confirmation-badge').dataset.status = confirmation?.status || '';
+    $('#confirmation-updated').textContent = confirmation ? `最後更新：${formatAdminDate(confirmation.updatedAt)} · 版本 ${confirmation.version}` : '';
+    $('#confirmation-slot-help').textContent = eligible.length ? '草稿選取時段後會暫時保留；確認拍攝後正式預約。' : '目前沒有可用時段。可先儲存草稿，並至可約時段新增時段。';
+    confirmationSnapshot = JSON.stringify(confirmationValues()); updateDirty();
+  }
+  async function loadConfirmation(inquiryId: string) {
+    const requestId = ++confirmationGeneration;
+    const current = () => requestId === confirmationGeneration && selected?.id === inquiryId;
+    confirmationLoading = true; updateConfirmationControls(); message(confirmationStatus, '正在載入拍攝確認…');
+    try {
+      const [data, slots] = await Promise.all([
+        requestAdmin<{ item: ShootConfirmation | null }>(`/api/admin/inquiries/${encodeURIComponent(inquiryId)}/confirmation`),
+        requestAdmin<{ items: ShootSlot[] }>('/api/admin/availability'),
+      ]);
+      if (!current()) return;
+      if (!data || !Object.hasOwn(data, 'item') || !slots || !Array.isArray(slots.items)) throw new Error('Invalid confirmation response');
+      confirmation = data.item; confirmationSlots = slots.items; confirmationLoaded = true;
+      renderConfirmation(); message(confirmationStatus, '');
+    } catch (error) {
+      if (current()) message(confirmationStatus, `拍攝確認無法載入。${adminErrorMessage(error)} 請重新載入確認內容。`, true);
+    } finally { if (current()) { confirmationLoading = false; updateConfirmationControls(); } }
+  }
+  async function saveConfirmation(nextStatus: 'draft' | 'confirmed') {
+    if (!selected || !confirmationLoaded || confirmationLoading || busySaving()) return;
+    if (!confirmationForm.reportValidity()) return;
+    if (nextStatus === 'confirmed' && (!confirmationSlot.value || !confirmationFields.location.value.trim())) {
+      message(confirmationStatus, '確認拍攝前，請選擇時段並填寫集合地點。', true);
+      (!confirmationSlot.value ? confirmationSlot : confirmationFields.location).focus(); return;
+    }
+    if (confirmationFields.mapUrl.value && !safeReferenceUrl(confirmationFields.mapUrl.value.trim())) {
+      message(confirmationStatus, '地圖連結須為不含帳號密碼的完整 HTTP 或 HTTPS 網址。', true); confirmationFields.mapUrl.focus(); return;
+    }
+    const originalId = selected.id, requestId = confirmationGeneration;
+    const current = () => requestId === confirmationGeneration && selected?.id === originalId;
+    confirmationSaving = true; updateConfirmationControls(); saveButton.disabled = true;
+    message(confirmationStatus, '正在儲存拍攝確認…');
+    try {
+      const result = await requestAdmin<{ item: ShootConfirmation }>(`/api/admin/inquiries/${encodeURIComponent(originalId)}/confirmation`, { method: 'PATCH', body: { ...confirmationValues(), version: confirmation?.version || 0, status: nextStatus } });
+      if (!current()) return;
+      if (!result?.item) throw new Error('Invalid confirmation response');
+      confirmation = result.item;
+      // Reflect this reservation locally without another request overwriting later edits.
+      confirmationSlots = confirmationSlots.map((slot) => slot.id === confirmation?.slotId ? { ...slot, inquiryId: originalId, status: confirmation.status === 'confirmed' ? 'booked' : 'held' } : slot.inquiryId === originalId ? { ...slot, inquiryId: null, status: 'open' } : slot);
+      renderConfirmation();
+      message(confirmationStatus, confirmation.status === 'confirmed' ? '已確認拍攝，對方可在申請回條查看。' : '草稿已儲存，對方尚無法查看。');
+    } catch (error) {
+      if (!current()) return;
+      message(confirmationStatus, error instanceof AdminApiError && error.status === 409 ? '確認內容或時段已變更。你的輸入仍保留；請先複製內容，再重新載入確認內容。' : error instanceof AdminApiError && error.status === 401 ? '登入已逾時。請先複製尚未儲存的內容，再重新登入。' : adminErrorMessage(error), true);
+      updateDirty();
+    } finally { confirmationSaving = false; updateConfirmationControls(); saveButton.disabled = saving; }
+  }
+  function safeReferenceUrl(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    try {
+      const parsed = new URL(value);
+      return ['https:', 'http:'].includes(parsed.protocol) && !parsed.username && !parsed.password ? parsed.href : null;
+    } catch { return null; }
+  }
+  function clearReferences() {
+    ++referencesGeneration;
+    window.clearTimeout(referencesExpiryTimer);
+    referenceImages.replaceChildren();
+    referenceLinks.replaceChildren();
+    $('#detail-reference-images-section').hidden = true;
+    $('#detail-reference-links-section').hidden = true;
+    references.setAttribute('aria-busy', 'false');
+    referencesRefresh.disabled = false;
+    message(referencesStatus, '');
+  }
+  function referenceAnchor(href: string): HTMLAnchorElement {
+    const link = document.createElement('a');
+    link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.referrerPolicy = 'no-referrer';
+    return link;
+  }
+  async function loadReferences(inquiryId: string) {
+    clearReferences();
+    const requestId = referencesGeneration;
+    const current = () => requestId === referencesGeneration && selected?.id === inquiryId;
+    const startedAt = Date.now();
+    references.setAttribute('aria-busy', 'true');
+    referencesRefresh.disabled = true;
+    message(referencesStatus, '正在載入參考資料…');
+    try {
+      const data = await requestAdmin<InquiryReferences>(`/api/admin/inquiries/${encodeURIComponent(inquiryId)}/references`);
+      if (!current()) return;
+      if (!data || !Array.isArray(data.reference_links) || !Array.isArray(data.reference_images)) throw new Error('Invalid reference response');
+      let unavailable = 0;
+      for (const [index, attachment] of data.reference_images.entries()) {
+        const href = safeReferenceUrl(attachment?.url);
+        if (!href) { ++unavailable; continue; }
+        const name = typeof attachment.name === 'string' && attachment.name.trim() ? attachment.name : `參考照片 ${index + 1}`;
+        const row = document.createElement('li');
+        const link = referenceAnchor(href);
+        const image = document.createElement('img');
+        image.alt = `參考照片：${name}`; image.loading = 'lazy'; image.decoding = 'async'; image.referrerPolicy = 'no-referrer';
+        image.addEventListener('error', () => {
+          if (!current()) return;
+          image.hidden = true;
+          const hint = document.createElement('p'); hint.textContent = '照片無法載入，請重新整理參考資料。';
+          row.append(hint);
+        }, { once: true });
+        image.src = href;
+        const caption = document.createElement('span'); caption.textContent = name;
+        link.append(image, caption); row.append(link); referenceImages.append(row);
+      }
+      for (const value of data.reference_links) {
+        const href = safeReferenceUrl(value);
+        if (!href) { ++unavailable; continue; }
+        const row = document.createElement('li');
+        const link = referenceAnchor(href); link.textContent = href;
+        row.append(link); referenceLinks.append(row);
+      }
+      const hasImages = referenceImages.childElementCount > 0;
+      const hasLinks = referenceLinks.childElementCount > 0;
+      $('#detail-reference-images-section').hidden = !hasImages;
+      $('#detail-reference-links-section').hidden = !hasLinks;
+      message(referencesStatus, unavailable ? '部分參考資料無法顯示，請重新整理後再試。' : !hasImages && !hasLinks ? '這份申請未提供參考照片或連結。' : '', unavailable > 0);
+      if (hasImages) {
+        const lifetime = Number.isFinite(data.expires_in) && data.expires_in > 0 ? Math.min(data.expires_in, 300) * 1000 : 300000;
+        referencesExpiryTimer = window.setTimeout(() => {
+          if (!current()) return;
+          referenceImages.replaceChildren();
+          $('#detail-reference-images-section').hidden = true;
+          message(referencesStatus, '照片檢視連結已過期，請重新整理參考資料。');
+        }, Math.max(0, lifetime - (Date.now() - startedAt)));
+      }
+    } catch (error) {
+      if (current()) message(referencesStatus, `參考資料無法載入。${adminErrorMessage(error)} 請按「重新整理參考資料」再試。`, true);
+    } finally {
+      if (current()) { references.setAttribute('aria-busy', 'false'); referencesRefresh.disabled = false; }
+    }
+  }
+  function renderList() {
+    list.replaceChildren();
+    for (const item of items) {
+      const row = document.createElement('li'); row.className = 'admin-inquiry-item';
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.inquiryId = item.id; button.setAttribute('aria-pressed', String(selected?.id === item.id));
+      const name = document.createElement('span'); name.className = 'admin-inquiry-item__name'; name.textContent = item.name || '未填寫姓名';
+      const badge = document.createElement('span'); badge.className = 'admin-pill'; badge.dataset.status = item.status; badge.textContent = labels[item.status] || '未知狀態';
+      const description = document.createElement('span'); description.className = 'admin-inquiry-item__sub'; description.textContent = `${formatAdminDate(item.created_at)} · ${item.collaboration_type || '未提供類型'}`;
+      button.append(name, badge, description); row.append(button); list.append(row);
+    }
+    empty.hidden = items.length > 0;
+    if (!items.length) {
+      empty.querySelector('strong')!.textContent = loading ? '正在載入' : listError ? '無法載入合作意向' : total ? '這一頁沒有資料' : '目前沒有符合的申請';
+      empty.querySelector('p')!.textContent = loading ? '正在取得符合條件的合作意向。' : listError ? '請稍後按「重新整理」再試。' : appliedQuery || appliedStatus !== 'all' ? '試著調整搜尋條件，或清除篩選。' : '新的站內合作意向會出現在這裡。';
+    }
+    $('#inquiry-total').textContent = loading ? '載入中' : `共 ${total} 筆`;
+    $('#inquiry-page-label').textContent = `第 ${page} / ${Math.max(1, Math.ceil(total / 20))} 頁`;
+    $<HTMLButtonElement>('#inquiry-prev').disabled = loading || page <= 1;
+    $<HTMLButtonElement>('#inquiry-next').disabled = loading || page * 20 >= total;
+  }
+  function selectItem(item: Inquiry | null, focus = false) {
+    selected = item;
+    clearReferences();
+    resetConfirmation();
+    setUnsavedChanges(false);
+    $('#inquiry-detail').hidden = !item;
+    $('#inquiry-detail-empty').hidden = Boolean(item);
+    message(saveStatus, '');
+    if (item) {
+      $('#inquiry-detail-title').textContent = item.name;
+      $('#detail-created').textContent = formatAdminDate(item.created_at);
+      $('#detail-contact-method').textContent = item.contact_method || '未提供';
+      $('#detail-contact').textContent = item.contact_account || '未提供';
+      $('#detail-type').textContent = item.collaboration_type || '未提供';
+      $('#detail-date').textContent = item.preferred_date || '尚未指定';
+      $('#detail-consent').textContent = item.consent ? '已同意' : '未同意';
+      $('#detail-description').textContent = item.description || '未提供';
+      $('#detail-badge').textContent = labels[item.status] || '未知狀態';
+      $('#detail-badge').dataset.status = item.status;
+      notes.value = item.admin_notes || '';
+      statusInput.value = item.status;
+      $('#detail-updated').textContent = `最後更新：${formatAdminDate(item.updated_at)} · 版本 ${item.version}`;
+      if (focus) $('#inquiry-detail-title').focus({ preventScroll: false });
+      void loadReferences(item.id);
+    }
+    renderList();
+  }
+  async function loadCounts() {
+    try {
+      const data = await requestAdmin<{ counts: Record<string, number> }>('/api/admin/overview');
+      document.querySelectorAll<HTMLElement>('[data-count]').forEach((element) => { const value = data.counts[element.dataset.count || '']; element.textContent = Number.isFinite(value) ? String(value) : '—'; });
+      message($('#overview-status'), '');
+    } catch (error) { message($('#overview-status'), `統計無法載入。${adminErrorMessage(error)}`, true); }
+  }
+  async function loadList(preserveSelection = false) {
+    const id = ++generation;
+    const previousId = preserveSelection ? selected?.id : linkedInquiryId;
+    linkedInquiryId = null;
+    loading = true;
+    listError = false;
+    items = [];
+    total = 0;
+    selectItem(null);
+    $('#inquiry-list-region').setAttribute('aria-busy', 'true');
+    $<HTMLButtonElement>('#inquiry-prev').disabled = true;
+    $<HTMLButtonElement>('#inquiry-next').disabled = true;
+    message(status, '正在載入合作意向…');
+    const params = new URLSearchParams({ page: String(page), status: appliedStatus, q: appliedQuery });
+    try {
+      const data = await requestAdmin<InquiryList>(`/api/admin/inquiries?${params}`);
+      if (id !== generation) return;
+      items = data.items; total = data.total; page = data.page;
+      const nextUrl = new URL(window.location.href);
+      if (page > 1) nextUrl.searchParams.set('page', String(page)); else nextUrl.searchParams.delete('page');
+      if (appliedQuery) nextUrl.searchParams.set('q', appliedQuery); else nextUrl.searchParams.delete('q');
+      if (appliedStatus !== 'all') nextUrl.searchParams.set('status', appliedStatus); else nextUrl.searchParams.delete('status');
+      let replacement = previousId ? items.find((item) => item.id === previousId) || null : null;
+      let selectionError = '';
+      if (previousId && !replacement) {
+        try {
+          const detail = await requestAdmin<{ item: Inquiry }>(`/api/admin/inquiries/${encodeURIComponent(previousId)}`);
+          if (id !== generation) return;
+          if (!detail?.item || detail.item.id !== previousId) throw new Error('Invalid inquiry response');
+          replacement = detail.item;
+        } catch (error) {
+          if (id !== generation) return;
+          selectionError = error instanceof AdminApiError && error.status === 404 ? '這份合作意向已不存在，請從列表選擇其他申請。' : `指定的合作意向無法載入。${adminErrorMessage(error)}`;
+        }
+      }
+      if (replacement) nextUrl.searchParams.set('id', replacement.id); else nextUrl.searchParams.delete('id');
+      window.history.replaceState({}, '', nextUrl);
+      selectItem(replacement);
+      message(status, selectionError || (total ? `找到 ${total} 筆合作意向。` : '目前沒有符合條件的合作意向。'), Boolean(selectionError));
+    } catch (error) {
+      if (id !== generation) return;
+      listError = true;
+      message(status, adminErrorMessage(error), true);
+    } finally {
+      if (id === generation) { loading = false; $('#inquiry-list-region').setAttribute('aria-busy', 'false'); renderList(); }
+    }
+  }
+  function changeFilters(reset = false) {
+    if (!ready || busySaving()) { query.value = appliedQuery; filter.value = appliedStatus; return; }
+    if (!confirmDiscardChanges()) { query.value = appliedQuery; filter.value = appliedStatus; return; }
+    setUnsavedChanges(false);
+    if (reset) { query.value = ''; filter.value = 'all'; }
+    appliedQuery = query.value.trim().slice(0, 120); appliedStatus = filter.value; page = 1;
+    void loadList();
+  }
+  query.addEventListener('input', () => { window.clearTimeout(searchTimer); searchTimer = window.setTimeout(() => changeFilters(), 350); });
+  filter.addEventListener('change', () => { window.clearTimeout(searchTimer); changeFilters(); });
+  $('#inquiry-reset').addEventListener('click', () => { window.clearTimeout(searchTimer); changeFilters(true); });
+  for (const [selector, delta] of [['#inquiry-prev', -1], ['#inquiry-next', 1]] as const) $(selector).addEventListener('click', () => {
+    if (!ready || loading || busySaving() || !confirmDiscardChanges()) return;
+    setUnsavedChanges(false); page = Math.max(1, page + delta); void loadList();
+  });
+  list.addEventListener('click', (event) => {
+    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-inquiry-id]') : null;
+    if (!button || busySaving() || loading || button.dataset.inquiryId === selected?.id || !confirmDiscardChanges()) return;
+    const item = items.find((candidate) => candidate.id === button.dataset.inquiryId);
+    if (item) { selectItem(item, true); const nextUrl = new URL(window.location.href); nextUrl.searchParams.set('id', item.id); window.history.replaceState({}, '', nextUrl); }
+  });
+  notes.addEventListener('input', updateDirty); statusInput.addEventListener('change', updateDirty);
+  referencesRefresh.addEventListener('click', () => { if (ready && selected) void loadReferences(selected.id); });
+  confirmationPanel.addEventListener('toggle', () => { if (confirmationPanel.open && ready && selected && !confirmationLoaded && !confirmationLoading) void loadConfirmation(selected.id); });
+  confirmationSlot.addEventListener('change', updateDirty);
+  for (const input of Object.values(confirmationFields)) input.addEventListener('input', updateDirty);
+  confirmationForm.addEventListener('submit', (event) => { event.preventDefault(); void saveConfirmation('confirmed'); });
+  $('#confirmation-draft').addEventListener('click', () => { void saveConfirmation('draft'); });
+  $('#confirmation-reload').addEventListener('click', () => {
+    if (!ready || !selected || confirmationLoading || busySaving()) return;
+    if (confirmationDirty() && !window.confirm('重新載入會捨棄尚未儲存的拍攝確認內容，確定要繼續嗎？')) return;
+    void loadConfirmation(selected.id);
+  });
+  $('#inquiry-refresh').addEventListener('click', () => {
+    if (!ready || loading || busySaving() || !confirmDiscardChanges()) return;
+    setUnsavedChanges(false); void Promise.all([loadList(true), loadCounts()]);
+  });
+  $('#detail-reload').addEventListener('click', () => {
+    if (!ready || loading || busySaving() || !confirmDiscardChanges()) return;
+    setUnsavedChanges(false); void loadList(true);
+  });
+  $<HTMLFormElement>('#inquiry-edit-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!selected || busySaving() || !statusInput.reportValidity() || !notes.reportValidity()) return;
+    saving = true; saveButton.disabled = true; notes.disabled = true; statusInput.disabled = true;
+    updateConfirmationControls();
+    message(saveStatus, '正在儲存…');
+    const originalId = selected.id;
+    try {
+      const result = await requestAdmin<{ item: Inquiry }>(`/api/admin/inquiries/${encodeURIComponent(originalId)}`, { method: 'PATCH', body: { status: statusInput.value, admin_notes: notes.value, version: selected.version } });
+      const index = items.findIndex((item) => item.id === originalId); if (index >= 0) items[index] = result.item;
+      selected = result.item;
+      notes.value = result.item.admin_notes || ''; statusInput.value = result.item.status;
+      $('#detail-badge').textContent = labels[result.item.status] || '未知狀態'; $('#detail-badge').dataset.status = result.item.status;
+      $('#detail-updated').textContent = `最後更新：${formatAdminDate(result.item.updated_at)} · 版本 ${result.item.version}`;
+      updateDirty(); renderList();
+      message(saveStatus, '已儲存狀態與內部備註。');
+      void loadCounts();
+    } catch (error) {
+      message(saveStatus, adminErrorMessage(error), true);
+      if (error instanceof AdminApiError && error.status === 401) message(saveStatus, '登入已逾時。請先複製尚未儲存的備註，再重新登入。', true);
+    } finally { saving = false; saveButton.disabled = false; notes.disabled = false; statusInput.disabled = false; updateConfirmationControls(); }
+  });
+  requireAdminSession().then(async () => { ready = true; await Promise.all([loadList(), loadCounts()]); }).catch(() => {});
+</script>

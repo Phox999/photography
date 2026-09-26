@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Plans from '../components/Plans.astro';
+import Process from '../components/Process.astro';
+import Dates from '../components/Dates.astro';
+import { siteConfig } from '../data/site';
+---
+
+<BaseLayout
+  title="合作方式與檔期｜phox999 photography"
+  description="了解一般互惠與主題企劃的安排，查看近期開放檔期，開始討論你想拍攝的作品。"
+>
+  <Header />
+
+  <main class="inner-page cooperation-page" id="main-content" tabindex="-1">
+    <section class="container page-intro inner-heading" aria-labelledby="cooperation-title">
+      <p class="eyebrow">COLLABORATION</p>
+      <h1 id="cooperation-title">找到適合的合作方式。</h1>
+      <p class="inner-intro">拍攝時間、照片交付與近期檔期，一次了解。</p>
+      <nav class="inner-tabs" aria-label="合作資訊目錄">
+        <a href="#plans">合作方式</a>
+        <a href="#availability">近期檔期</a>
+        <a href="#process">合作流程</a>
+      </nav>
+    </section>
+
+    <Plans id="plans" detailed description="先了解基本安排，細節再依這次拍攝一起確認。" />
+
+    <div class="process-section container">
+      <Process />
+    </div>
+
+    <Dates id="availability" />
+
+    <section class="container cooperation-availability" aria-label="開始合作">
+      <div class="inner-next">
+        <div>
+          <p class="eyebrow">NEXT STEP</p>
+          <h2>你想拍的，是什麼樣子？</h2>
+          <p>帶著想法、問題或參考作品，都可以開始討論。</p>
+        </div>
+        <a class="button button--primary" href={siteConfig.inquiryUrl}>填寫合作意向</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</BaseLayout>

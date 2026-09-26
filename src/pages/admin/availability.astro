@@ -1,0 +1,137 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+<AdminLayout title="拍攝檔期" current="availability">
+  <header class="admin-page-heading"><div><span class="admin-eyebrow">WORKSPACE / AVAILABILITY</span><h1>為下一次拍攝，留好時間。</h1><p>以台北時間建立時段，儲存後即顯示在公開月曆。可洽詢不代表預約成立。</p></div><a class="admin-button admin-button--quiet" href="/cooperation/#availability" target="_blank" rel="noopener">查看公開檔期</a></header>
+  <p class="admin-status" id="availability-status" role="status" aria-live="polite">正在確認權限…</p>
+  <div class="availability-admin-layout">
+    <section class="admin-card" aria-labelledby="slot-editor-title">
+      <h2 id="slot-editor-title">新增時段</h2>
+      <p class="admin-help">所有輸入皆為台北時間。單筆最長 24 小時；時段不可重疊，關閉的時段可直接重新開放。</p>
+      <form id="slot-form" action="/api/admin/availability" method="post">
+        <fieldset id="slot-fields" disabled>
+          <div class="admin-field"><label for="slot-start">開始時間</label><input id="slot-start" type="datetime-local" required step="60" /></div>
+          <div class="admin-field"><label for="slot-end">結束時間</label><input id="slot-end" type="datetime-local" required step="60" /></div>
+          <div class="admin-field"><label for="slot-state">公開狀態</label><select id="slot-state"><option value="open">可洽詢</option><option value="held">暫留（不接受洽詢）</option><option value="closed">關閉（不接受洽詢）</option></select></div>
+          <p class="admin-help" id="slot-version">尚未儲存。</p>
+          <div class="admin-actions"><button class="admin-button" type="submit" id="slot-save">新增時段</button><button class="admin-button admin-button--quiet" type="button" id="slot-new">清空／新增</button></div>
+        </fieldset>
+        <p class="admin-status" id="slot-save-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+    <section class="admin-card" aria-labelledby="slot-list-title">
+      <div class="admin-panel-heading"><h2 id="slot-list-title">已公布檔期</h2><span id="slot-count" class="admin-meta"></span></div>
+      <form id="slot-filter" class="availability-admin-filters">
+        <div class="admin-field"><label for="slot-from">開始日期</label><input id="slot-from" type="date" required /></div>
+        <div class="admin-field"><label for="slot-to">結束日期</label><input id="slot-to" type="date" required /></div>
+        <button class="admin-button admin-button--quiet" type="submit" id="slot-reload" disabled>查詢／重新載入</button>
+      </form>
+      <p class="admin-help">每次最多查詢 180 天。連結到合作意向的時段，請至拍攝確認單更改安排。</p>
+      <ul id="slot-list" class="availability-admin-list"></ul>
+      <p class="admin-empty" id="slot-empty">等待載入檔期。</p>
+    </section>
+  </div>
+</AdminLayout>
+<script>
+  import { AdminApiError, adminErrorMessage, confirmDiscardChanges, formatAdminDate, requestAdmin, requireAdminSession, setUnsavedChanges } from '../../lib/admin-client';
+  import { taipeiDate, taipeiInput, taipeiToIso } from '../../lib/availability';
+  type Slot = { id: string; startsAt: string; endsAt: string; status: 'open' | 'held' | 'booked' | 'closed'; inquiryId: string | null; version: number };
+  const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
+  const form = $<HTMLFormElement>('#slot-form');
+  const fields = $<HTMLFieldSetElement>('#slot-fields');
+  const start = $<HTMLInputElement>('#slot-start'); const end = $<HTMLInputElement>('#slot-end');
+  const state = $<HTMLSelectElement>('#slot-state');
+  const from = $<HTMLInputElement>('#slot-from'); const to = $<HTMLInputElement>('#slot-to');
+  const reload = $<HTMLButtonElement>('#slot-reload');
+  const saveStatus = $('#slot-save-status'); const loadStatus = $('#availability-status');
+  const list = $('#slot-list'); const empty = $('#slot-empty');
+  const labels = { open: '可洽詢', held: '暫留', booked: '已確認', closed: '已關閉' };
+  let items: Slot[] = []; let selected: Slot | null = null; let busy = false; let ready = false; let stale = false;
+  let original = '';
+  from.value = taipeiDate();
+  to.value = new Date(Date.parse(`${from.value}T00:00:00Z`) + 89 * 86400000).toISOString().slice(0, 10);
+  function snapshot() { return JSON.stringify([start.value, end.value, state.value]); }
+  function controls() {
+    fields.disabled = busy || !ready;
+    $<HTMLButtonElement>('#slot-save').disabled = stale;
+    reload.disabled = busy || !ready;
+    from.disabled = busy; to.disabled = busy;
+    list.querySelectorAll<HTMLButtonElement>('button').forEach((button) => { button.disabled = busy; });
+  }
+  function apply(slot: Slot | null) {
+    selected = slot; stale = false;
+    start.value = slot ? taipeiInput(slot.startsAt) : ''; end.value = slot ? taipeiInput(slot.endsAt) : ''; state.value = slot?.status || 'open';
+    $('#slot-editor-title').textContent = slot ? '編輯時段' : '新增時段';
+    $('#slot-save').textContent = slot ? '儲存檔期' : '新增時段';
+    $('#slot-version').textContent = slot ? `版本 ${slot.version} · 可將狀態改為關閉，保留檔期紀錄。` : '尚未儲存。';
+    original = snapshot(); setUnsavedChanges(false); saveStatus.textContent = ''; controls();
+  }
+  function render() {
+    list.replaceChildren(); $('#slot-count').textContent = `${items.length} 筆`; empty.hidden = items.length > 0;
+    empty.textContent = '此範圍尚未建立檔期。公開月曆會顯示「尚未公布」，不會推測可預約。';
+    for (const item of items) {
+      const row = document.createElement('li');
+      const heading = document.createElement('strong'); heading.textContent = `${formatAdminDate(item.startsAt)} — ${formatAdminDate(item.endsAt)}`;
+      const badge = document.createElement('span'); badge.className = 'admin-pill'; badge.textContent = labels[item.status];
+      const info = document.createElement('div'); info.append(heading, badge);
+      const actions = document.createElement('div'); actions.className = 'admin-actions';
+      if (item.inquiryId || item.status === 'booked') {
+        const note = document.createElement('p'); note.className = 'admin-help'; note.textContent = '此時段已連結拍攝安排，需由確認單修改或解除。'; actions.append(note);
+        if (item.inquiryId) { const link = document.createElement('a'); link.className = 'admin-text-link'; link.href = `/admin/?id=${encodeURIComponent(item.inquiryId)}`; link.textContent = '開啟合作意向與確認單'; actions.append(link); }
+      } else {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'admin-button admin-button--small admin-button--quiet'; button.textContent = '編輯／開放／關閉';
+        button.addEventListener('click', () => { if (busy || !confirmDiscardChanges()) return; apply(item); start.focus(); }); actions.append(button);
+      }
+      row.append(info, actions); list.append(row);
+    }
+    controls();
+  }
+  async function load() {
+    if (busy) return;
+    const days = (Date.parse(`${to.value}T00:00:00Z`) - Date.parse(`${from.value}T00:00:00Z`)) / 86400000 + 1;
+    if (!Number.isInteger(days) || days < 1 || days > 180) { loadStatus.textContent = '請選擇 1 至 180 天的有效日期範圍。'; return; }
+    busy = true; controls(); loadStatus.textContent = '正在讀取檔期…';
+    try {
+      const response = await requestAdmin<{ items: Slot[] }>(`/api/admin/availability?${new URLSearchParams({ from: from.value, to: to.value })}`);
+      items = response.items; render(); loadStatus.textContent = `已載入 ${items.length} 筆檔期。所有時間皆為台北時間。`;
+      apply(null);
+    } catch (error) { items = []; list.replaceChildren(); $('#slot-count').textContent = ''; empty.hidden = false; empty.textContent = '未能取得檔期，請重新載入。'; loadStatus.textContent = adminErrorMessage(error); }
+    finally { busy = false; controls(); }
+  }
+  form.addEventListener('input', () => { if (!busy) setUnsavedChanges(snapshot() !== original); });
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault(); if (busy || stale || !ready || !form.reportValidity()) return;
+    const startsAt = taipeiToIso(start.value); const endsAt = taipeiToIso(end.value);
+    if (!startsAt || !endsAt || Date.parse(endsAt) <= Date.parse(startsAt) || Date.parse(endsAt) - Date.parse(startsAt) > 86400000) { saveStatus.textContent = '請檢查時間：結束需晚於開始，單筆不可超過 24 小時。'; return; }
+    busy = true; controls(); saveStatus.textContent = '正在儲存檔期…';
+    try {
+      const body = { startsAt, endsAt, status: state.value, ...(selected ? { id: selected.id, version: selected.version } : {}) };
+      const response = await requestAdmin<{ item: Slot }>('/api/admin/availability', { method: selected ? 'PATCH' : 'POST', body });
+      const item = response.item;
+      items = items.filter((existing) => existing.id !== item.id);
+      if (Date.parse(item.startsAt) < Date.parse(`${to.value}T00:00:00+08:00`) + 86400000 && Date.parse(item.endsAt) > Date.parse(`${from.value}T00:00:00+08:00`)) items.push(item);
+      items.sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)); render(); apply(item);
+      saveStatus.textContent = '已儲存，公開月曆會於重新讀取時更新。';
+    } catch (error) {
+      if (error instanceof AdminApiError && error.status === 409) { stale = true; saveStatus.textContent = '時段可能重疊、已被更新或已連結確認單。修改仍保留；請先複製需要的內容，再重新載入檔期。'; }
+      else saveStatus.textContent = adminErrorMessage(error);
+    } finally { busy = false; controls(); }
+  });
+  $('#slot-new').addEventListener('click', () => { if (!busy && confirmDiscardChanges()) apply(null); });
+  $('#slot-filter').addEventListener('submit', (event) => { event.preventDefault(); if (!busy && confirmDiscardChanges()) void load(); });
+  requireAdminSession().then(() => { ready = true; apply(null); return load(); }).catch((error) => { loadStatus.textContent = adminErrorMessage(error); });
+</script>
+<style>
+  .availability-admin-layout { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.4fr); gap: 24px; align-items: start; }
+  .availability-admin-layout h2 { margin: 0 0 16px; }
+  #slot-form { margin-top: 24px; }
+  #slot-fields { display: grid; gap: 20px; border: 0; padding: 0; margin: 0; min-width: 0; }
+  .availability-admin-filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 16px; }
+  .availability-admin-filters .admin-field { flex: 1 1 150px; min-width: 0; }
+  .availability-admin-list { padding: 0; margin: 20px 0 0; list-style: none; }
+  .availability-admin-list :global(li) { display: grid; gap: 16px; border-top: 1px solid var(--adm-line); padding: 22px 0; overflow-wrap: anywhere; }
+  .availability-admin-list :global(li > div:first-child) { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .availability-admin-list :global(strong) { font-size: .95rem; }
+  .availability-admin-layout input { max-width: 100%; min-width: 0; }
+  @media (max-width: 900px) { .availability-admin-layout { grid-template-columns: minmax(0, 1fr); } }
+</style>

@@ -139,78 +139,93 @@ for (let i = 0; i < feedbacks.length; i += 3) {
     <h2 id="feedback-title">合作回饋</h2>
   </div>
 
-  <div class="feedback-carousel">
-    <button
-      class="feedback-nav feedback-nav--prev"
-      type="button"
-      aria-label="上一頁回饋"
-      data-feedback-prev
-    >
-      ‹
-    </button>
+  <div class="feedback-layout">
+    <div class="feedback-column">
+      <div class="feedback-carousel">
+        <button
+          class="feedback-nav feedback-nav--prev"
+          type="button"
+          aria-label="上一頁回饋"
+          data-feedback-prev
+        >
+          ‹
+        </button>
 
-    <div class="feedback-track" data-feedback-track tabindex="0">
-      {
-        feedbackPages.map((page) => (
-          <article class="feedback-slide" data-feedback-card>
-            <div class="feedback-page">
-              {page.map((feedback) => {
-                const previewText = toPreviewText(feedback);
-                const paragraphs = toParagraphs(feedback);
+        <div class="feedback-window">
+          <div class="feedback-track" data-feedback-track tabindex="0">
+            {
+              feedbackPages.map((page) => (
+                <article class="feedback-slide" data-feedback-card>
+                  <div class="feedback-page">
+                    {page.map((feedback) => {
+                      const previewText = toPreviewText(feedback);
+                      const paragraphs = toParagraphs(feedback);
 
-                return (
-                  <div class="feedback-item">
-                    <div class="feedback-item__header">
-                      <p class="feedback-item__id">{feedback.id}</p>
+                      return (
+                        <div class="feedback-item">
+                          <div class="feedback-item__header">
+                            <p class="feedback-item__id">{feedback.id}</p>
 
-                      <button
-                        class="feedback-more"
-                        type="button"
-                        data-feedback-open
-                        data-feedback-id={feedback.id}
-                        data-feedback-paragraphs={JSON.stringify(paragraphs)}
-                        aria-hidden="true"
-                        tabindex="-1"
-                      >
-                        查看完整回饋
-                      </button>
-                    </div>
+                            <button
+                              class="feedback-more"
+                              type="button"
+                              data-feedback-open
+                              data-feedback-id={feedback.id}
+                              data-feedback-paragraphs={JSON.stringify(paragraphs)}
+                              aria-hidden="true"
+                              tabindex="-1"
+                            >
+                              查看完整回饋
+                            </button>
+                          </div>
 
-                    <p class="feedback-item__text" data-feedback-text>
-                      {previewText}
-                    </p>
+                          <p class="feedback-item__text" data-feedback-text>
+                            {previewText}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          </article>
+                </article>
+              ))
+            }
+          </div>
+        </div>
+
+        <button
+          class="feedback-nav feedback-nav--next"
+          type="button"
+          aria-label="下一頁回饋"
+          data-feedback-next
+        >
+          ›
+        </button>
+      </div>
+    </div>
+
+    <aside class="feedback-profile" aria-label="攝影師介紹">
+      <img src="/assets/Profile-pic.jpg" alt="攝影師小蔡在海邊" width="144" height="144" loading="lazy" decoding="async" />
+      <div class="feedback-profile__copy">
+        <h3>在台北拍人像，<br />記錄自然的你。</h3>
+        <p>拍攝前聊想法，拍攝時給引導。讓你自在，也讓畫面有故事。</p>
+        <a href="/about/">認識小蔡</a>
+      </div>
+    </aside>
+
+    <div class="feedback-pagination" aria-label="回饋頁面">
+      {
+        feedbackPages.map((_, index) => (
+          <button
+            class={`feedback-dot ${index === 0 ? 'is-active' : ''}`}
+            type="button"
+            aria-label={`前往第 ${index + 1} 頁回饋`}
+            aria-current={index === 0 ? 'page' : undefined}
+            data-feedback-dot
+            data-feedback-index={index}
+          ></button>
         ))
       }
     </div>
-
-    <button
-      class="feedback-nav feedback-nav--next"
-      type="button"
-      aria-label="下一頁回饋"
-      data-feedback-next
-    >
-      ›
-    </button>
-  </div>
-
-  <div class="feedback-pagination" aria-label="回饋頁面">
-    {
-      feedbackPages.map((_, index) => (
-        <button
-          class={`feedback-dot ${index === 0 ? 'is-active' : ''}`}
-          type="button"
-          aria-label={`前往第 ${index + 1} 頁回饋`}
-          aria-current={index === 0 ? 'page' : undefined}
-          data-feedback-dot
-          data-feedback-index={index}
-        ></button>
-      ))
-    }
   </div>
 
 <dialog class="feedback-dialog" data-feedback-dialog>

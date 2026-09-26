@@ -4,19 +4,16 @@ const items = [
   number: '80',
   unit: '+',
   title: '場合作經驗',
-  text: '豐富的拍攝與溝通經驗',
 },
   {
     number: '8 ',
     unit: '年',
     title: '設計訓練',
-    text: '台師大設計所畢業，審美在線',
   },
   {
     number: '0',
     unit: '',
     title: '經驗OK',
-    text: '拍攝過程會協助引導',
   },
 ];
 ---
@@ -25,7 +22,7 @@ const items = [
   <div class="trust-bar trust-bar--stats container">
     {
       items.map((item) => (
-        <article class="trust-stat">
+        <article class="trust-stat trust-stat--vertical">
           <div class="trust-stat__number">
             <span>{item.number}</span>
             {item.unit && <small>{item.unit}</small>}
@@ -33,7 +30,6 @@ const items = [
 
           <div class="trust-stat__content">
             <h2>{item.title}</h2>
-            <p>{item.text}</p>
           </div>
         </article>
       ))

@@ -1,5 +1,7 @@
 ---
 import { navItems, siteConfig } from '../data/site';
+
+const currentPath = Astro.url.pathname;
 ---
 
 <header class="site-header" aria-label="網站導覽">
@@ -9,18 +11,18 @@ import { navItems, siteConfig } from '../data/site';
 </a>
 
   <nav class="desktop-nav" aria-label="主要導覽">
-    {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
+    {navItems.map((item) => <a href={item.href} aria-current={item.href === currentPath ? 'page' : undefined}>{item.label}</a>)}
   </nav>
 
   <a class="button button--header" href={siteConfig.inquiryUrl}>
-    立即預約
+    填寫合作意向
   </a>
 
   <details class="mobile-nav">
     <summary aria-label="開啟導覽選單">選單</summary>
     <div class="mobile-nav__panel">
-      {navItems.map((item) => <a href={item.href}>{item.label}</a>)}
-      <a href={siteConfig.inquiryUrl}>立即預約</a>
+      {navItems.map((item) => <a href={item.href} aria-current={item.href === currentPath ? 'page' : undefined}>{item.label}</a>)}
+      <a href={siteConfig.inquiryUrl}>填寫合作意向</a>
     </div>
   </details>
 </header>
