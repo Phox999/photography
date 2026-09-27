@@ -289,32 +289,6 @@
   justify-content: center;
 }
 
-.cooperation-notes {
-  max-width: 880px;
-  margin: 26px auto 0;
-  text-align: center;
-}
-
-.cooperation-note {
-  border-radius: var(--radius-xl);
-  background: #fff;
-  padding: 18px 24px;
-  box-shadow: var(--shadow-card);
-  text-align: left;
-}
-
-.cooperation-note summary {
-  color: var(--color-text);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.cooperation-note p {
-  margin-top: 14px;
-  color: var(--color-muted);
-  line-height: 1.85;
-}
-
 .cooperation-page .dates-section {
   margin-top: 26px;
 }

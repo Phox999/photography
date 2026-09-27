@@ -141,10 +141,6 @@
   padding-block: clamp(48px, 6vw, 82px);
 }
 
-.behind-scenes-container {
-  margin-block: clamp(48px, 6vw, 80px);
-}
-
 .feedback-column,
 .feedback-carousel,
 .feedback-track {

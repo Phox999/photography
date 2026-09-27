@@ -1,9 +1,6 @@
 /* Shared layout for the public interior pages. */
 .inner-page.inner-page {
   --inner-radius: 36px;
-  --inner-gap: 28px;
-  --radius-card: var(--inner-radius);
-  --radius-panel: var(--inner-radius);
   --inner-shadow: 0 12px 36px rgb(33 59 71 / .075);
   padding-block: 140px 80px;
   min-width: 0;
@@ -76,7 +73,7 @@
 .inner-page .inner-empty-mark { display: grid; place-items: center; flex: 0 0 auto; width: 68px; height: 68px; border-radius: 50%; background: #edf8fc; color: var(--color-primary-dark); }
 .inner-page [hidden] { display: none !important; }
 @media (max-width: 760px) {
-  .inner-page.inner-page { --inner-radius: 28px; --inner-gap: 20px; padding-block: 106px 56px; }
+  .inner-page.inner-page { --inner-radius: 28px; padding-block: 106px 56px; }
   .inner-page .container { width: calc(100% - 40px); }
   .inner-page .inner-heading { padding-block: 22px 34px; }
   .inner-page .inner-heading h1 { margin-block: 8px 16px; font-size: clamp(32px, 7.5vw, 44px); }

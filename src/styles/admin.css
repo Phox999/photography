@@ -900,18 +900,6 @@ p {
   font-size: 12px;
   line-height: 1.8;
 }
-.admin-form-disabled {
-  opacity: .65;
-  pointer-events: none;
-}
-.admin-loading {
-  animation: admin-breathe 1.3s ease-in-out infinite;
-}
-@keyframes admin-breathe {
-  50% {
-    opacity: .5;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
