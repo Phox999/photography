@@ -14,24 +14,23 @@ const { id = 'dates' } = Astro.props;
     <div class="availability-layout">
       <div class="availability-calendar" data-calendar-panel>
         <h3 id="availability-calendar-title" data-calendar-title>選擇日期</h3>
-        <p class="availability-load" data-calendar-status role="status">正在讀取已公布檔期…</p>
+        <p class="availability-load" data-calendar-status role="status" aria-live="polite">正在讀取已公布檔期…</p>
         <button class="availability-clear" type="button" data-calendar-retry hidden>重新載入</button>
         <div class="availability-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
         <div class="availability-calendar-grid" role="group" aria-labelledby="availability-calendar-title" data-calendar-grid></div>
-        <p class="availability-legend"><span>● 可洽詢</span><span>— 已公布時段未開放</span><span>空白：未公布</span></p>
+        <p class="availability-legend"><span>●：可預約</span><span>空白：不開放預約</span></p>
         <noscript><p>請啟用 JavaScript 讀取實際檔期，或直接在合作意向中詢問時間。</p></noscript>
       </div>
       <div class="availability-preference">
         <h3>偏好日期與時段</h3>
         <div data-date-picker hidden>
           <div class="availability-label-row"><label for="date-preference">日期 <span>由可洽詢日期選取</span></label><button class="availability-clear" type="button" data-date-clear disabled>清除日期</button></div>
-          <input id="date-preference" type="date" readonly aria-describedby="date-preference-help" />
+          <input id="date-preference" type="date" readonly />
           <label class="availability-time-label" for="time-preference">開放時段 <span>台北時間</span></label>
-          <select id="time-preference" aria-describedby="date-preference-help" disabled><option value="">請先選擇可洽詢日期</option></select>
+          <select id="time-preference" disabled><option value="">請先選擇可洽詢日期</option></select>
         </div>
-        <p id="date-preference-help" class="availability-note">只顯示攝影師已公布的時段。未公布不代表有空；選擇時間僅帶入合作意向，尚未完成預約。</p>
         <a class="button button--primary" href="/#contact" data-date-continue>填寫合作意向</a>
-        <p class="availability-summary" data-date-summary aria-live="polite">日期未定，也可以直接詢問。</p>
+
       </div>
     </div>
   </div>
@@ -44,11 +43,11 @@ const { id = 'dates' } = Astro.props;
     const dateInput = $<HTMLInputElement>('#date-preference');
     const timeSelect = $<HTMLSelectElement>('#time-preference');
     const continueLink = $<HTMLAnchorElement>('[data-date-continue]');
-    const summary = $('[data-date-summary]');
+    const summary = root.querySelector<HTMLElement>('[data-date-summary]');
     const grid = $('[data-calendar-grid]');
-    const loadStatus = $('[data-calendar-status]');
+    const loadStatus = root.querySelector<HTMLElement>('[data-calendar-status]');
     const retry = $<HTMLButtonElement>('[data-calendar-retry]');
-    const clear = $<HTMLButtonElement>('[data-date-clear]');
+    const clear = root.querySelector<HTMLButtonElement>('[data-date-clear]');
     const monthButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-calendar-month]'));
     const [year, month] = taipeiDate().split('-').map(Number);
     const months = Array.from({ length: 4 }, (_, index) => new Date(Date.UTC(year, month - 1 + index, 1)));
@@ -60,10 +59,10 @@ const { id = 'dates' } = Astro.props;
     function selection() { return slots.find((slot) => slot.id === timeSelect.value && slot.status === 'open' && Date.parse(slot.startsAt) > Date.now()); }
     function updateSummary() {
       const slot = selection();
-      summary.textContent = slot ? `偏好時間：${slotPreference(slot)}。實際檔期仍需雙方確認。` : '日期未定，也可以直接詢問。';
+      if (summary) summary.textContent = slot ? `偏好時間：${slotPreference(slot)}。實際檔期仍需雙方確認。` : '日期未定，也可以直接詢問。';
       continueLink.textContent = slot ? '帶入日期與時段' : '填寫合作意向';
       continueLink.href = slot && !document.querySelector('#preferred_date') ? `/?preferred_date=${encodeURIComponent(slotPreference(slot))}#contact` : '/#contact';
-      clear.disabled = !dateInput.value;
+      if (clear) clear.disabled = !dateInput.value;
     }
     function chooseDate(value = '') {
       dateInput.value = value;
@@ -99,20 +98,25 @@ const { id = 'dates' } = Astro.props;
       if (loadState === 'ready') {
         const monthSlots = slots.filter((slot) => slotsForDay([slot], dateKey(monthDate)).length || (taipeiDate(slot.startsAt).slice(0, 7) === dateKey(monthDate).slice(0, 7)));
         const futureOpen = monthSlots.filter((slot) => slot.status === 'open' && Date.parse(slot.startsAt) > Date.now());
-        loadStatus.textContent = !monthSlots.length ? '本月尚未公布檔期；不代表已額滿或可預約。' : futureOpen.length ? '選擇有圓點的日期，查看可洽詢時段。所有時間皆為台北時間。' : '本月已公布的時段目前均未開放選取；其餘日期尚未公布。';
+        if (loadStatus) loadStatus.textContent = !monthSlots.length ? '本月尚未公布檔期；不代表已額滿或可預約。' : futureOpen.length ? '選擇有圓點的日期，查看可洽詢時段。所有時間皆為台北時間。' : '本月已公布的時段目前均未開放選取；其餘日期尚未公布。';
       }
     }
     async function loadAvailability() {
       if (loading) return;
       loading = true;
-      loadState = 'loading'; slots = []; chooseDate(); retry.hidden = true; loadStatus.textContent = '正在讀取已公布檔期…';
+      loadState = 'loading'; slots = []; chooseDate(); retry.hidden = true;
+      if (loadStatus) loadStatus.textContent = '正在讀取已公布檔期…';
       const controller = new AbortController(); const timeout = window.setTimeout(() => controller.abort(), 12000);
       try {
         const from = dateKey(months[0]); const to = dateKey(new Date(Date.UTC(year, month + 3, 0)));
         const response = await fetch(`/api/availability?${new URLSearchParams({ from, to })}`, { cache: 'no-store', credentials: 'omit', signal: controller.signal });
         if (!response.ok) throw new Error('availability unavailable');
         slots = parsePublicSlots(await response.json()); loadState = 'ready';
-      } catch { loadState = 'error'; slots = []; loadStatus.textContent = '檔期暫時無法載入，請重試或直接詢問。這不代表目前有空檔。'; retry.hidden = false; }
+      } catch {
+        loadState = 'error'; slots = [];
+        if (loadStatus) loadStatus.textContent = '檔期暫時無法載入，請重試或直接詢問。這不代表目前有空檔。';
+        retry.hidden = false;
+      }
       finally { loading = false; window.clearTimeout(timeout); renderCalendar(); }
     }
     monthButtons.forEach((button, i) => { button.textContent = `${months[i].getUTCMonth() + 1}月`; button.addEventListener('click', () => { visibleMonth = i; renderCalendar(); }); });
@@ -121,17 +125,17 @@ const { id = 'dates' } = Astro.props;
       if (!button || button.disabled || !button.dataset.calendarDate) return;
       chooseDate(button.dataset.calendarDate); grid.querySelector<HTMLButtonElement>(`[data-calendar-date="${dateInput.value}"]`)?.focus({ preventScroll: true });
     });
-    clear.addEventListener('click', () => chooseDate()); timeSelect.addEventListener('change', updateSummary); retry.addEventListener('click', loadAvailability);
+    clear?.addEventListener('click', () => chooseDate()); timeSelect.addEventListener('change', updateSummary); retry.addEventListener('click', loadAvailability);
     continueLink.addEventListener('click', (event) => {
       const slot = selection(); const preferred = document.querySelector<HTMLInputElement>('#preferred_date');
-      if (timeSelect.value && !slot) { event.preventDefault(); chooseDate(); summary.textContent = '這個時段已開始，請重新選擇。'; return; }
+      if (timeSelect.value && !slot) { event.preventDefault(); chooseDate(); if (summary) summary.textContent = '這個時段已開始，請重新選擇。'; return; }
       if (!slot || !preferred) return;
       const value = slotPreference(slot);
-      if (preferred.disabled) { event.preventDefault(); summary.textContent = '合作意向正在送出，請稍後再調整時間。'; return; }
+      if (preferred.disabled) { event.preventDefault(); if (summary) summary.textContent = '合作意向正在送出，請稍後再調整時間。'; return; }
       const existing = preferred.value.trim(); const next = existing.split('、').includes(value) ? existing : [existing, value].filter(Boolean).join('、');
-      if (preferred.maxLength >= 0 && next.length > preferred.maxLength) { event.preventDefault(); summary.textContent = '偏好日期欄位已達字數上限，請在表單直接調整。'; return; }
+      if (preferred.maxLength >= 0 && next.length > preferred.maxLength) { event.preventDefault(); if (summary) summary.textContent = '偏好日期欄位已達字數上限，請在表單直接調整。'; return; }
       preferred.value = next; preferred.dispatchEvent(new Event('input', { bubbles: true }));
-      summary.textContent = `已帶入 ${value}，尚未完成預約。`;
+      if (summary) summary.textContent = `已帶入 ${value}，尚未完成預約。`;
     });
     $('[data-calendar-months]').hidden = false; $('[data-date-picker]').hidden = false;
     void loadAvailability();
@@ -162,7 +166,7 @@ const { id = 'dates' } = Astro.props;
   .availability-day:hover:not(:disabled) { background: var(--color-surface-soft); }
   .availability-day[aria-current='date'] { box-shadow: inset 0 0 0 2px var(--color-primary); font-weight: 700; }
   .availability-day[aria-pressed='true'], .availability-day[aria-pressed='true']:hover { background: var(--color-primary); color: white; font-weight: 700; }
-  .availability-day:disabled { color: var(--color-muted); opacity: .4; cursor: default; }
+  .availability-day:disabled { color: var(--color-muted); opacity: 1; cursor: default; }
   .availability-months button:focus-visible, .availability-day:focus-visible, .availability-clear:focus-visible { outline: 2px solid var(--color-primary-dark); outline-offset: 3px; }
   .availability-preference { display: flex; flex-direction: column; gap: 20px; }
   .availability-label-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }

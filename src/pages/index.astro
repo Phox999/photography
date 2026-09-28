@@ -4,7 +4,6 @@ import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
 import TrustBar from '../components/TrustBar.astro';
 import Portfolio from '../components/Portfolio.astro';
-import ExploreTools from '../components/ExploreTools.astro';
 import Plans from '../components/Plans.astro';
 import Guidelines from '../components/Guidelines.astro';
 import Feedback from '../components/Feedback.astro';
@@ -16,12 +15,11 @@ import '../styles/home-refresh.css';
 ---
 
 <BaseLayout>
-  <Header />
-  <main>
+  <Header home />
+  <main class="home-page">
     <Hero />
     <TrustBar />
     <Portfolio />
-    <ExploreTools />
     <Plans />
     {/* <Guidelines /> */}
     <Feedback />

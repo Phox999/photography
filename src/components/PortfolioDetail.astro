@@ -87,68 +87,6 @@ const { title, description, images } = Astro.props;
   <Footer />
 
   <script>
-    const layoutJustifiedGalleries = () => {
-      const galleries = document.querySelectorAll('[data-justified-gallery]');
-
-      galleries.forEach((gallery) => {
-        const items = Array.from(gallery.querySelectorAll('.portfolio-justified__item'));
-        const styles = window.getComputedStyle(gallery);
-
-        const gap = Number.parseFloat(styles.getPropertyValue('--gallery-gap')) || 8;
-        const targetHeight =
-          Number.parseFloat(styles.getPropertyValue('--target-row-height')) || 300;
-
-        const containerWidth = gallery.clientWidth;
-        if (!containerWidth || !items.length) return;
-
-        let row = [];
-        let ratioSum = 0;
-
-        const flushRow = (isLastRow = false) => {
-          if (!row.length) return;
-
-          const totalGap = gap * (row.length - 1);
-          let rowHeight = (containerWidth - totalGap) / ratioSum;
-
-          if (isLastRow) {
-            rowHeight = Math.min(targetHeight, rowHeight);
-          }
-
-          row.forEach((item) => {
-            const ratio = Number.parseFloat(item.dataset.ratio || '1.5');
-
-            item.style.width = `${rowHeight * ratio}px`;
-            item.style.height = `${rowHeight}px`;
-          });
-
-          row = [];
-          ratioSum = 0;
-        };
-
-        items.forEach((item) => {
-          const img = item.querySelector('img');
-
-          const ratio =
-            img && img.naturalWidth && img.naturalHeight
-              ? img.naturalWidth / img.naturalHeight
-              : 1.5;
-
-          item.dataset.ratio = String(ratio);
-
-          row.push(item);
-          ratioSum += ratio;
-
-          const projectedWidth = ratioSum * targetHeight + gap * (row.length - 1);
-
-          if (projectedWidth >= containerWidth) {
-            flushRow(false);
-          }
-        });
-
-        flushRow(true);
-      });
-    };
-
     const setupPortfolioLightbox = () => {
       const gallery = document.querySelector('[data-justified-gallery]');
       const dialog = document.querySelector('[data-lightbox-dialog]');
@@ -235,21 +173,6 @@ const { title, description, images } = Astro.props;
       });
     };
 
-    const galleryImages = document.querySelectorAll('[data-justified-gallery] img');
-
-    layoutJustifiedGalleries();
     setupPortfolioLightbox();
-
-    document.querySelectorAll('[data-justified-gallery]').forEach((gallery) => {
-      gallery.classList.add('is-ready');
-    });
-
-    galleryImages.forEach((image) => {
-      image.addEventListener('load', layoutJustifiedGalleries, { once: true });
-    });
-
-    window.addEventListener('resize', () => {
-      layoutJustifiedGalleries();
-    });
   </script>
 </Layout>

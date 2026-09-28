@@ -9,6 +9,7 @@
   --color-primary: #63BADF;
   --color-primary-dark: #3a81a0;
   --color-border: #7babc0;
+  --color-divider: #dedede;
   --font-heading: 'Noto Serif TC', 'Times New Roman', serif;
   --font-body: 'Noto Sans TC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
@@ -662,22 +663,22 @@ p {
 .portfolio-justified {
   --gallery-gap: 3px;
 
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-rows: clamp(170px, 18vw, 280px);
   gap: var(--gallery-gap);
-  align-items: flex-start;
+  align-items: stretch;
   padding-bottom: 80px;
-  opacity: 0;
-  transition: opacity 0.24s ease;
 }
 
-.portfolio-justified.is-ready {
-  opacity: 1;
+/* Ten photos fill two six-column rows; wider frames alternate across the pair. */
+.portfolio-justified__item:nth-child(10n + 2),
+.portfolio-justified__item:nth-child(10n + 10) {
+  grid-column: span 2;
 }
 
 .portfolio-justified__item {
-  flex: 0 0 auto;
-  width: calc((100% - 16px) / 3);
+  min-width: 0;
   margin: 0;
   overflow: hidden;
   background: var(--color-surface-soft);
@@ -705,6 +706,24 @@ p {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+@media (max-width: 980px) and (min-width: 721px) {
+  .portfolio-justified {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: clamp(160px, 24vw, 230px);
+  }
+
+  /* On four columns, each six-photo cycle still fills two rows. */
+  .portfolio-justified__item:nth-child(10n + 2),
+  .portfolio-justified__item:nth-child(10n + 10) {
+    grid-column: span 1;
+  }
+
+  .portfolio-justified__item:nth-child(6n + 2),
+  .portfolio-justified__item:nth-child(6n + 6) {
+    grid-column: span 2;
+  }
 }
 
 /* Lightbox */
@@ -1293,21 +1312,32 @@ p {
 }
 
 .portfolio-justified {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: clamp(132px, 43vw, 220px);
   padding-bottom: 56px;
 }
 
+.portfolio-justified__item:nth-child(10n + 2),
+.portfolio-justified__item:nth-child(10n + 10),
+.portfolio-justified__item:nth-child(6n + 2),
+.portfolio-justified__item:nth-child(6n + 6) {
+  grid-column: span 1;
+}
+
+/* Start each five-photo mobile group with one full-width image. */
+.portfolio-justified__item:nth-child(5n + 1) {
+  grid-column: span 2;
+}
+
 .portfolio-justified__item {
-  width: 100% !important;
-  height: auto !important;
+  width: auto;
+  height: auto;
 }
 
 .portfolio-justified__item img {
   width: 100%;
-  height: auto;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
 }
 
 .site-header {

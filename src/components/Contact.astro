@@ -2,11 +2,14 @@
 import { siteConfig } from '../data/site';
 
 const shootStyles = [
-  { id: 'coast', title: '海邊日光', image: '/assets/hero.webp' },
-  { id: 'sunlight', title: '午後光影', image: '/assets/hero-02.webp' },
-  { id: 'city', title: '都會漫步', image: '/assets/hero-03.webp' },
-  { id: 'night', title: '夜色敘事', image: '/assets/hero-04.webp' },
+  { id: 'coast', title: '社畜 OL'},
+  { id: 'sunlight', title: '情侶/小團體'},
+  { id: 'city', title: '大尺寫真'},
+  { id: 'night', title: '棒球' },
+  { id: 'coast', title: '肌肉'},
+  { id: 'sunlight', title: '紅色'},
 ];
+const showThemeImages = false;
 ---
 
 <section class="section contact-section" id="contact" aria-labelledby="contact-title">
@@ -14,7 +17,7 @@ const shootStyles = [
     <header class="contact-copy">
       <p class="eyebrow">CONTACT</p>
       <h2 id="contact-title">一鍵申請，下一步開始拍攝。</h2>
-      <p>挑幾張喜歡的照片，聊聊拍攝想法。</p>
+      <p>挑選主題或幾張喜歡的照片，聊聊拍攝想法</p>
     </header>
 
     <form class="contact-form" data-inquiry-form>
@@ -23,30 +26,24 @@ const shootStyles = [
         <input name="website" type="text" autocomplete="off" tabindex="-1" />
       </label>
 
-      <p class="form-intro">選填項目已標示，確認內容後才會送出。</p>
-
       <div class="contact-editor" data-contact-editor>
-        <section class="contact-form-section" aria-labelledby="contact-idea-title">
-          <h3 id="contact-idea-title">這次想拍什麼</h3>
+        <section class="contact-form-section" aria-labelledby="contact-step-1-title">
+          <h3 id="contact-step-1-title">1. 挑選想拍攝的風格</h3>
           <fieldset class="contact-style-select">
-            <legend>喜歡的拍攝風格 <span>選填，可複選</span></legend>
-            <div class="contact-style-grid">
+            <legend>a.本期主題 <span>選填，可複選</span></legend>
+            <div class:list={['contact-style-grid', !showThemeImages && 'contact-style-grid--text-only']}>
               {shootStyles.map((style) => (
                 <button class="contact-style" type="button" aria-pressed="false" data-contact-style={style.id} data-style-title={style.title}>
-                  <img src={style.image} alt="" width="360" height="240" loading="lazy" decoding="async" />
+                  {showThemeImages && style.image && <img src={style.image} alt="" width="360" height="240" loading="lazy" decoding="async" />}
                   <span>{style.title}</span>
                   <span class="contact-style__check" aria-hidden="true">✓</span>
                 </button>
               ))}
             </div>
-            <div class="contact-style-footer">
-              <p data-style-status aria-live="polite">選擇項目已標示，確認內容後才會送出。</p>
-              <a href="#portfolio">回到作品集挑選參考</a>
-            </div>
           </fieldset>
 
           <section class="contact-reference-card" aria-labelledby="reference-title">
-            <h4 id="reference-title">加入自己的參考 <span>選填</span></h4>
+            <h4 id="reference-title">b. 加入自己的參考照片及連結 <span>選填</span></h4>
             <div class="contact-reference-grid">
               <div class="form-field">
                 <label for="reference-images">參考照片</label>
@@ -55,53 +52,35 @@ const shootStyles = [
                   <label class="reference-file-picker__button" for="reference-images">選擇照片</label>
                   <span class="reference-file-picker__names" data-reference-file-names aria-live="polite">尚未選擇檔案</span>
                 </div>
-                <p class="field-help" id="reference-images-help">最多 3 張 JPG、PNG 或 WebP，每張 4 MB。照片只會在此頁預覽，目前不會上傳。</p>
+                <p class="field-help" id="reference-images-help">最多 3 張 JPG、PNG 或 WebP，每張 4 MB。</p>
                 <div class="reference-previews" data-reference-previews aria-live="polite"></div>
                 <p class="field-help" id="reference-status" data-reference-status role="status"></p>
               </div>
               <div class="form-field">
-                <label for="reference-links">參考連結 <span>選填</span></label>
+                <label for="reference-links">拍攝想法及參考連結 <span>選填</span></label>
                 <textarea id="reference-links" name="reference_links" rows="4" maxlength="1000" placeholder="https://..."></textarea>
-                <p class="field-help">每行一個完整的 http:// 或 https:// 連結，最多 3 個。</p>
+                <p class="field-help">最多 2,000 字</p>
               </div>
             </div>
           </section>
+        </section>
 
-          <details class="brief-import">
-            <summary>帶入已整理的拍攝規劃 <span>選填</span></summary>
-            <div class="brief-import__content">
-              <label for="brief-summary">拍攝規劃摘要</label>
-              <textarea id="brief-summary" rows="3" maxlength="2000" placeholder="貼上已整理的拍攝規劃摘要"></textarea>
-              <button class="button button--secondary" type="button" data-apply-brief>套用規劃摘要</button>
-              <p data-brief-status role="status" aria-live="polite"></p>
-            </div>
-          </details>
-
+        <section class="contact-form-section" aria-labelledby="contact-step-2-title">
+          <h3 id="contact-step-2-title">2. 填寫合作資訊</h3>
           <div class="form-grid contact-details-grid">
             <div class="form-field">
               <label for="collaboration_type">合作類型</label>
               <select id="collaboration_type" name="collaboration_type" required>
                 <option value="">請選擇</option>
-                <option value="輕量體驗(2hr)">一般互惠｜約 2 小時</option>
                 <option value="標準方案(3hr)">一般互惠｜約 3 小時</option>
                 <option value="主題合作">主題企劃</option>
               </select>
             </div>
             <div class="form-field">
-              <label for="preferred_date">偏好日期 <span>選填</span></label>
-              <input id="preferred_date" name="preferred_date" type="text" autocomplete="off" placeholder="未確定可留白；檔期需再確認" />
+              <label for="preferred_date">偏好日期</label>
+              <input id="preferred_date" name="preferred_date" type="text" autocomplete="off" placeholder="選填" />
             </div>
           </div>
-
-          <div class="form-field">
-            <label for="description">拍攝想法</label>
-            <textarea id="description" name="description" rows="5" maxlength="2000" placeholder="想嘗試的主題、場景，或想一起討論的方向。" required></textarea>
-            <p class="field-help">拍攝想法與參考連結合計最多 2,000 字。</p>
-          </div>
-        </section>
-
-        <section class="contact-form-section contact-form-section--details" aria-labelledby="contact-details-title">
-          <h3 id="contact-details-title">你的聯絡方式</h3>
           <div class="form-grid">
             <div class="form-field form-field--wide">
               <label for="name">姓名／暱稱</label>
@@ -122,7 +101,6 @@ const shootStyles = [
             <div class="form-field">
               <label for="contact_account">聯絡帳號／連結</label>
               <input id="contact_account" name="contact_account" type="text" autocomplete="off" required />
-              <p class="field-help">填入可搜尋的帳號、連結或電話。</p>
             </div>
           </div>
 
@@ -167,8 +145,6 @@ const shootStyles = [
           <button class="button button--primary" type="button" data-confirm-inquiry>確認送出合作意向</button>
         </div>
       </section>
-
-      <p class="contact-expectation">拍攝內容與日期，以雙方確認為準。</p>
       <p class="form-status" role="status" aria-live="polite" data-inquiry-status></p>
       <div class="contact-links" aria-label="其他聯絡方式">
         <a href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
@@ -218,7 +194,7 @@ const shootStyles = [
     const updateStyleStatus = () => {
       const selected = selectedStyles();
       if (styleStatus) {
-        styleStatus.textContent = selected.length ? `已選 ${selected.length} 張：${selected.join('、')}。再次點選可取消。` : '選擇項目已標示，確認內容後才會送出。';
+        styleStatus.textContent = selected.length ? `已選 ${selected.length} 個主題：${selected.join('、')}。再次點選可取消。` : '選擇項目已標示，確認內容後才會送出。';
       }
     };
 
