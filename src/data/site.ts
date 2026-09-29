@@ -95,19 +95,19 @@ export const portfolioItems = [
 ];
 
 export const portfolioGalleryItems = [
-  { title: '作品名稱 01', image: '/assets/portfolio-01.jpg', layout: 'gallery-item--wide' },
-  { title: '作品名稱 02', image: '/assets/portfolio-02.jpg', layout: 'gallery-item--wide' },
-  { title: '作品名稱 03', image: '/assets/_I7A3962.jpg', layout: 'gallery-item--wide' },
-  { title: '作品名稱 04', image: '/assets/portfolio-04.jpg', layout: 'gallery-item--tall' },
-  { title: '作品名稱 05', image: '/assets/portfolio-05.jpg', layout: 'gallery-item--wide' },
-  { title: '作品名稱 06', image: '/assets/portfolio-06.jpg', layout: 'gallery-item--tall' },
-  { title: '拍攝花絮 01', image: '/assets/behind-01.jpg', layout: 'gallery-item--small' },
-  { title: '拍攝花絮 02', image: '/assets/behind-02.jpg', layout: 'gallery-item--small' },
-  { title: '拍攝花絮 03', image: '/assets/behind-03.jpg', layout: 'gallery-item--small' },
-  { title: '拍攝花絮 04', image: '/assets/behind-04.jpg', layout: 'gallery-item--wide' },
-  { title: '拍攝花絮 05', image: '/assets/behind-05.jpg', layout: 'gallery-item--small' },
-  { title: '拍攝花絮 06', image: '/assets/behind-06.jpg', layout: 'gallery-item--wide' },
-  { title: '形象主視覺', image: '/assets/hero.jpg', layout: 'gallery-item--wide' },
+  { title: '作品名稱 01', image: '/assets/portfolio-01.webp', layout: 'gallery-item--wide' },
+  { title: '作品名稱 02', image: '/assets/portfolio-02.webp', layout: 'gallery-item--wide' },
+  { title: '作品名稱 03', image: '/assets/_I7A3962.webp', layout: 'gallery-item--wide' },
+  { title: '作品名稱 04', image: '/assets/portfolio-04.webp', layout: 'gallery-item--tall' },
+  { title: '作品名稱 05', image: '/assets/portfolio-05.webp', layout: 'gallery-item--wide' },
+  { title: '作品名稱 06', image: '/assets/portfolio-06.webp', layout: 'gallery-item--tall' },
+  { title: '拍攝花絮 01', image: '/assets/behind-01.webp', layout: 'gallery-item--small' },
+  { title: '拍攝花絮 02', image: '/assets/behind-02.webp', layout: 'gallery-item--small' },
+  { title: '拍攝花絮 03', image: '/assets/behind-03.webp', layout: 'gallery-item--small' },
+  { title: '拍攝花絮 04', image: '/assets/behind-04.webp', layout: 'gallery-item--wide' },
+  { title: '拍攝花絮 05', image: '/assets/behind-05.webp', layout: 'gallery-item--small' },
+  { title: '拍攝花絮 06', image: '/assets/behind-06.webp', layout: 'gallery-item--wide' },
+  { title: '形象主視覺', image: '/assets/hero.webp', layout: 'gallery-item--wide' },
 ];
 
 export const faqItems = [

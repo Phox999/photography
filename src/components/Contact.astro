@@ -2,12 +2,18 @@
 import { siteConfig } from '../data/site';
 
 const shootStyles = [
-  { id: 'coast', title: '社畜 OL'},
-  { id: 'sunlight', title: '情侶/小團體'},
-  { id: 'city', title: '大尺寫真'},
-  { id: 'night', title: '棒球' },
-  { id: 'coast', title: '肌肉'},
-  { id: 'sunlight', title: '紅色'},
+  { id: 'office-lady', title: 'OL 制服' },
+  { id: 'couple', title: '情侶寫真' },
+  { id: 'small-group', title: '2-4 人小團體' },
+  { id: 'baseball', title: '棒球' },
+  { id: 'muscle-men', title: '肌肉(男生優先)' },
+  { id: 'red-theme', title: '紅色' },
+  { id: 'fashion-lingerie', title: '時尚內衣' },
+  { id: 'home-portrait', title: '居家寫真' },
+  { id: 'school-swimsuit', title: '死庫水' },
+  { id: 'bondage', title: '束縛' },
+  { id: 'water', title: '水' },
+  { id: 'other', title: '其他' },
 ];
 const showThemeImages = false;
 ---
@@ -30,7 +36,7 @@ const showThemeImages = false;
         <section class="contact-form-section" aria-labelledby="contact-step-1-title">
           <h3 id="contact-step-1-title">1. 挑選想拍攝的風格</h3>
           <fieldset class="contact-style-select">
-            <legend>a.本期主題 <span>選填，可複選</span></legend>
+            <legend>a.本期推薦主題 <span>可複選</span></legend>
             <div class:list={['contact-style-grid', !showThemeImages && 'contact-style-grid--text-only']}>
               {shootStyles.map((style) => (
                 <button class="contact-style" type="button" aria-pressed="false" data-contact-style={style.id} data-style-title={style.title}>
@@ -43,10 +49,9 @@ const showThemeImages = false;
           </fieldset>
 
           <section class="contact-reference-card" aria-labelledby="reference-title">
-            <h4 id="reference-title">b. 加入自己的參考照片及連結 <span>選填</span></h4>
+            <h4 id="reference-title">b. 加入自己的參考照片 / 連結 <span>選填</span></h4>
             <div class="contact-reference-grid">
               <div class="form-field">
-                <label for="reference-images">參考照片</label>
                 <div class="reference-file-picker">
                   <input class="reference-file-input" id="reference-images" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="reference-images-help reference-status" data-reference-images />
                   <label class="reference-file-picker__button" for="reference-images">選擇照片</label>
@@ -82,10 +87,6 @@ const showThemeImages = false;
             </div>
           </div>
           <div class="form-grid">
-            <div class="form-field form-field--wide">
-              <label for="name">姓名／暱稱</label>
-              <input id="name" name="name" type="text" autocomplete="name" required />
-            </div>
             <div class="form-field">
               <label for="contact_method">聯絡方式</label>
               <select id="contact_method" name="contact_method" required>
@@ -165,6 +166,17 @@ const showThemeImages = false;
   const inquiryForm = document.querySelector('[data-inquiry-form]');
 
   if (inquiryForm instanceof HTMLFormElement) {
+    const preferredDateInput = inquiryForm.querySelector<HTMLInputElement>('#preferred_date');
+    const requestedDate = new URLSearchParams(window.location.search).get('preferred_date');
+    const requestedDateValue = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
+      ? new Date(`${requestedDate}T00:00:00Z`)
+      : null;
+    if (preferredDateInput && requestedDate && requestedDateValue && Number.isFinite(requestedDateValue.getTime())
+      && requestedDateValue.toISOString().slice(0, 10) === requestedDate
+      && !preferredDateInput.value.trim()) {
+      preferredDateInput.value = requestedDate.replaceAll('-', '/');
+    }
+
     const editor = inquiryForm.querySelector('[data-contact-editor]');
     const review = inquiryForm.querySelector('[data-contact-review]');
     const status = inquiryForm.querySelector('[data-inquiry-status]');

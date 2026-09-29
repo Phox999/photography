@@ -11,7 +11,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           <div class="admin-hero-editor__fields">
             <div class="admin-field"><label for="hero-title-input">首頁主標</label><textarea id="hero-title-input" maxlength="120" rows="2" required placeholder="第一次互惠拍攝，&#10;也能安心開始。" aria-describedby="hero-title-help"></textarea><p class="admin-help" id="hero-title-help">純文字，最多 120 字。換行會保留在首頁顯示。</p></div>
             <div class="admin-field"><label for="hero-copy-input">首頁介紹</label><textarea id="hero-copy-input" maxlength="1000" rows="5" required placeholder="介紹你的拍攝方式與合作特色。" aria-describedby="hero-copy-help"></textarea><p class="admin-help" id="hero-copy-help">純文字，最多 1,000 字。</p></div>
-            <div class="admin-field"><label for="hero-image-input">輪播照片</label><input id="hero-image-input" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="hero-image-help" /><p class="admin-help" id="hero-image-help">可一次選多張 JPEG、PNG 或 WebP；單張最多 8 MiB，輪播最多 10 張。</p><div class="admin-actions"><button class="admin-button admin-button--quiet" type="button" id="hero-image-upload" disabled>加入輪播</button><button class="admin-button admin-button--quiet" type="button" id="hero-image-restore">恢復原始輪播</button></div><p class="admin-status" id="hero-image-status" role="status" aria-live="polite"></p></div>
+            <div class="admin-field"><label for="hero-image-input">輪播照片</label><input id="hero-image-input" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="hero-image-help" /><p class="admin-help" id="hero-image-help">可一次選多張 JPEG、PNG 或 WebP；單張最多 8 MiB，輪播最多 10 張。</p><div class="admin-actions"><button class="admin-button admin-button--quiet" type="button" id="hero-image-upload" disabled>加入輪播</button></div><p class="admin-status" id="hero-image-status" role="status" aria-live="polite"></p></div>
           </div>
           <figure class="admin-hero-preview"><div class="admin-hero-image-grid" id="hero-image-preview" aria-label="首頁輪播照片預覽"></div><figcaption id="hero-image-caption"></figcaption></figure>
         </div></fieldset></section>
@@ -27,17 +27,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   type Faq = { question: string; answer: string };
   type HeroImage = { path: string; url: string };
   type Content = { id: number; announcement: string; announcement_enabled: boolean; faqs: Faq[]; hero_title: string; hero_copy: string; hero_image_paths: string[]; hero_image_urls: string[]; version: number; updated_at: string };
-  const originalHeroImages: HeroImage[] = [
-    { path: 'static:/assets/hero.webp', url: '/assets/hero.webp' },
-    { path: 'static:/assets/hero-02.webp', url: '/assets/hero-02.webp' },
-    { path: 'static:/assets/hero-03.webp', url: '/assets/hero-03.webp' },
-    { path: 'static:/assets/hero-04.webp', url: '/assets/hero-04.webp' },
-    { path: 'static:/assets/portfolio/6-20海邊jk_/IMG_9630.webp', url: '/assets/portfolio/6-20海邊jk_/IMG_9630.webp' },
-    { path: 'static:/assets/portfolio/照片分享/IMG_6114.webp', url: '/assets/portfolio/照片分享/IMG_6114.webp' },
-    { path: 'static:/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp', url: '/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp' },
-    { path: 'static:/assets/portfolio/興華天橋/13.webp', url: '/assets/portfolio/興華天橋/13.webp' },
-    { path: 'static:/assets/portfolio/maid/01.webp', url: '/assets/portfolio/maid/01.webp' },
-  ];
   const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
   const form = $<HTMLFormElement>('#admin-content-form');
   const announcement = $<HTMLTextAreaElement>('#announcement');
@@ -77,8 +66,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       && chosenFiles.every((file) => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) && file.size > 0 && file.size <= 8 * 1024 * 1024);
     heroUpload.disabled = busy || uploading || !filesValid;
     heroFile.disabled = busy || uploading;
-    const isOriginalCarousel = JSON.stringify(heroImages.map(({ path }) => path)) === JSON.stringify(originalHeroImages.map(({ path }) => path));
-    $('#hero-image-restore').toggleAttribute('disabled', busy || uploading || isOriginalCarousel);
     $<HTMLButtonElement>('#content-reload').disabled = busy || uploading;
     add.disabled = busy || value.faqs.length >= 12;
     publish.disabled = busy || uploading || !changed;
@@ -127,9 +114,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     announcement.value = content.announcement || '';
     heroTitle.value = content.hero_title;
     heroCopy.value = content.hero_copy;
-    heroImages = content.hero_image_paths.length
-      ? content.hero_image_paths.map((path, index) => ({ path, url: content.hero_image_urls[index] }))
-      : originalHeroImages.map((image) => ({ ...image }));
+    heroImages = content.hero_image_paths.map((path, index) => ({ path, url: content.hero_image_urls[index] }));
     renderHeroImages();
     enabled.checked = content.announcement_enabled;
     faqList.replaceChildren();
@@ -166,7 +151,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const order = document.createElement('span'); order.className = 'admin-hero-image-order'; order.textContent = `⠿ 拖曳排序 · ${index + 1} / ${heroImages.length}`; actions.append(order);
       for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '刪除']]) {
         const button = document.createElement('button'); button.type = 'button'; button.dataset.heroAction = action; button.dataset.heroIndex = String(index); button.textContent = label;
-        button.disabled = uploading || busy || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1) || (action === 'remove' && heroImages.length <= 1);
+        button.disabled = uploading || busy || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1);
         button.setAttribute('aria-label', action === 'remove' ? `從首頁輪播刪除第 ${index + 1} 張照片` : `將輪播第 ${index + 1} 張照片${action === 'up' ? '上移' : '下移'}`);
         actions.append(button);
       }
@@ -252,11 +237,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     else if (button.dataset.heroAction === 'down' && index < heroImages.length - 1) [heroImages[index + 1], heroImages[index]] = [heroImages[index], heroImages[index + 1]];
     renderHeroImages(); updateState();
   });
-  $('#hero-image-restore').addEventListener('click', () => {
-    if (busy) return;
-    heroImages = originalHeroImages.map((image) => ({ ...image })); heroFile.value = ''; renderHeroImages();
-    message($('#hero-image-status'), '已選擇恢復原本輪播，發布更新後生效。'); updateState();
-  });
   add.addEventListener('click', () => {
     if (busy || readFaqs().length >= 12) return;
     const row = createFaq({ question: '', answer: '' }); renumber(); row.querySelector<HTMLInputElement>('input')!.focus();
@@ -290,7 +270,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     const value = readContent();
     if ((value.announcement_enabled && !value.announcement.trim()) || value.faqs.some((faq) => !faq.question.trim() || !faq.answer.trim())) { message(saveStatus, '啟用的公告與每一題問答都需要填寫有效內容。', true); return; }
     if (JSON.stringify(value) === original) { message(saveStatus, '內容尚未變更。'); return; }
-    if (!window.confirm(`確認發布首頁主視覺（${value.hero_image_paths.length || originalHeroImages.length} 張輪播照片）、公告與 ${value.faqs.length} 題常見問題？照片順序會依預覽中的排列保存。`)) return;
+    if (!window.confirm(`確認發布首頁主視覺（${value.hero_image_paths.length} 張輪播照片）、公告與 ${value.faqs.length} 題常見問題？照片順序會依預覽中的排列保存。`)) return;
     setBusy(true); message(saveStatus, '正在發布…');
     try {
       const result = await requestAdmin<{ content: Content }>('/api/admin/content', { method: 'PATCH', body: { ...value, version: loaded.version } });

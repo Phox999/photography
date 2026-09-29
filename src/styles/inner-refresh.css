@@ -277,12 +277,12 @@
 }
 
 .cooperation-page .inner-heading {
-  text-align: center;
+  text-align: left;
 }
 
 .cooperation-page .inner-heading h1,
 .cooperation-page .inner-heading > p {
-  margin-inline: auto;
+  margin-inline: 0;
 }
 
 .cooperation-page .inner-tabs {

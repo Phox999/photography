@@ -22,12 +22,10 @@ const { id = 'dates' } = Astro.props;
         <noscript><p>請啟用 JavaScript 讀取實際檔期，或直接在合作意向中詢問時間。</p></noscript>
       </div>
       <div class="availability-preference">
-        <h3>偏好日期與時段</h3>
+        <h3>偏好日期</h3>
         <div data-date-picker hidden>
           <div class="availability-label-row"><label for="date-preference">日期 <span>由可洽詢日期選取</span></label><button class="availability-clear" type="button" data-date-clear disabled>清除日期</button></div>
           <input id="date-preference" type="date" readonly />
-          <label class="availability-time-label" for="time-preference">開放時段 <span>台北時間</span></label>
-          <select id="time-preference" disabled><option value="">請先選擇可洽詢日期</option></select>
         </div>
         <a class="button button--primary" href="/#contact" data-date-continue>填寫合作意向</a>
 
@@ -36,12 +34,11 @@ const { id = 'dates' } = Astro.props;
   </div>
 </section>
 <script>
-  import { openSlotsForDay, parsePublicSlots, slotPreference, slotsForDay, taipeiDate, type PublicSlot } from '../lib/availability';
+  import { openSlotsForDay, parsePublicSlots, slotsForDay, taipeiDate, type PublicSlot } from '../lib/availability';
   const root = document.querySelector<HTMLElement>('[data-availability]');
   if (root) {
     const $ = <T extends Element = HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
     const dateInput = $<HTMLInputElement>('#date-preference');
-    const timeSelect = $<HTMLSelectElement>('#time-preference');
     const continueLink = $<HTMLAnchorElement>('[data-date-continue]');
     const summary = root.querySelector<HTMLElement>('[data-date-summary]');
     const grid = $('[data-calendar-grid]');
@@ -57,21 +54,14 @@ const { id = 'dates' } = Astro.props;
     let loadState: 'loading' | 'ready' | 'error' = 'loading';
     let loading = false;
     const dateKey = (value: Date) => value.toISOString().slice(0, 10);
-    function selection() { return slots.find((slot) => slot.id === timeSelect.value && slot.status === 'open' && Date.parse(slot.startsAt) > Date.now()); }
     function updateSummary() {
-      const slot = selection();
-      if (summary) summary.textContent = slot ? `偏好時間：${slotPreference(slot)}。實際檔期仍需雙方確認。` : '日期未定，也可以直接詢問。';
-      continueLink.textContent = slot ? '帶入日期與時段' : '填寫合作意向';
-      continueLink.href = slot && !document.querySelector('#preferred_date') ? `/?preferred_date=${encodeURIComponent(slotPreference(slot))}#contact` : '/#contact';
+      const preferredDate = dateInput.value;
+      if (summary) summary.textContent = preferredDate ? `偏好日期：${preferredDate.replaceAll('-', '/')}。實際檔期仍需雙方確認。` : '日期未定，也可以直接詢問。';
+      continueLink.href = preferredDate && !document.querySelector('#preferred_date') ? `/?preferred_date=${encodeURIComponent(preferredDate)}#contact` : '/#contact';
       if (clear) clear.disabled = !dateInput.value;
     }
     function chooseDate(value = '') {
       dateInput.value = value;
-      timeSelect.replaceChildren();
-      const open = value && loadState === 'ready' ? openSlotsForDay(slots, value) : [];
-      if (!open.length) { const option = new Option('請先選擇可洽詢日期', ''); timeSelect.add(option); }
-      else for (const slot of open) timeSelect.add(new Option(slotPreference(slot), slot.id));
-      timeSelect.disabled = !open.length;
       updateSummary(); renderCalendar();
     }
     function renderCalendar() {
@@ -91,7 +81,7 @@ const { id = 'dates' } = Astro.props;
         const state = open.length ? 'open' : daySlots.length ? 'unavailable' : 'unknown';
         const button = document.createElement('button'); button.type = 'button'; button.className = `availability-day availability-day--${state}`;
         button.dataset.calendarDate = date; button.textContent = String(day); button.disabled = !open.length;
-        button.setAttribute('aria-label', `${date}，${date < taipeiDate() ? '已過日期' : state === 'open' ? `${open.length} 個可洽詢時段` : state === 'unavailable' ? '當日已公布時段未開放選取' : loadState === 'error' ? '檔期無法載入' : '未公布檔期'}`);
+        button.setAttribute('aria-label', `${date}，${date < taipeiDate() ? '已過日期' : state === 'open' ? '可洽詢日期' : state === 'unavailable' ? '當日沒有可洽詢日期' : loadState === 'error' ? '檔期無法載入' : '未公布檔期'}`);
         button.setAttribute('aria-pressed', String(dateInput.value === date));
         if (date === taipeiDate()) button.setAttribute('aria-current', 'date');
         grid.append(button);
@@ -99,7 +89,7 @@ const { id = 'dates' } = Astro.props;
       if (loadState === 'ready') {
         const monthSlots = slots.filter((slot) => slotsForDay([slot], dateKey(monthDate)).length || (taipeiDate(slot.startsAt).slice(0, 7) === dateKey(monthDate).slice(0, 7)));
         const futureOpen = monthSlots.filter((slot) => slot.status === 'open' && Date.parse(slot.startsAt) > Date.now());
-        if (loadStatus) loadStatus.textContent = !monthSlots.length ? '本月尚未公布檔期；不代表已額滿或可預約。' : futureOpen.length ? '選擇有圓點的日期，查看可洽詢時段。所有時間皆為台北時間。' : '本月已公布的時段目前均未開放選取；其餘日期尚未公布。';
+        if (loadStatus) loadStatus.textContent = !monthSlots.length ? '本月尚未公布檔期；不代表已額滿或可預約。' : futureOpen.length ? '選擇有圓點的日期，帶入偏好日期；實際檔期仍需雙方確認。' : '本月已公布的日期目前均未開放選取；其餘日期尚未公布。';
       }
     }
     async function loadAvailability() {
@@ -128,13 +118,15 @@ const { id = 'dates' } = Astro.props;
       if (!button || button.disabled || !button.dataset.calendarDate) return;
       chooseDate(button.dataset.calendarDate); grid.querySelector<HTMLButtonElement>(`[data-calendar-date="${dateInput.value}"]`)?.focus({ preventScroll: true });
     });
-    clear?.addEventListener('click', () => chooseDate()); timeSelect.addEventListener('change', updateSummary); retry.addEventListener('click', loadAvailability);
+    clear?.addEventListener('click', () => chooseDate()); retry.addEventListener('click', loadAvailability);
     continueLink.addEventListener('click', (event) => {
-      const slot = selection(); const preferred = document.querySelector<HTMLInputElement>('#preferred_date');
-      if (timeSelect.value && !slot) { event.preventDefault(); chooseDate(); if (summary) summary.textContent = '這個時段已開始，請重新選擇。'; return; }
-      if (!slot || !preferred) return;
-      const value = slotPreference(slot);
-      if (preferred.disabled) { event.preventDefault(); if (summary) summary.textContent = '合作意向正在送出，請稍後再調整時間。'; return; }
+      const selectedDate = dateInput.value;
+      const preferred = document.querySelector<HTMLInputElement>('#preferred_date');
+      if (!selectedDate) return;
+      if (!openSlotsForDay(slots, selectedDate).length) { event.preventDefault(); chooseDate(); if (summary) summary.textContent = '這個日期已無法選取，請重新選擇。'; return; }
+      if (!preferred) return;
+      const value = selectedDate.replaceAll('-', '/');
+      if (preferred.disabled) { event.preventDefault(); if (summary) summary.textContent = '合作意向正在送出，請稍後再調整日期。'; return; }
       const existing = preferred.value.trim(); const next = existing.split('、').includes(value) ? existing : [existing, value].filter(Boolean).join('、');
       if (preferred.maxLength >= 0 && next.length > preferred.maxLength) { event.preventDefault(); if (summary) summary.textContent = '偏好日期欄位已達字數上限，請在表單直接調整。'; return; }
       preferred.value = next; preferred.dispatchEvent(new Event('input', { bubbles: true }));

@@ -698,7 +698,7 @@
 .contact-form .checkbox-field,
 .contact-form .button,
 .contact-form .reference-file-picker__button {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .contact-form .form-grid .form-field > :is(input, select) {
@@ -708,8 +708,19 @@
   min-height: 64px;
   margin: 0;
   padding-block: 0;
+  padding-inline: 24px;
   box-sizing: border-box;
   align-self: start;
+}
+
+.contact-form .form-grid .form-field > select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23536b77' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 24px center;
+  background-size: 16px;
 }
 
 .form-field--wide {
@@ -1017,7 +1028,7 @@
   padding: 6px 16px 6px 8px;
 }
 
-.reference-file-input {
+.contact-form .reference-file-input {
   position: absolute;
   width: 1px;
   height: 1px;

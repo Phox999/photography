@@ -12,7 +12,7 @@ const { id = 'plans', detailed = false, description } = Astro.props;
 const plans = [
   {
     key: 'standard',
-    icon: '/assets/icons/plan-standard.png',
+    icon: '/assets/icons/plan-standard.webp',
     title: '一般互惠',
     subtitle: '第一次合作，或想完成一組人像作品',
     bullets: ['約 2–3 小時', '1–2 套服裝，事前確認', '交付約 40–80 張照片'],
@@ -26,7 +26,7 @@ const plans = [
   },
   {
     key: 'themed',
-    icon: '/assets/icons/plan-theme.png',
+    icon: '/assets/icons/plan-theme.webp',
     title: '主題企劃',
     subtitle: '已有主題、服裝或場景方向',
     bullets: ['時間與場景共同規劃', '服裝與風格拍攝前確認', '交付數量依企劃內容討論'],
@@ -90,12 +90,12 @@ const plans = [
   }
 
   .plans-section--detailed .section-heading {
-    text-align: center;
+    text-align: left;
   }
 
   .plans-description {
     max-width: 38em;
-    margin: 18px auto 0;
+    margin: 18px 0 0;
     color: var(--color-muted);
     font-size: 1rem;
     line-height: 1.8;
@@ -105,17 +105,17 @@ const plans = [
     width: min(100%, 1120px);
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 28px;
-    margin-inline: auto;
+    margin-inline: 0;
   }
 
   .plans-section--detailed .plan-card {
     min-width: 0;
     min-height: 0;
-    align-items: center;
+    align-items: flex-start;
     border: 0;
     border-radius: 36px;
     padding: clamp(32px, 3.8vw, 48px);
-    text-align: center;
+    text-align: left;
   }
 
   .plans-section--detailed .plan-card__icon {
@@ -159,7 +159,7 @@ const plans = [
   .plan-card__terms summary {
     width: fit-content;
     min-height: 44px;
-    margin-inline: auto;
+    margin-inline: 0;
     padding-block: 10px;
     color: var(--color-primary-dark);
     font-size: 0.89rem;

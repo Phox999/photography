@@ -490,6 +490,7 @@ p {
 
 .section-heading {
   margin-bottom: 28px;
+  text-align: left;
 }
 
 .section-heading--row {
@@ -497,6 +498,7 @@ p {
   align-items: end;
   justify-content: space-between;
   gap: 20px;
+  text-align: left;
 }
 
 .eyebrow {

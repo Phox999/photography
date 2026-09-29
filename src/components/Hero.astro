@@ -1,33 +1,9 @@
 ---
 import { siteConfig } from '../data/site';
-
-const heroImages = [
-  '/assets/hero.webp',
-  '/assets/hero-02.webp',
-  '/assets/hero-03.webp',
-  '/assets/hero-04.webp',
-  '/assets/portfolio/6-20海邊jk_/IMG_9630.webp',
-  '/assets/portfolio/照片分享/IMG_6114.webp',
-  '/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp',
-  '/assets/portfolio/興華天橋/13.webp',
-  '/assets/portfolio/maid/01.webp',
-];
 ---
 
 <section class="hero" id="hero" aria-labelledby="hero-title" data-hero-carousel>
-  <div class="hero__media" aria-hidden="true">
-    {
-      heroImages.map((image, index) => (
-        <img
-          class={`hero__image ${index === 0 ? 'is-active' : ''}`}
-          src={image}
-          alt=""
-          loading={index === 0 ? 'eager' : 'lazy'}
-          data-hero-image
-        />
-      ))
-    }
-  </div>
+  <div class="hero__media" aria-hidden="true"></div>
 
   <div class="hero__overlay"></div>
 
@@ -53,12 +29,11 @@ const heroImages = [
   const heroCarousel = document.querySelector('[data-hero-carousel]');
 
   if (heroCarousel) {
-    let images = Array.from(heroCarousel.querySelectorAll<HTMLImageElement>('[data-hero-image]'));
+    let images: HTMLImageElement[] = [];
     const media = heroCarousel.querySelector<HTMLElement>('.hero__media');
     const title = heroCarousel.querySelector('[data-hero-title]');
     const copy = heroCarousel.querySelector('[data-hero-copy]');
     let currentIndex = 0;
-    let hasCustomImage = false;
 
     const goToHeroImage = (index) => {
       if (!images.length) return;
@@ -71,10 +46,9 @@ const heroImages = [
     loadPublicSiteContent().then((content) => {
       if (title) title.textContent = content.hero_title;
       if (copy) copy.textContent = content.hero_copy;
-      if (content.hero_image_urls.length && media) {
-        hasCustomImage = true;
+      if (media) {
         currentIndex = 0;
-        media.replaceChildren(...content.hero_image_urls.map((url, index) => {
+        images = content.hero_image_urls.map((url, index) => {
           const image = document.createElement('img');
           image.className = `hero__image ${index === 0 ? 'is-active' : ''}`;
           image.src = url;
@@ -82,15 +56,13 @@ const heroImages = [
           image.loading = index === 0 ? 'eager' : 'lazy';
           image.dataset.heroImage = '';
           return image;
-        }));
-        images = Array.from(media.querySelectorAll<HTMLImageElement>('[data-hero-image]'));
+        });
+        media.replaceChildren(...images);
+      }
+
+      if (images.length > 1) {
+        window.setInterval(() => goToHeroImage(currentIndex + 1), 4600);
       }
     });
-
-    if (images.length > 1) {
-      window.setInterval(() => {
-        if (!hasCustomImage) goToHeroImage(currentIndex + 1);
-      }, 4600);
-    }
   }
 </script>
