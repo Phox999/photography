@@ -8,7 +8,7 @@ const unavailable = (label = '首頁照片', detail = '') => new HttpError(503,
   'upload_unconfirmed');
 
 // Show an actionable, sanitized Storage error without exposing its raw response.
-function storageFailure(response, result, label) {
+function storageFailure(response, result, label, bucket) {
   const rawCode = [result?.code, result?.error, result?.errorCode]
     .find((value) => typeof value === 'string' && value);
   const code = rawCode?.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 48) || '';
@@ -17,16 +17,18 @@ function storageFailure(response, result, label) {
     return unavailable(label, 'Supabase Storage 驗證失敗，請檢查 Cloudflare 的 SUPABASE_SECRET_KEY。');
   }
   if (response.status === 403) {
-    return unavailable(label, 'Supabase Storage 拒絕上傳（HTTP 403），請檢查 site-hero 儲存桶的存取設定。');
+    return unavailable(label, `Supabase Storage 拒絕上傳（HTTP 403），請檢查 ${bucket} 儲存桶的存取設定。`);
   }
   if (response.status === 404 || code === 'NoSuchBucket') {
-    return unavailable(label, '找不到 site-hero 儲存桶，請確認已套用 migration 202609240011_hero_content.sql。');
+    const migration = bucket === 'site-hero' ? '202609240011_hero_content.sql'
+      : bucket === 'site-portfolio' ? '202609260003_portfolio_management.sql' : '對應的 Supabase migration';
+    return unavailable(label, `找不到 ${bucket} 儲存桶，請確認已套用 ${migration}。`);
   }
   if (response.status === 413 || code === 'EntityTooLarge') {
     return unavailable(label, '照片超過 Supabase Storage 專案或儲存桶的檔案大小上限。');
   }
   if (code === 'InvalidMimeType') {
-    return unavailable(label, 'site-hero 儲存桶未允許此圖片格式，請確認 JPEG、PNG、WebP 的設定。');
+    return unavailable(label, `${bucket} 儲存桶未允許此圖片格式，請確認 JPEG、PNG、WebP 的設定。`);
   }
 
   return unavailable(label, `Supabase Storage 回傳 HTTP ${response.status}${code ? `（${code}）` : ''}，請檢查 Storage 設定。`);
@@ -115,7 +117,7 @@ export async function persistHeroUpload(env, upload, bucket = 'site-hero', label
     try { result = JSON.parse(text); } catch {
       throw unavailable(label, `Supabase Storage 回覆格式無法辨識（HTTP ${response.status}）。`);
     }
-    if (!response.ok) throw storageFailure(response, result, label);
+    if (!response.ok) throw storageFailure(response, result, label, bucket);
     if (result?.Key !== `${bucket}/${upload.path}`) {
       throw unavailable(label, 'Supabase Storage 回傳的照片路徑不一致，請重試。');
     }
