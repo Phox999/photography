@@ -106,8 +106,18 @@ const getShootDate = (slug: string) => {
             <p class="eyebrow" data-portfolio-detail-category></p>
             <h2 id="portfolio-live-title" data-portfolio-detail-title></h2>
             <p class="portfolio-live-detail__description" data-portfolio-detail-description></p>
-            <div class="portfolio-live-detail__grid" data-portfolio-detail-images></div>
+            <div class="portfolio-live-detail__grid portfolio-justified" data-portfolio-detail-images></div>
           </section>
+
+          <dialog class="portfolio-lightbox" data-lightbox-dialog aria-label="照片放大檢視">
+            <div class="portfolio-lightbox__inner">
+              <button class="portfolio-lightbox__close" type="button" aria-label="關閉照片" data-lightbox-close>×</button>
+              <button class="portfolio-lightbox__nav portfolio-lightbox__nav--prev" type="button" aria-label="上一張照片" data-lightbox-prev>‹</button>
+              <img class="portfolio-lightbox__image" src="" alt="" data-lightbox-image />
+              <button class="portfolio-lightbox__nav portfolio-lightbox__nav--next" type="button" aria-label="下一張照片" data-lightbox-next>›</button>
+              <p class="portfolio-lightbox__count" aria-live="polite" data-lightbox-count></p>
+            </div>
+          </dialog>
 
           <div class="portfolio-empty" data-archive-empty hidden>
             <p>找不到符合條件的系列。</p>
@@ -378,14 +388,7 @@ const getShootDate = (slug: string) => {
 
   .portfolio-live-detail__description { margin-bottom: 24px; color: var(--color-muted); }
 
-  .portfolio-live-detail__grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(8px, 1.2vw, 16px);
-  }
 
-  :global(.portfolio-live-detail__photo) { overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radius-md); background: var(--color-surface-soft); }
-  :global(.portfolio-live-detail__photo img) { width: 100%; height: 100%; object-fit: cover; }
 
   .portfolio-empty,
   .portfolio-index-unavailable {
@@ -448,7 +451,6 @@ const getShootDate = (slug: string) => {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .portfolio-live-detail__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -482,8 +484,72 @@ const getShootDate = (slug: string) => {
     const detailCategory = archive.querySelector<HTMLElement>('[data-portfolio-detail-category]');
     const detailDescription = archive.querySelector<HTMLElement>('[data-portfolio-detail-description]');
     const detailImages = archive.querySelector<HTMLElement>('[data-portfolio-detail-images]');
+    const lightbox = archive.querySelector<HTMLDialogElement>('[data-lightbox-dialog]');
+    const lightboxImage = archive.querySelector<HTMLImageElement>('[data-lightbox-image]');
+    const lightboxCount = archive.querySelector<HTMLElement>('[data-lightbox-count]');
+    let lightboxImages: HTMLImageElement[] = [];
+    let currentLightboxIndex = 0;
     let publishedCollections: Awaited<ReturnType<typeof loadPublishedPortfolio>> = null;
     let category = '全部';
+
+    const updateLightbox = (index: number) => {
+      if (!lightboxImage || !lightboxImages.length) return;
+      currentLightboxIndex = (index + lightboxImages.length) % lightboxImages.length;
+      const currentImage = lightboxImages[currentLightboxIndex];
+      lightboxImage.src = currentImage.currentSrc || currentImage.src;
+      lightboxImage.alt = currentImage.alt || '';
+      if (lightboxCount) {
+        lightboxCount.textContent = String(currentLightboxIndex + 1) + ' / ' + String(lightboxImages.length);
+      }
+    };
+
+    const openLightbox = (index: number) => {
+      if (!lightbox || !detailImages || !lightboxImage) return;
+      lightboxImages = Array.from(detailImages.querySelectorAll<HTMLImageElement>('.portfolio-justified__button img'));
+      if (!lightboxImages.length) return;
+      updateLightbox(index);
+      if (typeof lightbox.showModal === 'function') lightbox.showModal();
+      else lightbox.setAttribute('open', '');
+    };
+
+    const closeLightbox = () => {
+      if (!lightbox) return;
+      if (lightbox.open && typeof lightbox.close === 'function') lightbox.close();
+      else lightbox.removeAttribute('open');
+    };
+
+    detailImages?.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest<HTMLButtonElement>('[data-lightbox-open]');
+      if (button) openLightbox(Number(button.dataset.lightboxIndex || 0));
+    });
+
+    archive.querySelector<HTMLButtonElement>('[data-lightbox-close]')?.addEventListener('click', closeLightbox);
+    archive.querySelector<HTMLButtonElement>('[data-lightbox-prev]')?.addEventListener('click', () => updateLightbox(currentLightboxIndex - 1));
+    archive.querySelector<HTMLButtonElement>('[data-lightbox-next]')?.addEventListener('click', () => updateLightbox(currentLightboxIndex + 1));
+
+    lightbox?.addEventListener('click', (event) => {
+      if (event.target === lightbox) closeLightbox();
+    });
+
+    lightbox?.addEventListener('close', () => {
+      if (!lightboxImage) return;
+      lightboxImage.src = '';
+      lightboxImage.alt = '';
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (!lightbox?.open) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        updateLightbox(currentLightboxIndex - 1);
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        updateLightbox(currentLightboxIndex + 1);
+      }
+    });
 
     const showCollection = (slug: string | null) => {
       const collection = publishedCollections?.find((item) => item.slug === slug);
@@ -503,13 +569,20 @@ const getShootDate = (slug: string) => {
       if (detailImages) {
         detailImages.replaceChildren(...collection.images.map((src, index) => {
           const figure = document.createElement('figure');
-          figure.className = 'portfolio-live-detail__photo';
+          figure.className = 'portfolio-justified__item';
+          const button = document.createElement('button');
+          button.className = 'portfolio-justified__button';
+          button.type = 'button';
+          button.dataset.lightboxOpen = '';
+          button.dataset.lightboxIndex = String(index);
+          button.setAttribute('aria-label', '開啟 ' + collection.title + ' 照片 ' + (index + 1));
           const image = document.createElement('img');
           image.src = src;
           image.alt = `${collection.title}作品照片 ${index + 1}`;
           image.loading = index < 3 ? 'eager' : 'lazy';
           image.decoding = 'async';
-          figure.append(image);
+          button.append(image);
+          figure.append(button);
           return figure;
         }));
       }
