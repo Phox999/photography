@@ -3,7 +3,34 @@ import { getSecretConfig, HttpError } from './auth.js';
 const MAX_BYTES = 8 * 1024 * 1024;
 const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const invalid = () => new HttpError(400, '請選擇有效的 JPEG、PNG 或 WebP 圖片。', 'invalid_input');
-const unavailable = (label = '首頁照片') => new HttpError(503, `${label}上傳暫時無法使用，請稍後重新整理。`, 'upload_unconfirmed');
+const unavailable = (label = '首頁照片', detail = '') => new HttpError(503,
+  detail ? `${label}上傳失敗。${detail}` : `${label}上傳暫時無法使用，請稍後重新整理。`,
+  'upload_unconfirmed');
+
+// Show an actionable, sanitized Storage error without exposing its raw response.
+function storageFailure(response, result, label) {
+  const rawCode = [result?.code, result?.error, result?.errorCode]
+    .find((value) => typeof value === 'string' && value);
+  const code = rawCode?.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 48) || '';
+
+  if (response.status === 401 || code === 'InvalidJWT') {
+    return unavailable(label, 'Supabase Storage 驗證失敗，請檢查 Cloudflare 的 SUPABASE_SECRET_KEY。');
+  }
+  if (response.status === 403) {
+    return unavailable(label, 'Supabase Storage 拒絕上傳（HTTP 403），請檢查 site-hero 儲存桶的存取設定。');
+  }
+  if (response.status === 404 || code === 'NoSuchBucket') {
+    return unavailable(label, '找不到 site-hero 儲存桶，請確認已套用 migration 202609240011_hero_content.sql。');
+  }
+  if (response.status === 413 || code === 'EntityTooLarge') {
+    return unavailable(label, '照片超過 Supabase Storage 專案或儲存桶的檔案大小上限。');
+  }
+  if (code === 'InvalidMimeType') {
+    return unavailable(label, 'site-hero 儲存桶未允許此圖片格式，請確認 JPEG、PNG、WebP 的設定。');
+  }
+
+  return unavailable(label, `Supabase Storage 回傳 HTTP ${response.status}${code ? `（${code}）` : ''}，請檢查 Storage 設定。`);
+}
 
 export function assertHeroUpload(request) {
   if (request.headers.get('origin') !== new URL(request.url).origin
@@ -81,13 +108,23 @@ export async function persistHeroUpload(env, upload, bucket = 'site-hero', label
       method: 'POST', headers, body: upload.bytes, signal: controller.signal, redirect: 'error', cache: 'no-store',
     });
     const text = await response.text();
-    if (text.length > 16384) throw unavailable(label);
+    if (text.length > 16384) {
+      throw unavailable(label, `Supabase Storage 回傳內容過大（HTTP ${response.status}）。`);
+    }
     let result;
-    try { result = JSON.parse(text); } catch { throw unavailable(label); }
-    if (!response.ok || result?.Key !== `${bucket}/${upload.path}`) throw unavailable(label);
+    try { result = JSON.parse(text); } catch {
+      throw unavailable(label, `Supabase Storage 回覆格式無法辨識（HTTP ${response.status}）。`);
+    }
+    if (!response.ok) throw storageFailure(response, result, label);
+    if (result?.Key !== `${bucket}/${upload.path}`) {
+      throw unavailable(label, 'Supabase Storage 回傳的照片路徑不一致，請重試。');
+    }
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw unavailable(label);
+    const detail = error?.name === 'AbortError'
+      ? '連線至 Supabase Storage 逾時，請稍後重試。'
+      : '無法連線至 Supabase Storage，請確認服務狀態後重試。';
+    throw unavailable(label, detail);
   } finally { clearTimeout(timer); }
   return { path: upload.path, url: `${config.url}/storage/v1/object/public/${bucket}/${upload.path}` };
 }
