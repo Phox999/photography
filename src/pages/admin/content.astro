@@ -185,11 +185,13 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     try {
       for (const file of files) {
         message($('#hero-image-status'), `正在上傳第 ${uploaded + 1} / ${files.length} 張…`);
-        heroImages.push(await uploadHeroFile(file)); uploaded += 1; renderHeroImages(); updateState();
+        heroImages.push(await uploadHeroFile(file)); uploaded += 1;
+        const remaining = new DataTransfer(); files.slice(uploaded).forEach((pending) => remaining.items.add(pending)); heroFile.files = remaining.files;
+        renderHeroImages(); updateState();
       }
       heroFile.value = '';
       message($('#hero-image-status'), `已加入 ${uploaded} 張照片；發布更新後才會顯示在首頁。`);
-    } catch (error) { message($('#hero-image-status'), `${uploaded ? `已完成 ${uploaded} 張。` : ''}${error instanceof Error && error.name !== 'AbortError' ? error.message : '照片上傳逾時，請檢查連線後重試。'}`, true); }
+    } catch (error) { message($('#hero-image-status'), `${uploaded ? `已完成 ${uploaded} 張，剩餘照片仍保留在選擇清單中；修正問題後可繼續上傳。` : ''}${error instanceof Error && error.name !== 'AbortError' ? error.message : '照片上傳逾時，請檢查連線後重試。'}`, true); }
     finally { uploading = false; updateState(); }
   }
   heroUpload.addEventListener('click', () => void uploadHero());
@@ -286,3 +288,4 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   });
   requireAdminSession().then(loadContent).catch(() => {});
 </script>
+

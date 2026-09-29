@@ -198,11 +198,12 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       for (const file of files) {
         $('#portfolio-upload-status').textContent = `正在上傳第 ${count + 1} / ${files.length} 張…`;
         const image = await uploadPhoto(file); collection.images.push(image); count += 1;
+        const remaining = new DataTransfer(); files.slice(count).forEach((pending) => remaining.items.add(pending)); photoInput.files = remaining.files;
         if (!collection.cover) { collection.cover = image.path; collection.coverUrl = image.url; }
         renderPhotos(); renderList();
       }
       photoInput.value = ''; $('#portfolio-upload-status').textContent = `已加入 ${count} 張；發布作品集後會顯示在網站。`;
-    } catch (error) { $('#portfolio-upload-status').textContent = error instanceof Error ? error.message : '照片上傳失敗，請稍後重試。'; }
+    } catch (error) { $('#portfolio-upload-status').textContent = `${count ? `已完成 ${count} 張，剩餘照片仍保留在選擇清單中；修正問題後可繼續上傳。` : ''}${error instanceof Error ? error.message : '照片上傳失敗，請稍後重試。'}`; }
     finally { uploading = false; updateState(); }
   }
   function newCollection() {
@@ -315,3 +316,4 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   @media (max-width: 920px) { .portfolio-admin-grid { grid-template-columns: minmax(0, 1fr); } }
   @media (max-width: 560px) { .portfolio-admin-fields { grid-template-columns: minmax(0, 1fr); } .portfolio-admin-photos { grid-template-columns: repeat(2, minmax(0, 1fr)); } .portfolio-admin-publish { align-items: stretch; flex-direction: column; } .portfolio-admin-publish button { width: 100%; } }
 </style>
+

@@ -36,7 +36,7 @@ export async function readArchiveFiles(config, photos, signal) {
     const headers = { apikey: config.key };
     if (!config.key.startsWith('sb_secret_')) headers.Authorization = `Bearer ${config.key}`;
     let response;
-    try { response = await fetch(url.href, { headers, signal, redirect: 'error', cache: 'no-store' }); }
+    try { response = await fetch(url.href, { headers, signal, redirect: 'manual', cache: 'no-store' }); }
     catch { throw unavailable(); }
     if (!response.ok || !response.body || !/^image\/(?:jpeg|png|webp|avif)(?:;|$)/i.test(response.headers.get('content-type') || '')) {
       await response.body?.cancel(); throw unavailable();
@@ -80,3 +80,4 @@ export function zipResponse(files, filename = 'photos.zip') {
   const body = new ReadableStream({ pull(controller) { if (index === parts.length) { controller.close(); return; } const chunk = parts[index]; parts[index++] = null; controller.enqueue(chunk); }, cancel() { parts.length = 0; } });
   return new Response(body, { headers: { 'Content-Type': 'application/zip', 'Content-Length': String(offset + directorySize + 22), 'Content-Disposition': `attachment; filename="${filename}"`, 'Cache-Control': 'private, no-store', Pragma: 'no-cache', Vary: 'Authorization', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow' } });
 }
+

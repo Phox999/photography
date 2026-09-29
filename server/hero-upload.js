@@ -107,7 +107,7 @@ export async function persistHeroUpload(env, upload, bucket = 'site-hero', label
   const timer = setTimeout(() => controller.abort(), 20000);
   try {
     const response = await fetch(`${config.url}/storage/v1/object/${bucket}/${upload.path}`, {
-      method: 'POST', headers, body: upload.bytes, signal: controller.signal, redirect: 'error', cache: 'no-store',
+      method: 'POST', headers, body: upload.bytes, signal: controller.signal, redirect: 'manual', cache: 'no-store',
     });
     const text = await response.text();
     if (text.length > 16384) {
@@ -130,3 +130,4 @@ export async function persistHeroUpload(env, upload, bucket = 'site-hero', label
   } finally { clearTimeout(timer); }
   return { path: upload.path, url: `${config.url}/storage/v1/object/public/${bucket}/${upload.path}` };
 }
+

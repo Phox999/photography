@@ -131,7 +131,7 @@ async function uploadObject(config, path, image) {
   const timeout = setTimeout(() => controller.abort(), 12000);
   try {
     const result = await fetch(`${config.url}/storage/v1/object/${REFERENCE_BUCKET}/${path}`, {
-      method: 'POST', headers, body: image.bytes, signal: controller.signal, redirect: 'error', cache: 'no-store',
+      method: 'POST', headers, body: image.bytes, signal: controller.signal, redirect: 'manual', cache: 'no-store',
     });
     const bytes = result.body ? await boundedBytes(result.body, 16 * 1024, storageError, storageError) : new Uint8Array();
     if (!result.ok) throw storageError();
@@ -237,3 +237,4 @@ export async function signedInquiryReferences(config, row) {
   }
   return { reference_links: links, reference_images: images.map(({ name, type, size, path }) => ({ name, type, size, url: urls.get(path) })), expires_in: REFERENCE_URL_TTL };
 }
+

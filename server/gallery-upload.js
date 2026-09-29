@@ -69,7 +69,7 @@ export async function persistGalleryUpload(env, admin, upload) {
   const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 20000);
   try {
     const response = await fetch(`${config.url}/storage/v1/object/client-galleries/${upload.path}`, { method:'POST', headers,
-      body:upload.bytes, redirect:'error', cache:'no-store', signal:controller.signal });
+      body:upload.bytes, redirect: 'manual', cache:'no-store', signal:controller.signal });
     const bytes = await bounded(response.body, 16384); let result;
     try { result = JSON.parse(new TextDecoder().decode(bytes)); } catch { throw unavailable(); }
     // Content-addressed paths plus overwrite=false make an identical retry safe.
@@ -83,3 +83,4 @@ export async function persistGalleryUpload(env, admin, upload) {
   if (!data?.id || data.gallery_id !== upload.galleryId) throw unavailable();
   return data;
 }
+
