@@ -3,7 +3,17 @@ import { siteConfig } from '../data/site';
 ---
 
 <section class="hero" id="hero" aria-labelledby="hero-title" data-hero-carousel>
-  <div class="hero__media" aria-hidden="true"></div>
+  <div class="hero__media" aria-hidden="true">
+    <img
+      class="hero__image is-active"
+      src="/assets/hero.webp"
+      alt=""
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      data-hero-image
+    />
+  </div>
 
   <div class="hero__overlay"></div>
 
@@ -29,8 +39,8 @@ import { siteConfig } from '../data/site';
   const heroCarousel = document.querySelector('[data-hero-carousel]');
 
   if (heroCarousel) {
-    let images: HTMLImageElement[] = [];
     const media = heroCarousel.querySelector<HTMLElement>('.hero__media');
+    let images = media ? Array.from(media.querySelectorAll<HTMLImageElement>('[data-hero-image]')) : [];
     const title = heroCarousel.querySelector('[data-hero-title]');
     const copy = heroCarousel.querySelector('[data-hero-copy]');
     let currentIndex = 0;
@@ -43,21 +53,32 @@ import { siteConfig } from '../data/site';
       images[currentIndex].classList.add('is-active');
     };
 
-    loadPublicSiteContent().then((content) => {
+    loadPublicSiteContent().then(async (content) => {
       if (title) title.textContent = content.hero_title;
       if (copy) copy.textContent = content.hero_copy;
-      if (media) {
-        currentIndex = 0;
-        images = content.hero_image_urls.map((url, index) => {
+
+      if (media && content.hero_image_urls.length) {
+        const apiImages = content.hero_image_urls.map((url, index) => {
           const image = document.createElement('img');
           image.className = `hero__image ${index === 0 ? 'is-active' : ''}`;
           image.src = url;
           image.alt = '';
           image.loading = index === 0 ? 'eager' : 'lazy';
+          image.decoding = 'async';
           image.dataset.heroImage = '';
           return image;
         });
-        media.replaceChildren(...images);
+
+        try {
+          await apiImages[0].decode();
+          if (apiImages[0].naturalWidth > 0) {
+            currentIndex = 0;
+            images = apiImages;
+            media.replaceChildren(...images);
+          }
+        } catch {
+          // Keep the local fallback visible if the first API image cannot load.
+        }
       }
 
       if (images.length > 1) {
