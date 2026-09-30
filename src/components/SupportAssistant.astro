@@ -24,7 +24,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
       <ol class="support-messages" data-support-messages role="log" aria-label="本頁問答" aria-live="polite" aria-relevant="additions"></ol>
     </div>
     <form class="support-form" data-support-form>
-      <div class="support-input-row"><input id="support-question" name="question" type="text" maxlength="240" aria-label="輸入拍攝問題" placeholder="例如：第一次拍攝要準備什麼？" autocomplete="off" enterkeyhint="send" required /><button type="submit" aria-label="送出問題">送出</button></div>
+      <div class="support-input-row"><input id="support-question" name="question" type="text" maxlength="240" aria-label="輸入拍攝問題" placeholder="例如：第一次拍攝要準備什麼？" autocomplete="off" enterkeyhint="send" required /><button type="submit" aria-label="送出問題"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="m27.66 14.21-22.12-11.06a2 2 0 0 0 -2.19.26 2 2 0 0 0 -.62 2.12l2.92 9.47h10.35a1 1 0 0 1 0 2h-10.35l-2.92 9.47a2 2 0 0 0 1.91 2.59 2 2 0 0 0 .9-.21l22.12-11.06a2 2 0 0 0 0-3.58z" /></svg></button></div>
     </form>
   </div>
 </dialog>
@@ -43,30 +43,34 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
   .support-close { width: 38px; height: 38px; flex: 0 0 38px; border: 0; border-radius: 50%; background: #f4f9fb; color: #234c5b; cursor: pointer; font: 400 1.45rem/1 var(--font-body); }
   .support-body { min-height: 0; flex: 0 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 18px 22px 12px; scrollbar-gutter: stable; background: #f3f5f6; }
   .support-quick { display: flex; flex-wrap: wrap; gap: 8px; }
-  .support-quick button, .support-messages :global(.support-options button) { max-width: 100%; min-height: 52px; padding: 10px 16px; border: 1px solid #9dcce0; border-radius: var(--radius-pill); color: #215e75; background: #fff; font: 500 .89rem/1.5 var(--font-body); cursor: pointer; text-align: left; overflow-wrap: anywhere; }
+  .support-quick button, .support-messages :global(.support-options button) { max-width: 100%; min-height: 52px; padding: 10px 16px; border: 1px solid #9dcce0; border-radius: var(--radius-lg); color: #215e75; background: #fff; font: 500 .89rem/1.5 var(--font-body); cursor: pointer; text-align: left; overflow-wrap: anywhere; }
   .support-quick button:hover, .support-messages :global(.support-options button:hover) { background: #eef8fc; }
   .support-more { margin: 8px 0 0; }
   .support-more summary { padding: 10px 0; color: #365968; font-size: .89rem; cursor: pointer; min-height: 44px; }
   .support-more .support-quick { margin-top: 5px; }
   .support-messages { display: grid; gap: 14px; padding: 0; margin: 18px 0 0; list-style: none; }
   .support-messages:empty { margin: 0; }
-  .support-messages :global(li) { min-width: 0; width: fit-content; max-width: calc(100% - 20px); justify-self: start; padding: 14px 16px; border: 1px solid #e5eaed; border-radius: var(--radius-control); background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); font-size: 1rem; line-height: 1.85; overflow-wrap: anywhere; }
-  .support-messages :global(li.support-message--visitor) { justify-self: end; border-color: #cce8f4; border-radius: var(--radius-control); background: #def1fa; color: #17495e; }
+  .support-messages :global(li) { min-width: 0; width: fit-content; max-width: calc(100% - 20px); justify-self: start; padding: 14px 16px; border: 1px solid #e5eaed; border-radius: var(--radius-lg); background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); font-size: 1rem; line-height: 1.85; overflow-wrap: anywhere; }
+  .support-messages :global(li.support-message--visitor) { justify-self: end; border-color: #cce8f4; border-radius: var(--radius-lg); background: #def1fa; color: #17495e; }
   .support-messages :global(li.support-message--assistant) { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 9px; width: 100%; max-width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
   .support-messages :global(.support-avatar) { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
   .support-messages :global(.support-reply-content) { min-width: 0; }
   .support-messages :global(.support-speaker) { display: block; margin: 0 0 5px 2px; color: #397f9b; font-size: .8rem; font-weight: 700; line-height: 1.35; }
-  .support-messages :global(.support-reply-bubble) { padding: 14px 16px; border: 1px solid #e5eaed; border-radius: var(--radius-control); background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); }
+  .support-messages :global(.support-reply-bubble) { padding: 14px 16px; border: 1px solid #e5eaed; border-radius: var(--radius-lg); background: #fff; color: #2e5161; box-shadow: 0 2px 5px rgb(37 66 79 / .04); }
   .support-messages :global(p) { white-space: pre-wrap; margin: 0; }
   .support-messages :global(.support-options), .support-messages :global(.support-links) { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-  .support-messages :global(.support-links a) { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; min-height: 44px; padding: 9px 16px; border: 1px solid #b7ddec; border-radius: var(--radius-pill); background: #edf8fc; color: #215e75; font: 600 .89rem/1.5 var(--font-body); text-decoration: none; text-align: center; overflow-wrap: anywhere; }
-  .support-messages :global(.support-links a:hover) { border-color: #63badf; background: #dff2fa; }
+  .support-messages :global(.support-links--only) { margin-top: 0; }
+  .support-messages :global(.support-links a) { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 44px; padding: 4px 0; border: 0; border-radius: 0; background: transparent; color: #287b9c; font: 700 .95rem/1.5 var(--font-body); text-decoration: none; text-align: left; overflow-wrap: anywhere; }
+  .support-messages :global(.support-links a:hover) { background: transparent; color: #1e6684; text-decoration: underline; text-underline-offset: 4px; }
+  .support-messages :global(.support-link-icon) { display: inline-block; width: 15px; height: 15px; flex: 0 0 15px; background-color: currentColor; -webkit-mask: url('/assets/icons/external-link.svg') center / contain no-repeat; mask: url('/assets/icons/external-link.svg') center / contain no-repeat; }
   .support-form { padding: 14px 20px 10px; border-top: 1px solid #e5eef2; flex: 0 0 auto; background: #fff; }
-  .support-input-row { display: flex; align-items: stretch; gap: 8px; }
-  .support-input-row input { min-width: 0; width: 100%; height: 52px; padding: 10px 12px; border: 1px solid #bcd5e0; border-radius: var(--radius-control); background: #fff; color: #111; font: 400 1rem/1.5 var(--font-body); }
-  .support-input-row button { min-width: 62px; padding: 9px; border: 0; border-radius: var(--radius-pill); color: #fff; background: #63badf; font: 600 .89rem/1.4 var(--font-body); cursor: pointer; }
+  .support-input-row { --support-control-height: 52px; display: flex; align-items: center; gap: 8px; }
+  .support-input-row input { min-width: 0; width: 100%; height: var(--support-control-height); padding: 10px 12px; border: 1px solid #bcd5e0; border-radius: var(--radius-pill); background: #fff; color: #111; font: 400 1rem/1.5 var(--font-body); }
+  .support-input-row button { display: grid; place-items: center; width: var(--support-control-height); height: var(--support-control-height); min-width: var(--support-control-height); flex: 0 0 var(--support-control-height); padding: 0; border: 0; border-radius: 50%; background: #63badf; cursor: pointer; }
+  .support-input-row button svg { display: block; width: 22px; height: 22px; fill: currentColor; color: #fff; }
   .support-input-row button:hover { background: var(--color-primary-dark); }
   .support-dialog :global(:focus-visible), .support-launcher:focus-visible { outline: 3px solid #287b9c; outline-offset: 3px; }
+  .support-input-row input:focus-visible { outline: none; box-shadow: inset 0 0 0 3px #287b9c; }
   @media (min-width: 601px) {
     .support-dialog::backdrop { background: transparent; }
   }
@@ -85,7 +89,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
 
 <script>
   import { faqItems } from '../data/site';
-  import { supportContactLinks, type SupportLink, type SupportTopic } from '../data/supportKnowledge';
+  import { supportInquiryLink, supportFallbackAnswer, type SupportLink, type SupportTopic } from '../data/supportKnowledge';
   import { loadPublicSiteContent } from '../lib/site-content';
   import { buildSupportKnowledge, matchSupportQuestion } from '../lib/support-matcher';
 
@@ -109,7 +113,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
       paragraph.textContent = text;
       if (visitor) {
         item.className = 'support-message--visitor';
-        item.append(paragraph);
+        if (text.trim()) item.append(paragraph);
       } else {
         item.className = 'support-message--assistant';
         const avatar = document.createElement('img');
@@ -125,7 +129,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
         speaker.textContent = '小蔡 · 合作小幫手';
         const bubble = document.createElement('div');
         bubble.className = 'support-reply-bubble';
-        bubble.append(paragraph);
+        if (text.trim()) bubble.append(paragraph);
         content.append(speaker, bubble);
         item.append(avatar, content);
       }
@@ -135,14 +139,20 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
       return item;
     }
     function addLinks(item: HTMLElement, links: SupportLink[]) {
+      if (links.length === 0) return;
       const target = item.querySelector<HTMLElement>('.support-reply-bubble') ?? item;
       const group = document.createElement('div');
-      group.className = 'support-links';
+      const hasAnswerText = Boolean(target.querySelector('p')?.textContent?.trim());
+      group.className = hasAnswerText ? 'support-links' : 'support-links support-links--only';
       links.forEach(link => {
         const anchor = document.createElement('a');
         anchor.textContent = link.label;
         anchor.href = link.href;
         if (link.href.startsWith('https://')) { anchor.target = '_blank'; anchor.rel = 'noopener noreferrer'; }
+        const icon = document.createElement('span');
+        icon.className = 'support-link-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        anchor.append(icon);
         group.append(anchor);
       });
       target.append(group);
@@ -191,7 +201,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
       const match = matchSupportQuestion(question, faqs);
       if (match.kind === 'answer') answerTopic(match.topic, false);
       else if (match.kind === 'choices') showChoices(match.prompt, match.topics);
-      else addLinks(appendMessage('我暫時找不到這題的公開說明。可以改選上方常見問題，或透過以下方式查看合作資訊。'), supportContactLinks);
+      else addLinks(appendMessage(supportFallbackAnswer), [supportInquiryLink]);
     });
     function updateViewport() {
       if (!dialog?.open) return;

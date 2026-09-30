@@ -1,5 +1,5 @@
 import { faqItems } from '../data/site';
-import { supportTopics, supportContactLinks, type SupportTopic } from '../data/supportKnowledge';
+import { supportTopics, supportInquiryLink, supportFallbackAnswer, type SupportTopic } from '../data/supportKnowledge';
 
 export type PublishedFAQ = { question: string; answer: string };
 
@@ -38,8 +38,8 @@ export function buildSupportKnowledge(faqs: PublishedFAQ[] = faqItems): SupportT
       ? { ...topic, answer: matches[0].answer }
       : {
           ...topic,
-          answer: '目前沒有可唯一對應的公開說明。可以先填寫合作意向，或透過 Instagram、Email 確認。',
-          links: supportContactLinks,
+          answer: supportFallbackAnswer,
+          links: [supportInquiryLink],
         };
   });
 }

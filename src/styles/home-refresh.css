@@ -1194,3 +1194,9 @@
     max-width: var(--home-content-max);
   }
 }
+
+@media (min-width: 721px) and (max-width: 1100px) {
+  .trust-wrap .trust-bar.trust-bar--stats .trust-stat + .trust-stat {
+    border-top: 0;
+  }
+}
