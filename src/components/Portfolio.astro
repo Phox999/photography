@@ -91,7 +91,13 @@ const countFor = (category: string) =>
   .portfolio-empty[hidden] { display: none; }
   @media (max-width: 900px) { .portfolio-section :global(.portfolio-card) { flex-basis: calc((100% - 48px) / 3); } }
   @media (max-width: 620px) {
-    .portfolio-section > .section-heading--row { align-items: flex-end; }
+    .portfolio-section > .section-heading--row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .portfolio-section > .section-heading--row .portfolio-scroll-controls { justify-self: end; }
     .portfolio-scroll-controls button { width: 44px; height: 44px; }
     .portfolio-section :global(.portfolio-card) { flex-basis: 84%; }
     .portfolio-toolbar { align-items: center; }

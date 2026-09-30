@@ -1827,7 +1827,7 @@ p {
   }
 
   .hero__image {
-    object-position: 62% center;
+    object-position: center center;
   }
 
   .hero__overlay {
