@@ -59,6 +59,8 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
 
 <script>
   import { AdminApiError, adminErrorMessage, confirmDiscardChanges, requestAdmin, requireAdminSession, setUnsavedChanges } from '../../lib/admin-client';
+  import { portfolioChangeSet } from '../../lib/portfolio-changes.js';
+  import { portfolioControlState } from '../../lib/portfolio-control-state.js';
   type PortfolioPhoto = { path: string; url: string };
   type Collection = { slug: string; title: string; category: '外拍' | '棚拍'; description: string; cover: string; coverUrl: string; images: PortfolioPhoto[]; totalImages: number };
   type PortfolioResponse = { version: number; collections: Array<Omit<Collection, 'coverUrl'> & { cover_url: string; images: PortfolioPhoto[] }> };
@@ -97,14 +99,31 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     const value = payload();
     const changed = JSON.stringify(value) !== original;
     const valid = value.length > 0 && value.every((item) => item.title.trim() && item.cover && item.images.length > 0);
+    const controls = portfolioControlState({ busy, uploading, collections, selectedIndex, hasPendingFiles: Boolean(photoInput.files?.length), changed, valid });
     setUnsavedChanges(changed);
     $('#portfolio-dirty').textContent = changed ? '有尚未發布的修改。' : '內容尚未變更。';
-    $<HTMLButtonElement>('#portfolio-publish').disabled = busy || uploading || !changed || !valid;
+    $<HTMLButtonElement>('#portfolio-publish').disabled = controls.publishDisabled;
     $('#portfolio-count').textContent = `${collections.length} 組作品`;
-    uploadButton.disabled = busy || uploading || !(photoInput.files?.length);
-    photoInput.disabled = busy || uploading;
-    $<HTMLButtonElement>('#portfolio-add').disabled = busy || uploading || collections.length >= 80;
-    $<HTMLButtonElement>('#portfolio-reload').disabled = busy || uploading;
+    uploadButton.disabled = controls.uploadDisabled;
+    photoInput.disabled = controls.locked;
+    titleInput.disabled = controls.locked;
+    categoryInput.disabled = controls.locked;
+    descriptionInput.disabled = controls.locked;
+    $<HTMLButtonElement>('#portfolio-add').disabled = controls.addDisabled;
+    $<HTMLButtonElement>('#portfolio-reload').disabled = controls.reloadDisabled;
+    list.querySelectorAll<HTMLButtonElement>('[data-collection-select]').forEach((button) => { button.disabled = controls.locked; });
+    list.querySelectorAll<HTMLButtonElement>('[data-collection-action]').forEach((button) => {
+      const action = button.dataset.collectionAction;
+      const index = Number(button.dataset.collectionIndex);
+      const state = controls.collectionActions[index];
+      button.disabled = !state || (action === 'up' ? state.upDisabled : action === 'down' ? state.downDisabled : state.removeDisabled);
+    });
+    photoGrid.querySelectorAll<HTMLButtonElement>('[data-photo-action]').forEach((button) => {
+      const action = button.dataset.photoAction;
+      const index = Number(button.dataset.photoIndex);
+      const state = controls.photoActions[index];
+      button.disabled = !state || (action === 'up' ? state.upDisabled : action === 'down' ? state.downDisabled : action === 'cover' ? state.coverDisabled : state.removeDisabled);
+    });
   }
   function collectionFromResponse(item: PortfolioResponse['collections'][number]): Collection {
     return { ...item, coverUrl: item.cover_url, images: item.images };
@@ -120,7 +139,6 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const actions = document.createElement('div'); actions.className = 'portfolio-admin-item__actions';
       for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '移除']]) {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'admin-button admin-button--quiet admin-button--small'; button.dataset.collectionAction = action; button.dataset.collectionIndex = String(index); button.textContent = label;
-        button.disabled = busy || uploading || (action === 'up' && index === 0) || (action === 'down' && index === collections.length - 1);
         button.setAttribute('aria-label', action === 'remove' ? `移除${name.textContent}` : `${action === 'up' ? '將' : '將'}${name.textContent}${action === 'up' ? '上移' : '下移'}`);
         actions.append(button);
       }
@@ -141,7 +159,6 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const actions = document.createElement('div'); actions.className = 'portfolio-admin-photo__actions';
       for (const [action, label] of [['up', '上移'], ['down', '下移'], ['cover', '設為封面'], ['remove', '移除']]) {
         const button = document.createElement('button'); button.type = 'button'; button.dataset.photoAction = action; button.dataset.photoIndex = String(index); button.textContent = label;
-        button.disabled = busy || uploading || (action === 'up' && index === 0) || (action === 'down' && index === collection.images.length - 1) || (action === 'remove' && collection.images.length <= 1) || (action === 'cover' && collection.cover === photo.path);
         button.setAttribute('aria-label', `${label}第 ${index + 1} 張照片`);
         actions.append(button);
       }
@@ -221,6 +238,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   }
 
   list.addEventListener('click', (event) => {
+    if (busy || uploading) return;
     const target = event.target instanceof Element ? event.target : null;
     const actionButton = target?.closest<HTMLButtonElement>('[data-collection-action]');
     if (actionButton) {
@@ -251,12 +269,12 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     renderPhotos(); renderList(); updateState();
   });
   detailForm.addEventListener('input', () => {
-    const collection = collections[selectedIndex]; if (!collection || busy) return;
+    const collection = collections[selectedIndex]; if (!collection || busy || uploading) return;
     collection.title = titleInput.value; collection.description = descriptionInput.value;
     $('#portfolio-detail-heading').textContent = collection.title.trim() || '新增作品';
     renderList(); updateState();
   });
-  categoryInput.addEventListener('change', () => { const collection = collections[selectedIndex]; if (collection) { collection.category = categoryInput.value as Collection['category']; renderList(); updateState(); } });
+  categoryInput.addEventListener('change', () => { const collection = collections[selectedIndex]; if (collection && !busy && !uploading) { collection.category = categoryInput.value as Collection['category']; renderList(); updateState(); } });
   photoInput.addEventListener('change', updateState);
   uploadButton.addEventListener('click', () => void uploadPhotos());
   $('#portfolio-add').addEventListener('click', newCollection);
@@ -267,7 +285,8 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     if (!window.confirm(`確認發布 ${collections.length} 組作品集？網站上的作品順序與照片會隨即更新。`)) return;
     busy = true; updateState(); $('#portfolio-save-status').textContent = '正在發布作品集…';
     try {
-      const result = await requestAdmin<PortfolioResponse>('/api/admin/portfolio', { method: 'PATCH', body: { collections: payload(), version } });
+      const changes = portfolioChangeSet(JSON.parse(original) as ReturnType<typeof payload>, payload());
+      const result = await requestAdmin<PortfolioResponse>('/api/admin/portfolio-changes', { method: 'PATCH', body: { ...changes, version } });
       version = result.version; collections = result.collections.map(collectionFromResponse); selectedIndex = Math.min(selectedIndex, collections.length - 1);
       original = JSON.stringify(payload()); renderList(); renderEditor();
       $('#portfolio-save-status').textContent = '作品集已發布，網站通常會在一分鐘內更新。';

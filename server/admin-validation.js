@@ -190,3 +190,36 @@ export function portfolioUpdate(body) {
   if (!collections.length) invalid('請至少保留一組公開作品。');
   return { p_collections: collections, p_version: parseVersion(body.version) };
 }
+
+export function portfolioChanges(body) {
+  objectBody(body, ['upserts', 'deleted_slugs', 'order', 'version']);
+  if (!Array.isArray(body.upserts) || body.upserts.length > 80
+    || !Array.isArray(body.deleted_slugs) || body.deleted_slugs.length > 80
+    || !Array.isArray(body.order) || body.order.length > 80) invalid('作品集變更資料格式不正確。');
+
+  const upserts = body.upserts.map((item) => portfolioUpdate({ collections: [item], version: body.version }).p_collections[0]);
+  const upsertSlugs = upserts.map((item) => item.slug);
+  if (new Set(upsertSlugs).size !== upsertSlugs.length) invalid('作品集變更包含重複的識別名稱。');
+
+  const deletedSlugs = body.deleted_slugs.map((slug) => {
+    const normalized = portfolioText(slug, 120, '作品集識別名稱', { required: true });
+    if (/[\\/?#]/.test(normalized)) invalid('作品集識別名稱格式不正確。');
+    return normalized;
+  });
+  if (new Set(deletedSlugs).size !== deletedSlugs.length
+    || deletedSlugs.some((slug) => upsertSlugs.includes(slug))) invalid('作品集變更有重複或互相衝突的識別名稱。');
+
+  const order = body.order.map((slug) => {
+    const normalized = portfolioText(slug, 120, '作品集識別名稱', { required: true });
+    if (/[\\/?#]/.test(normalized)) invalid('作品集識別名稱格式不正確。');
+    return normalized;
+  });
+  if (new Set(order).size !== order.length) invalid('作品集順序包含重複的識別名稱。');
+
+  return {
+    p_upserts: upserts,
+    p_deleted_slugs: deletedSlugs,
+    p_order: order,
+    p_version: parseVersion(body.version),
+  };
+}

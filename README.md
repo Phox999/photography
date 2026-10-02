@@ -21,6 +21,16 @@ npm install
 npm run dev
 ```
 
+## Tests
+
+Run the built-in Node unit and mock API checks with:
+
+```bash
+npm test
+```
+
+The PostgreSQL security tests in `supabase/tests/` require a disposable local Supabase project and its complete migration sequence. They have not been run against a production project.
+
 ## Production build
 
 ```bash

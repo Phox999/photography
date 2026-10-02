@@ -96,6 +96,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 </style>
 <script>
   import { requestAdmin, requireAdminSession, adminErrorMessage, formatAdminDate, setUnsavedChanges, confirmDiscardChanges, AdminApiError } from '../../lib/admin-client';
+  import { confirmationBodyFits } from '../../lib/confirmation-request-size.js';
   type Status = 'new' | 'reviewing' | 'contacted' | 'closed';
   type Inquiry = { id: string; name: string; contact_method: string; contact_account: string; collaboration_type: string; preferred_date: string | null; description: string; consent: boolean; status: Status; admin_notes: string | null; created_at: string; updated_at: string; version: number };
   type InquiryList = { items: Inquiry[]; total: number; page: number; pageSize: number };
@@ -229,10 +230,15 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     }
     const originalId = selected.id, requestId = confirmationGeneration;
     const current = () => requestId === confirmationGeneration && selected?.id === originalId;
+    const update = { ...confirmationValues(), version: confirmation?.version || 0, status: nextStatus };
+    if (!confirmationBodyFits(update)) {
+      message(confirmationStatus, '確認單內容超過傳輸上限，請精簡內容後再儲存。', true);
+      return;
+    }
     confirmationSaving = true; updateConfirmationControls(); saveButton.disabled = true;
     message(confirmationStatus, '正在儲存拍攝確認…');
     try {
-      const result = await requestAdmin<{ item: ShootConfirmation }>(`/api/admin/inquiries/${encodeURIComponent(originalId)}/confirmation`, { method: 'PATCH', body: { ...confirmationValues(), version: confirmation?.version || 0, status: nextStatus } });
+      const result = await requestAdmin<{ item: ShootConfirmation }>(`/api/admin/inquiries/${encodeURIComponent(originalId)}/confirmation`, { method: 'PATCH', body: update });
       if (!current()) return;
       if (!result?.item) throw new Error('Invalid confirmation response');
       confirmation = result.item;

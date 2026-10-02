@@ -35,6 +35,7 @@ const { id = 'dates' } = Astro.props;
 </section>
 <script>
   import { openSlotsForDay, parsePublicSlots, slotsForDay, taipeiDate, type PublicSlot } from '../lib/availability';
+  import { calendarRangeFor } from '../lib/calendar-months.js';
   const root = document.querySelector<HTMLElement>('[data-availability]');
   if (root) {
     const $ = <T extends Element = HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
@@ -46,9 +47,8 @@ const { id = 'dates' } = Astro.props;
     const retry = $<HTMLButtonElement>('[data-calendar-retry]');
     const clear = root.querySelector<HTMLButtonElement>('[data-date-clear]');
     const monthButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-calendar-month]'));
-    const [year, month] = taipeiDate().split('-').map(Number);
-    const firstMonth = new Date(Date.UTC(year, month, 1));
-    const months = Array.from({ length: 4 }, (_, index) => new Date(Date.UTC(firstMonth.getUTCFullYear(), firstMonth.getUTCMonth() + index, 1)));
+    const dateRange = calendarRangeFor(taipeiDate());
+    const months = dateRange.months;
     let visibleMonth = 0;
     let slots: PublicSlot[] = [];
     let loadState: 'loading' | 'ready' | 'error' = 'loading';
@@ -99,10 +99,7 @@ const { id = 'dates' } = Astro.props;
       if (loadStatus) loadStatus.textContent = '正在讀取已公布檔期…';
       const controller = new AbortController(); const timeout = window.setTimeout(() => controller.abort(), 12000);
       try {
-        const from = dateKey(months[0]);
-        const lastMonth = months[months.length - 1];
-        const to = dateKey(new Date(Date.UTC(lastMonth.getUTCFullYear(), lastMonth.getUTCMonth() + 1, 0)));
-        const response = await fetch(`/api/availability?${new URLSearchParams({ from, to })}`, { cache: 'no-store', credentials: 'omit', signal: controller.signal });
+        const response = await fetch(`/api/availability?${new URLSearchParams({ from: dateRange.from, to: dateRange.to })}`, { cache: 'no-store', credentials: 'omit', signal: controller.signal });
         if (!response.ok) throw new Error('availability unavailable');
         slots = parsePublicSlots(await response.json()); loadState = 'ready';
       } catch {

@@ -22,21 +22,23 @@ import { faqItems } from '../data/site';
 
 <script>
   import { loadPublicSiteContent } from '../lib/site-content';
+  import { publicFaqView } from '../lib/faq-state.js';
   const grid = document.querySelector<HTMLElement>('#faq .faq-grid');
   if (grid) {
-    const { faqs } = await loadPublicSiteContent();
-    if (faqs.length) {
-      const items = faqs.map(({ question, answer }) => {
-        const detail = document.createElement('details');
-        detail.className = 'faq-item';
-        const summary = document.createElement('summary');
-        summary.textContent = question;
-        const paragraph = document.createElement('p');
-        paragraph.textContent = answer;
-        detail.append(summary, paragraph);
-        return detail;
-      });
-      grid.replaceChildren(...items);
-    }
+    const section = grid.closest<HTMLElement>('#faq');
+    const { faqs: contentFaqs } = await loadPublicSiteContent();
+    const view = publicFaqView(contentFaqs);
+    const items = view.items.map(({ question, answer }) => {
+      const detail = document.createElement('details');
+      detail.className = 'faq-item';
+      const summary = document.createElement('summary');
+      summary.textContent = question;
+      const paragraph = document.createElement('p');
+      paragraph.textContent = answer;
+      detail.append(summary, paragraph);
+      return detail;
+    });
+    grid.replaceChildren(...items);
+    if (section) section.hidden = !view.visible;
   }
 </script>

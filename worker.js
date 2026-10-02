@@ -12,6 +12,7 @@ import { onRequest as adminInquiryConfirmation } from './functions/api/admin/inq
 import { onRequest as adminContent } from './functions/api/admin/content.js';
 import { onRequest as adminHeroImage } from './functions/api/admin/hero-image.js';
 import { onRequest as adminPortfolio } from './functions/api/admin/portfolio.js';
+import { onRequest as adminPortfolioChanges } from './functions/api/admin/portfolio-changes.js';
 import { onRequest as adminPortfolioUpload } from './functions/api/admin/portfolio-upload.js';
 import { onRequest as adminAvailability } from './functions/api/admin/availability.js';
 import { onRequest as adminAudit } from './functions/api/admin/audit.js';
@@ -48,6 +49,7 @@ const apiRoutes = [
   [/^\/api\/admin\/content$/, adminContent],
   [/^\/api\/admin\/hero-image$/, adminHeroImage],
   [/^\/api\/admin\/portfolio$/, adminPortfolio],
+  [/^\/api\/admin\/portfolio-changes$/, adminPortfolioChanges],
   [/^\/api\/admin\/portfolio-upload$/, adminPortfolioUpload],
   [/^\/api\/admin\/availability$/, adminAvailability],
   [/^\/api\/admin\/audit$/, adminAudit],

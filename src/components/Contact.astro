@@ -61,9 +61,13 @@ const showThemeImages = false;
                 <p class="field-help" id="reference-status" data-reference-status role="status"></p>
               </div>
               <div class="form-field">
-                <label for="reference-links">拍攝想法及參考連結 <span>選填</span></label>
-                <textarea id="reference-links" name="reference_links" rows="4" maxlength="1000" placeholder="https://..."></textarea>
-                <p class="field-help">最多 2,000 字</p>
+                <label for="description">拍攝想法 <span>選填</span></label>
+                <textarea id="description" name="description" rows="5" aria-describedby="description-help description-count" placeholder="例如：想拍攝的氛圍、地點或其他想法"></textarea>
+                <p class="field-help" id="description-help">可填自由文字，或選擇上方風格；兩者合計最多 2,000 字。</p>
+                <p class="field-help" data-description-count aria-live="polite">0 / 2,000 字</p>
+                <label for="reference-links">參考連結 <span>選填</span></label>
+                <textarea id="reference-links" name="reference_links" rows="3" maxlength="6146" aria-describedby="reference-links-help" placeholder="每行一個 http:// 或 https:// 網址"></textarea>
+                <p class="field-help" id="reference-links-help">最多 3 個連結，每個最多 2,048 字；後端只儲存連結文字。</p>
               </div>
             </div>
           </section>
@@ -71,6 +75,13 @@ const showThemeImages = false;
 
         <section class="contact-form-section" aria-labelledby="contact-step-2-title">
           <h3 id="contact-step-2-title">2. 填寫合作資訊</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="name">姓名／暱稱</label>
+              <input id="name" name="name" type="text" autocomplete="name" maxlength="80" required aria-describedby="name-help" />
+              <p class="field-help" id="name-help">必填，最多 80 字。</p>
+            </div>
+          </div>
           <div class="form-grid contact-details-grid">
             <div class="form-field">
               <label for="collaboration_type">合作類型</label>
@@ -82,7 +93,7 @@ const showThemeImages = false;
             </div>
             <div class="form-field">
               <label for="preferred_date">偏好日期</label>
-              <input id="preferred_date" name="preferred_date" type="text" autocomplete="off" placeholder="選填" />
+              <input id="preferred_date" name="preferred_date" type="text" autocomplete="off" maxlength="200" placeholder="選填" />
             </div>
           </div>
           <div class="form-grid">
@@ -100,7 +111,7 @@ const showThemeImages = false;
             </div>
             <div class="form-field">
               <label for="contact_account">聯絡帳號／連結</label>
-              <input id="contact_account" name="contact_account" type="text" autocomplete="off" required />
+              <input id="contact_account" name="contact_account" type="text" autocomplete="off" maxlength="120" required />
             </div>
           </div>
 
@@ -162,6 +173,8 @@ const showThemeImages = false;
 </section>
 
 <script>
+  import { buildInquiryPayload, normalizeInquiryDraft, validateInquiryDraft } from '../lib/inquiry-form.js';
+
   const inquiryForm = document.querySelector('[data-inquiry-form]');
 
   if (inquiryForm instanceof HTMLFormElement) {
@@ -180,15 +193,13 @@ const showThemeImages = false;
     const review = inquiryForm.querySelector('[data-contact-review]');
     const status = inquiryForm.querySelector('[data-inquiry-status]');
     const styleButtons = Array.from(inquiryForm.querySelectorAll('[data-contact-style]'));
-    const styleStatus = inquiryForm.querySelector('[data-style-status]');
     const referenceInput = inquiryForm.querySelector('[data-reference-images]');
     const referenceFileNames = inquiryForm.querySelector('[data-reference-file-names]');
     const referencePreviews = inquiryForm.querySelector('[data-reference-previews]');
     const referenceStatus = inquiryForm.querySelector('[data-reference-status]');
-    const briefInput = inquiryForm.querySelector('#brief-summary');
     const description = inquiryForm.querySelector('#description');
-    const referenceLinks = inquiryForm.querySelector('#reference-links');
     const confirmButton = inquiryForm.querySelector('[data-confirm-inquiry]');
+    const descriptionCount = inquiryForm.querySelector('[data-description-count]');
     let referenceFiles = [];
     let pending = false;
 
@@ -197,16 +208,25 @@ const showThemeImages = false;
       .map((button) => button.getAttribute('data-style-title'))
       .filter(Boolean);
 
-    const selectedLinks = () => String(referenceLinks?.value || '')
-      .split('\n')
-      .map((link) => link.trim())
-      .filter(Boolean);
-
-    const updateStyleStatus = () => {
-      const selected = selectedStyles();
-      if (styleStatus) {
-        styleStatus.textContent = selected.length ? `已選 ${selected.length} 個主題：${selected.join('、')}。再次點選可取消。` : '選擇項目已標示，確認內容後才會送出。';
-      }
+    const readDraft = () => normalizeInquiryDraft(new FormData(inquiryForm), selectedStyles());
+    const fieldSelectors = {
+      name: '#name',
+      contact_method: '#contact_method',
+      contact_account: '#contact_account',
+      collaboration_type: '#collaboration_type',
+      preferred_date: '#preferred_date',
+      description: '#description',
+      reference_links: '#reference-links',
+      consent: '[name="consent"]',
+    };
+    const reportValidationError = (error) => {
+      if (status) status.textContent = error.message;
+      inquiryForm.querySelector(fieldSelectors[error.field] || '#description')?.focus();
+    };
+    const updateDescriptionCount = () => {
+      if (!descriptionCount) return;
+      const count = readDraft().combinedDescription.length;
+      descriptionCount.textContent = `${count} / 2,000 字`;
     };
 
     const showEditor = () => {
@@ -221,13 +241,12 @@ const showThemeImages = false;
       if (target) target.textContent = value || '未填寫';
     };
 
-    const fillReview = () => {
-      const formData = new FormData(inquiryForm);
-      setReviewText('[data-review-name]', String(formData.get('name') || ''));
-      setReviewText('[data-review-contact]', `${formData.get('contact_method') || ''}｜${formData.get('contact_account') || ''}`);
-      setReviewText('[data-review-type]', String(formData.get('collaboration_type') || ''));
-      setReviewText('[data-review-date]', String(formData.get('preferred_date') || ''));
-      setReviewText('[data-review-description]', String(description?.value || ''));
+    const fillReview = (draft) => {
+      setReviewText('[data-review-name]', draft.name);
+      setReviewText('[data-review-contact]', `${draft.contactMethod}｜${draft.contactAccount}`);
+      setReviewText('[data-review-type]', draft.collaborationType);
+      setReviewText('[data-review-date]', draft.preferredDate);
+      setReviewText('[data-review-description]', draft.description);
 
       const styles = selectedStyles();
       const stylesPanel = inquiryForm.querySelector('[data-review-styles]');
@@ -235,7 +254,7 @@ const showThemeImages = false;
       if (stylesPanel) stylesPanel.hidden = styles.length === 0;
       if (stylesText) stylesText.textContent = styles.join('、');
 
-      const links = selectedLinks();
+      const links = draft.referenceLinks;
       const referencesPanel = inquiryForm.querySelector('[data-review-references]');
       const fileText = inquiryForm.querySelector('[data-review-file-list]');
       const linkList = inquiryForm.querySelector('[data-review-link-list]');
@@ -280,8 +299,10 @@ const showThemeImages = false;
       if (pending) return;
       const isSelected = button.getAttribute('aria-pressed') === 'true';
       button.setAttribute('aria-pressed', String(!isSelected));
-      updateStyleStatus();
+      updateDescriptionCount();
     }));
+
+    description?.addEventListener('input', updateDescriptionCount);
 
     referenceInput?.addEventListener('change', () => {
       if (!(referenceInput instanceof HTMLInputElement) || !referenceStatus) return;
@@ -299,33 +320,16 @@ const showThemeImages = false;
       if (files.length > 3 || accepted.length !== files.length) referenceInput.value = '';
     });
 
-    inquiryForm.querySelector('[data-apply-brief]')?.addEventListener('click', () => {
-      if (!(briefInput instanceof HTMLTextAreaElement) || !(description instanceof HTMLTextAreaElement)) return;
-      const brief = briefInput.value.trim();
-      if (!brief) {
-        inquiryForm.querySelector('[data-brief-status]')?.replaceChildren('請先貼上拍攝規劃摘要。');
-        return;
-      }
-      const merged = [description.value.trim(), brief].filter(Boolean).join('\n\n');
-      if (merged.length > 2000) {
-        inquiryForm.querySelector('[data-brief-status]')?.replaceChildren('合併後超過 2,000 字，請先精簡摘要。');
-        return;
-      }
-      description.value = merged;
-      briefInput.value = '';
-      inquiryForm.querySelector('[data-brief-status]')?.replaceChildren('已套用到拍攝想法，尚未送出。');
-    });
-
     inquiryForm.addEventListener('submit', (event) => {
       event.preventDefault();
       if (pending) return;
-      const links = selectedLinks();
-      if (links.length > 3 || links.some((link) => !/^https?:\/\//i.test(link))) {
-        if (status) status.textContent = '參考連結請使用完整的 http:// 或 https:// 網址，每份最多 3 個。';
-        referenceLinks?.focus();
+      const draft = readDraft();
+      const validationError = validateInquiryDraft(draft);
+      if (validationError) {
+        reportValidationError(validationError);
         return;
       }
-      fillReview();
+      fillReview(draft);
       if (status) status.textContent = '';
     });
 
@@ -333,41 +337,34 @@ const showThemeImages = false;
 
     confirmButton?.addEventListener('click', async () => {
       if (pending) return;
-      const formData = new FormData(inquiryForm);
-      const detailParts = [
-        String(formData.get('description') || '').trim(),
-        selectedStyles().length ? `偏好風格：${selectedStyles().join('、')}` : '',
-        selectedLinks().length ? `參考連結：\n${selectedLinks().join('\n')}` : '',
-      ].filter(Boolean);
-      const descriptionText = detailParts.join('\n\n');
-
-      if (descriptionText.length > 2000) {
-        if (status) status.textContent = '拍攝想法、風格與參考連結合計超過 2,000 字，請返回精簡內容。';
+      const draft = readDraft();
+      const validationError = validateInquiryDraft(draft);
+      if (validationError) {
+        showEditor();
+        reportValidationError(validationError);
         return;
       }
-
-      const payload = Object.fromEntries(formData.entries());
-      payload.description = descriptionText;
-      delete payload.reference_links;
-      delete payload[''];
+      const payload = buildInquiryPayload(draft);
 
       pending = true;
       if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = true;
       if (status) status.textContent = '送出中…';
 
+      let responseReceived = false;
       try {
         const response = await fetch('/api/inquiries', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
+        responseReceived = true;
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
 
         inquiryForm.reset();
         styleButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
-        updateStyleStatus();
         clearPreviews();
+        updateDescriptionCount();
         if (editor) editor.hidden = false;
         if (review) review.hidden = true;
         if (status) {
@@ -383,13 +380,18 @@ const showThemeImages = false;
           }
         }
       } catch (error) {
-        if (status) status.textContent = error instanceof Error ? error.message : '目前無法送出，請改用 Instagram 或 Google 表單聯絡。';
+        if (status) {
+          status.textContent = responseReceived
+            ? (error instanceof Error ? error.message : '目前無法送出，請改用 Instagram 或 Google 表單聯絡。')
+            : '連線中斷，送出結果尚未確認。為避免重複，請先透過 Instagram 或 Email 與我確認；表單內容仍保留。';
+        }
       } finally {
         pending = false;
         if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = false;
       }
     });
 
+    updateDescriptionCount();
     window.addEventListener('pagehide', clearPreviews);
   }
 </script>

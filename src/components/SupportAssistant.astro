@@ -88,10 +88,10 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
 </style>
 
 <script>
-  import { faqItems } from '../data/site';
   import { supportInquiryLink, supportFallbackAnswer, type SupportLink, type SupportTopic } from '../data/supportKnowledge';
   import { loadPublicSiteContent } from '../lib/site-content';
   import { buildSupportKnowledge, matchSupportQuestion } from '../lib/support-matcher';
+  import { publicFaqView } from '../lib/faq-state.js';
 
   const launcher = document.querySelector<HTMLButtonElement>('[data-support-launcher]');
   const dialog = document.querySelector<HTMLDialogElement>('[data-support-dialog]');
@@ -103,7 +103,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
 
   if (launcher && dialog && form && input && messages && typeof dialog.showModal === 'function') {
     const publicContent = await loadPublicSiteContent();
-    const faqs = publicContent.faqs.length ? publicContent.faqs : faqItems;
+    const { items: faqs } = publicFaqView(publicContent.faqs);
     launcher.hidden = false;
 
     function scrollToAnswer() { if (scroller) scroller.scrollTop = scroller.scrollHeight; }
