@@ -1,6 +1,7 @@
-import { endpoint, json, getSecretConfig } from '../../server/auth.js';
+import { endpoint, json, getSecretConfig, getSupabaseConfig } from '../../server/auth.js';
 import { readInquirySubmission, referenceLinks, validateReferenceImages, persistInquiry } from '../../server/inquiry-references.js';
 import { prepareSubmission } from '../../server/inquiry-workflow.js';
+import { validateFavoriteReferences, resolveFavoriteReferences } from '../../server/portfolio-favorites.js';
 
 const contactMethods = new Set(['Instagram', 'Line', 'Facebook', 'Threads', '手機', '其他']);
 const collaborationTypes = new Set(['輕量體驗(2hr)', '標準方案(3hr)', '主題合作']);
@@ -116,9 +117,12 @@ export const onRequest = endpoint(async (context) => {
   }
 
   payload.reference_links = referenceLinks(body.reference_links);
+  const favorites = validateFavoriteReferences(body.portfolio_favorites);
   const images = await validateReferenceImages(files);
+  const config = getSecretConfig(env);
+  if (favorites.length) payload.portfolio_favorites = await resolveFavoriteReferences(getSupabaseConfig(env), favorites);
   const workflow = await prepareSubmission(body, payload, images);
-  const receipt = await persistInquiry(getSecretConfig(env), payload, images, workflow);
+  const receipt = await persistInquiry(config, payload, images, workflow);
 
   return json(
     {

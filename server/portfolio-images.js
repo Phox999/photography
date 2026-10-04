@@ -1,5 +1,6 @@
 import { HttpError } from './auth.js';
 import { isValidPortfolioImagePath } from './admin-validation.js';
+import { portfolioPath } from './seo.js';
 
 const imageUrl = (path, config) => path.startsWith('static:')
   ? path.slice('static:'.length)
@@ -12,7 +13,7 @@ function checkedCollections(data) {
   }
   const slugs = new Set();
   for (const item of collections) {
-    if (!item || typeof item.slug !== 'string' || !item.slug.trim() || /[\\/?#]/.test(item.slug) || slugs.has(item.slug)
+    if (!item || typeof item.slug !== 'string' || !item.slug.trim() || item.slug === '.' || item.slug === '..' || /[\\/?#]/.test(item.slug) || slugs.has(item.slug)
       || typeof item.title !== 'string' || !item.title.trim() || item.title.length > 120
       || !['外拍', '棚拍'].includes(item.category) || typeof item.description !== 'string' || item.description.length > 1000
       || !Array.isArray(item.images) || item.images.length < 1 || item.images.length > 500
@@ -50,7 +51,7 @@ export function publicPortfolioResult(data, config) {
       cover: imageUrl(item.cover, config),
       images: item.images.map((path) => imageUrl(path, config)),
       totalImages: item.totalImages,
-      href: `/portfolio/?collection=${encodeURIComponent(item.slug)}`,
+      href: portfolioPath(item.slug),
     })),
   };
 }

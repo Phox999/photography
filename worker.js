@@ -20,12 +20,17 @@ import { onRequest as adminGalleries } from './functions/api/admin/galleries.js'
 import { onRequest as adminGalleryUpload } from './functions/api/admin/gallery-upload.js';
 import { onRequest as adminFeedback } from './functions/api/admin/feedback.js';
 import { onRequest as portfolio } from './functions/api/portfolio.js';
+import { handlePublicPage } from './server/public-page-routing.js';
 import { onRequest as clientSelection } from './functions/api/client/selection.js';
 import { onRequest as clientGallery } from './functions/api/client/gallery.js';
 import { onRequest as clientDraft } from './functions/api/client/draft.js';
 import { onRequest as clientDownload } from './functions/api/client/download.js';
 import { onRequest as clientArchive } from './functions/api/client/archive.js';
 import { json } from './server/auth.js';
+import { onRequest as cooperationCenter } from './functions/api/cooperation/center.js';
+import { onRequest as lineWebhook } from './functions/api/cooperation/line-webhook.js';
+import { onRequest as adminCenter } from './functions/api/admin/inquiries/[id]/center.js';
+import { drainNotifications } from './server/notifications.js';
 
 async function publicAvailability(context) {
   if (context.request.method !== 'GET') {
@@ -40,6 +45,9 @@ const apiRoutes = [
   [/^\/api\/inquiries$/, inquiries],
   [/^\/api\/feedback$/, feedback],
   [/^\/api\/cooperation$/, cooperation],
+  [/^\/api\/cooperation\/center$/, cooperationCenter],
+  [/^\/api\/cooperation\/line-webhook$/, lineWebhook],
+  [/^\/api\/admin\/inquiries\/([^/]+)\/center$/, adminCenter, ['id']],
   [/^\/api\/availability$/, publicAvailability],
   [/^\/api\/admin\/overview$/, adminOverview],
   [/^\/api\/admin\/inquiries$/, adminInquiries],
@@ -76,8 +84,12 @@ function decodeParams(match, names = []) {
 }
 
 export default {
+  async scheduled(controller, env, executionContext) { executionContext.waitUntil(drainNotifications(env)); },
   async fetch(request, env, executionContext) {
     const { pathname } = new URL(request.url);
+
+    const publicPage = await handlePublicPage({ request, env, waitUntil: executionContext.waitUntil.bind(executionContext) });
+    if (publicPage) return publicPage;
 
     if (pathname.startsWith('/api/')) {
       for (const [pattern, handler, paramNames = []] of apiRoutes) {
