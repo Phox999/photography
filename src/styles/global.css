@@ -2364,6 +2364,18 @@ p {
   text-underline-offset: 3px;
 }
 
+.form-status code {
+  display: inline-block;
+  margin-inline: 0.3em;
+  padding: 0.18em 0.5em;
+  border-radius: 8px;
+  background: rgba(99, 186, 223, 0.12);
+  color: var(--color-primary-dark);
+  font: inherit;
+  letter-spacing: 0.025em;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 720px) {
   .contact-section {
     padding-block: 48px 64px;
