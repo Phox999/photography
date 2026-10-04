@@ -7,7 +7,7 @@ export const onRequest = endpoint(async (context) => {
   if (unsupported) return unsupported;
   const { config, accessToken } = await requireAdmin(context);
   const id = parseId(context.params.id);
-  const query = new URLSearchParams({ select: 'id,reference_links,reference_images', id: `eq.${id}`, limit: '1' });
+  const query = new URLSearchParams({ select: 'id,reference_links,reference_images,portfolio_favorites', id: `eq.${id}`, limit: '1' });
   // The row read stays user-scoped so the existing admin RLS policy still applies.
   const { data } = await supabaseRequest(config, `/rest/v1/collaboration_requests?${query}`, { accessToken });
   if (!Array.isArray(data)) throw new HttpError(503, '參考資料暫時無法讀取。', 'upstream_unavailable');

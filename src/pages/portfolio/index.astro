@@ -581,6 +581,8 @@ const structuredData = {
       if (detailCategory) detailCategory.textContent = collection.category;
       if (detailDescription) detailDescription.textContent = collection.description;
       if (detailImages) {
+        detailImages.dataset.favoriteSlug = collection.slug;
+        detailImages.dataset.favoriteTitle = collection.title;
         detailImages.replaceChildren(...collection.images.map((src, index) => {
           const figure = document.createElement('figure');
           figure.className = 'portfolio-justified__item';

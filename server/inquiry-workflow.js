@@ -33,6 +33,7 @@ export async function prepareSubmission(body, payload, images) {
     collaboration_type: payload.collaboration_type, preferred_date: payload.preferred_date,
     description: payload.description, consent: payload.consent, reference_links: payload.reference_links ?? [],
     reference_images: await Promise.all(images.map(async (image) => ({ name: image.name, type: image.type, size: image.size, hash: await sha256(image.bytes) }))),
+    ...(payload.portfolio_favorites?.length ? { portfolio_favorites: payload.portfolio_favorites.map(({ slug, image }) => ({ slug, image })) } : {}),
   };
   return { ...credentials, tokenHash: await sha256(credentials.token), requestHash: await sha256(JSON.stringify(canonical)) };
 }

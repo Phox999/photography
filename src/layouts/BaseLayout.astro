@@ -3,6 +3,8 @@ import '../styles/global.css';
 import '../styles/shell-refresh.css';
 import '../styles/inner-refresh.css';
 import FloatingActions from '../components/FloatingActions.astro';
+import FavoriteWorks from '../components/FavoriteWorks.astro';
+import '../styles/favorites.css';
 import { canonicalUrl as getCanonicalUrl, DEFAULT_DESCRIPTION, safeJsonLd } from '../../server/seo.js';
 
 const {
@@ -51,6 +53,7 @@ const schemaItems = noindex && !allowStructuredDataWhenNoindex
     {showPublicUi && <aside class="public-announcement" data-public-announcement role="status" hidden></aside>}
     <slot />
     {showPublicUi && <FloatingActions />}
+    {showPublicUi && <FavoriteWorks />}
   </body>
 </html>
 

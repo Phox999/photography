@@ -87,6 +87,8 @@ const structuredData = {
       class="portfolio-justified container"
       aria-label={`${title} 照片集`}
       data-justified-gallery
+      data-favorite-slug={slug}
+      data-favorite-title={title}
     >
       {
         images.map((image, index) => (
@@ -234,5 +236,11 @@ const structuredData = {
     };
 
     setupPortfolioLightbox();
+    const requestedPhoto = new URLSearchParams(window.location.search).get('photo');
+    if (requestedPhoto) {
+      const { normalizeFavoriteImage } = await import('../lib/portfolio-favorites.js');
+      const image = Array.from(document.querySelectorAll<HTMLImageElement>('[data-justified-gallery] img')).find(image => normalizeFavoriteImage(image.getAttribute('src')) === normalizeFavoriteImage(requestedPhoto));
+      image?.closest<HTMLButtonElement>('[data-lightbox-open]')?.click();
+    }
   </script>
 </Layout>
