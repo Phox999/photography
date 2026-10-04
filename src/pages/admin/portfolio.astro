@@ -45,8 +45,17 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
           <div class="admin-actions"><button class="admin-button admin-button--quiet" type="button" id="portfolio-upload" disabled>加入照片</button></div>
           <p class="admin-status" id="portfolio-upload-status" role="status" aria-live="polite"></p>
         </div>
-        <div class="portfolio-admin-photo-heading"><h3>作品照片</h3><span class="admin-meta">可排序、設定封面或移除</span></div>
-        <div class="portfolio-admin-photos" id="portfolio-photos"></div>
+        <div class="portfolio-admin-photo-heading"><h3 id="portfolio-photos-title">作品照片</h3><span class="admin-meta" id="portfolio-selection-count" role="status" aria-live="polite">已選 0 張</span></div>
+        <p class="admin-help" id="portfolio-selection-help">點選照片可多選；Shift + 點選可選取一段照片。每組作品至少保留 1 張。</p>
+        <div class="portfolio-admin-photo-toolbar" id="portfolio-photo-toolbar" role="group" aria-label="照片操作">
+          <label class="portfolio-admin-select-all"><input id="portfolio-select-all" type="checkbox" />全選</label>
+          <button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-clear-selection" disabled>取消選取</button>
+          <button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-photo-up" disabled>向前移</button>
+          <button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-photo-down" disabled>向後移</button>
+          <button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-photo-cover" disabled>設為封面</button>
+          <button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-photo-remove" disabled>移除照片</button>
+        </div>
+        <div class="portfolio-admin-photos" id="portfolio-photos" aria-labelledby="portfolio-photos-title" aria-describedby="portfolio-selection-help"></div>
       </form>
     </section>
   </div>
@@ -61,6 +70,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   import { AdminApiError, adminErrorMessage, confirmDiscardChanges, requestAdmin, requireAdminSession, setUnsavedChanges } from '../../lib/admin-client';
   import { portfolioChangeSet } from '../../lib/portfolio-changes.js';
   import { portfolioControlState } from '../../lib/portfolio-control-state.js';
+  import { moveSelectedPhotos, photoSelectionState, removeSelectedPhotos, selectPhotoRange } from '../../lib/portfolio-photo-selection.js';
   type PortfolioPhoto = { path: string; url: string };
   type Collection = { slug: string; title: string; category: '外拍' | '棚拍'; description: string; cover: string; coverUrl: string; images: PortfolioPhoto[]; totalImages: number };
   type PortfolioResponse = { version: number; collections: Array<Omit<Collection, 'coverUrl'> & { cover_url: string; images: PortfolioPhoto[] }> };
@@ -75,6 +85,10 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   const photoInput = $<HTMLInputElement>('#portfolio-image-input');
   const photoGrid = $('#portfolio-photos');
   const uploadButton = $<HTMLButtonElement>('#portfolio-upload');
+  const selectAll = $<HTMLInputElement>('#portfolio-select-all');
+  let selectedPhotos = new Set<string>();
+  let selectionAnchor: string | null = null;
+  let selectionSlug: string | null = null;
   let collections: Collection[] = [];
   let selectedIndex = -1;
   let version = 1;
@@ -118,11 +132,22 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const state = controls.collectionActions[index];
       button.disabled = !state || (action === 'up' ? state.upDisabled : action === 'down' ? state.downDisabled : state.removeDisabled);
     });
-    photoGrid.querySelectorAll<HTMLButtonElement>('[data-photo-action]').forEach((button) => {
-      const action = button.dataset.photoAction;
-      const index = Number(button.dataset.photoIndex);
-      const state = controls.photoActions[index];
-      button.disabled = !state || (action === 'up' ? state.upDisabled : action === 'down' ? state.downDisabled : action === 'cover' ? state.coverDisabled : state.removeDisabled);
+    const collection = collections[selectedIndex];
+    const selection = photoSelectionState(collection?.images || [], selectedPhotos, collection?.cover, controls.locked);
+    selectAll.checked = selection.allSelected;
+    selectAll.indeterminate = selection.partlySelected;
+    selectAll.disabled = selection.selectAllDisabled;
+    $('#portfolio-selection-count').textContent = `已選 ${selection.count} 張`;
+    $<HTMLButtonElement>('#portfolio-clear-selection').disabled = selection.clearDisabled;
+    $<HTMLButtonElement>('#portfolio-photo-up').disabled = selection.upDisabled;
+    $<HTMLButtonElement>('#portfolio-photo-down').disabled = selection.downDisabled;
+    $<HTMLButtonElement>('#portfolio-photo-cover').disabled = selection.coverDisabled;
+    $<HTMLButtonElement>('#portfolio-photo-remove').disabled = selection.removeDisabled;
+    photoGrid.querySelectorAll<HTMLButtonElement>('[data-photo-select]').forEach((button) => {
+      const selected = selectedPhotos.has(button.dataset.photoSelect!);
+      button.disabled = controls.locked;
+      button.classList.toggle('is-selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
     });
   }
   function collectionFromResponse(item: PortfolioResponse['collections'][number]): Collection {
@@ -150,23 +175,27 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     photoGrid.replaceChildren();
     const collection = collections[selectedIndex];
     if (!collection) return;
+    selectedPhotos = new Set(collection.images.filter(photo => selectedPhotos.has(photo.path)).map(photo => photo.path));
+    if (selectionAnchor && !collection.images.some(photo => photo.path === selectionAnchor)) selectionAnchor = null;
     $('#portfolio-detail-count').textContent = `${collection.images.length} 張照片`;
     collection.images.forEach((photo, index) => {
-      const card = document.createElement('article'); card.className = 'portfolio-admin-photo';
+      const card = document.createElement('button'); card.type = 'button'; card.className = 'portfolio-admin-photo';
+      card.dataset.photoSelect = photo.path;
+      card.setAttribute('aria-label', `選取${collection.title || '作品'}第 ${index + 1} 張照片${collection.cover === photo.path ? '，目前封面' : ''}`);
+      card.setAttribute('aria-pressed', String(selectedPhotos.has(photo.path)));
       const img = document.createElement('img'); img.src = photo.url; img.alt = `${collection.title || '作品'}第 ${index + 1} 張`; img.loading = 'lazy';
       card.append(img);
       if (collection.cover === photo.path) { const badge = document.createElement('span'); badge.className = 'portfolio-admin-photo__cover'; badge.textContent = '封面'; card.append(badge); }
-      const actions = document.createElement('div'); actions.className = 'portfolio-admin-photo__actions';
-      for (const [action, label] of [['up', '上移'], ['down', '下移'], ['cover', '設為封面'], ['remove', '移除']]) {
-        const button = document.createElement('button'); button.type = 'button'; button.dataset.photoAction = action; button.dataset.photoIndex = String(index); button.textContent = label;
-        button.setAttribute('aria-label', `${label}第 ${index + 1} 張照片`);
-        actions.append(button);
-      }
-      card.append(actions); photoGrid.append(card);
+      const check = document.createElement('span'); check.className = 'portfolio-admin-photo__check'; check.textContent = '✓'; check.setAttribute('aria-hidden', 'true');
+      card.append(check); photoGrid.append(card);
     });
+    updateState();
   }
   function renderEditor() {
     const collection = collections[selectedIndex];
+    if (selectionSlug !== (collection?.slug || null)) {
+      selectedPhotos.clear(); selectionAnchor = null; selectionSlug = collection?.slug || null;
+    }
     emptyPanel.hidden = Boolean(collection); detailForm.hidden = !collection;
     if (!collection) return;
     $('#portfolio-detail-heading').textContent = collection.title.trim() || '新增作品';
@@ -183,6 +212,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     try {
       const result = await requestAdmin<PortfolioResponse>('/api/admin/portfolio');
       version = result.version;
+      selectedPhotos.clear(); selectionAnchor = null;
       collections = result.collections.length
         ? result.collections.map(collectionFromResponse)
         : seedCollections();
@@ -255,20 +285,44 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     if (select) { selectedIndex = Number(select.dataset.collectionSelect); renderList(); renderEditor(); }
   });
   photoGrid.addEventListener('click', (event) => {
-    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-photo-action]') : null;
-    const collection = collections[selectedIndex]; const index = Number(button?.dataset.photoIndex);
-    if (!button || !collection || !collection.images[index] || busy || uploading) return;
-    const action = button.dataset.photoAction;
-    if (action === 'up' && index > 0) [collection.images[index - 1], collection.images[index]] = [collection.images[index], collection.images[index - 1]];
-    else if (action === 'down' && index < collection.images.length - 1) [collection.images[index + 1], collection.images[index]] = [collection.images[index], collection.images[index + 1]];
-    else if (action === 'cover') { collection.cover = collection.images[index].path; collection.coverUrl = collection.images[index].url; }
-    else if (action === 'remove' && collection.images.length > 1 && window.confirm('確定從這組公開作品中移除這張照片？')) {
-      const [removed] = collection.images.splice(index, 1);
-      if (collection.cover === removed.path) { collection.cover = collection.images[0].path; collection.coverUrl = collection.images[0].url; }
-    }
-    renderPhotos(); renderList(); updateState();
+    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-photo-select]') : null;
+    const collection = collections[selectedIndex]; const path = button?.dataset.photoSelect;
+    if (!path || !collection?.images.some(photo => photo.path === path) || busy || uploading) return;
+    if (event.shiftKey && selectionAnchor) selectedPhotos = selectPhotoRange(collection.images, selectedPhotos, selectionAnchor, path);
+    else { if (selectedPhotos.has(path)) selectedPhotos.delete(path); else selectedPhotos.add(path); selectionAnchor = path; }
+    updateState();
   });
-  detailForm.addEventListener('input', () => {
+  selectAll.addEventListener('change', () => {
+    if (busy || uploading) return;
+    const images = collections[selectedIndex]?.images || [];
+    selectedPhotos = selectAll.checked ? new Set(images.map(photo => photo.path)) : new Set();
+    selectionAnchor = null; updateState();
+  });
+  const clearSelection = () => { if (busy || uploading) return; selectedPhotos.clear(); selectionAnchor = null; updateState(); };
+  $('#portfolio-clear-selection').addEventListener('click', clearSelection);
+  detailForm.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && event.target instanceof Element && event.target.closest('#portfolio-photos, #portfolio-photo-toolbar')) clearSelection();
+  });
+  $('#portfolio-photo-toolbar').addEventListener('click', (event) => {
+    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('button') : null;
+    const collection = collections[selectedIndex];
+    if (!button || !collection || busy || uploading || button.disabled) return;
+    const state = photoSelectionState(collection.images, selectedPhotos, collection.cover);
+    if (button.id === 'portfolio-photo-up' && !state.upDisabled) collection.images = moveSelectedPhotos(collection.images, selectedPhotos, 'up');
+    else if (button.id === 'portfolio-photo-down' && !state.downDisabled) collection.images = moveSelectedPhotos(collection.images, selectedPhotos, 'down');
+    else if (button.id === 'portfolio-photo-cover' && !state.coverDisabled) {
+      const photo = collection.images.find(photo => selectedPhotos.has(photo.path))!;
+      collection.cover = photo.path; collection.coverUrl = photo.url;
+    } else if (button.id === 'portfolio-photo-remove' && !state.removeDisabled) {
+      if (!window.confirm(`確定從這組作品移除已選的 ${state.count} 張照片？發布作品集後才會更新網站。`)) return;
+      const remaining = removeSelectedPhotos(collection.images, selectedPhotos, collection.cover);
+      if (!remaining) return;
+      Object.assign(collection, remaining); selectedPhotos.clear(); selectionAnchor = null;
+    } else return;
+    renderList(); renderEditor();
+  });
+  detailForm.addEventListener('input', (event) => {
+    if (event.target !== titleInput && event.target !== descriptionInput) return;
     const collection = collections[selectedIndex]; if (!collection || busy || uploading) return;
     collection.title = titleInput.value; collection.description = descriptionInput.value;
     $('#portfolio-detail-heading').textContent = collection.title.trim() || '新增作品';
@@ -323,16 +377,22 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   .portfolio-admin-photo-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 24px 0 12px; }
   .portfolio-admin-photo-heading h3 { margin: 0; }
   .portfolio-admin-photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  .portfolio-admin-photos :global(.portfolio-admin-photo) { position: relative; overflow: hidden; border: 1px solid var(--adm-line); border-radius: 14px; background: #fff; }
-  .portfolio-admin-photos :global(.portfolio-admin-photo > img) { width: 100%; aspect-ratio: 1; object-fit: cover; }
+  .portfolio-admin-photo-toolbar { position: sticky; top: 12px; z-index: 2; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 12px 0; border: 1px solid var(--adm-line); border-radius: 14px; background: #fff; padding: 12px; box-shadow: 0 4px 16px rgb(0 0 0 / .06); }
+  .portfolio-admin-select-all { display: inline-flex; align-items: center; gap: 8px; margin-right: 4px; font-size: 14px; cursor: pointer; }
+  .portfolio-admin-select-all input { width: 18px; height: 18px; accent-color: var(--adm-primary); }
+  .portfolio-admin-photos :global(.portfolio-admin-photo) { position: relative; overflow: hidden; display: block; width: 100%; border: 3px solid transparent; border-radius: 14px; background: var(--adm-pale); padding: 0; cursor: pointer; }
+  .portfolio-admin-photos :global(.portfolio-admin-photo > img) { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 160ms ease; }
+  .portfolio-admin-photos :global(.portfolio-admin-photo.is-selected) { border-color: var(--adm-primary); }
+  .portfolio-admin-photos :global(.portfolio-admin-photo.is-selected > img) { transform: scale(.93); border-radius: 8px; }
+  .portfolio-admin-photos :global(.portfolio-admin-photo:focus-visible) { outline: 3px solid var(--adm-primary); outline-offset: 3px; }
+  .portfolio-admin-photos :global(.portfolio-admin-photo:disabled) { cursor: default; opacity: .65; }
+  .portfolio-admin-photos :global(.portfolio-admin-photo__check) { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 25px; height: 25px; border: 2px solid #fff; border-radius: 50%; background: rgb(0 0 0 / .3); color: transparent; font-size: 15px; box-shadow: 0 1px 6px rgb(0 0 0 / .2); }
+  .portfolio-admin-photos :global(.portfolio-admin-photo.is-selected .portfolio-admin-photo__check) { border-color: var(--adm-primary); background: var(--adm-primary); color: #fff; }
   .portfolio-admin-photos :global(.portfolio-admin-photo__cover) { position: absolute; top: 8px; left: 8px; border-radius: 999px; background: var(--adm-primary); padding: 4px 8px; color: #fff; font-size: 11px; }
-  .portfolio-admin-photos :global(.portfolio-admin-photo__actions) { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 6px; }
-  .portfolio-admin-photos :global(.portfolio-admin-photo__actions button) { min-height: 28px; border: 1px solid var(--adm-line); border-radius: 999px; background: white; padding: 3px 7px; color: var(--adm-primary); font: inherit; font-size: 11px; cursor: pointer; }
-  .portfolio-admin-photos :global(.portfolio-admin-photo__actions button:disabled) { opacity: .45; cursor: default; }
+  @media (prefers-reduced-motion: reduce) { .portfolio-admin-photos :global(.portfolio-admin-photo > img) { transition: none; } }
   .portfolio-admin-publish { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 20px; }
   .portfolio-admin-publish p { margin: 6px 0 0; }
   .portfolio-admin-publish button { min-width: 180px; }
   @media (max-width: 920px) { .portfolio-admin-grid { grid-template-columns: minmax(0, 1fr); } }
   @media (max-width: 560px) { .portfolio-admin-fields { grid-template-columns: minmax(0, 1fr); } .portfolio-admin-photos { grid-template-columns: repeat(2, minmax(0, 1fr)); } .portfolio-admin-publish { align-items: stretch; flex-direction: column; } .portfolio-admin-publish button { width: 100%; } }
 </style>
-
