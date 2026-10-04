@@ -1,3 +1,4 @@
+import { normalizeFavorites } from './portfolio-favorites.js';
 const CONTACT_METHODS = new Set(['Instagram', 'Line', 'Facebook', 'Threads', '手機', '其他']);
 const COLLABORATION_TYPES = new Set(['輕量體驗(2hr)', '標準方案(3hr)', '主題合作']);
 const REFERENCE_LINK_LIMIT = 3;
@@ -36,12 +37,13 @@ export function composeInquiryDescription(description, styles = []) {
   return [text(description), styleDescription].filter(Boolean).join('\n\n');
 }
 
-export function normalizeInquiryDraft(formData, styles = []) {
+export function normalizeInquiryDraft(formData, styles = [], favorites = []) {
   const get = (name) => formData.get(name);
   const links = normalizeReferenceLinks(get('reference_links'));
   const consentValue = get('consent');
   const description = text(get('description'));
   const selectedStyles = styles.map(text).filter(Boolean);
+  const portfolioFavorites = normalizeFavorites(favorites);
 
   return {
     name: text(get('name')),
@@ -51,7 +53,8 @@ export function normalizeInquiryDraft(formData, styles = []) {
     preferredDate: text(get('preferred_date')),
     description,
     styles: selectedStyles,
-    combinedDescription: composeInquiryDescription(description, selectedStyles),
+    combinedDescription: composeInquiryDescription(description, selectedStyles) || (portfolioFavorites.length ? '以已收藏的作品作為拍攝參考。' : ''),
+    portfolioFavorites,
     referenceLinks: links.links,
     referenceLinkError: links.error,
     consent: consentValue === true || consentValue === 'on' || consentValue === 'true',
@@ -69,7 +72,7 @@ export function validateInquiryDraft(draft) {
   if (!draft.collaborationType) return { field: 'collaboration_type', message: '請選擇合作類型。' };
   if (!COLLABORATION_TYPES.has(draft.collaborationType)) return { field: 'collaboration_type', message: '請選擇有效的合作類型。' };
   if (draft.preferredDate.length > 200) return { field: 'preferred_date', message: '偏好日期不可超過 200 字。' };
-  if (!draft.description && !draft.styles.length) return { field: 'description', message: '請選擇拍攝風格或填寫拍攝想法。' };
+  if (!draft.description && !draft.styles.length && !draft.portfolioFavorites?.length) return { field: 'description', message: '請選擇拍攝風格或填寫拍攝想法。' };
   if (draft.combinedDescription.length > DESCRIPTION_LENGTH) return { field: 'description', message: '拍攝想法與已選風格合計不可超過 2,000 字。' };
   if (draft.referenceLinkError) return { field: 'reference_links', message: draft.referenceLinkError };
   if (!draft.consent) return { field: 'consent', message: '請先同意資料使用說明。' };
@@ -87,5 +90,6 @@ export function buildInquiryPayload(draft) {
     description: draft.combinedDescription,
     reference_links: draft.referenceLinks,
     consent: draft.consent,
+    ...(draft.portfolioFavorites?.length ? { portfolio_favorites: draft.portfolioFavorites } : {}),
   };
 }

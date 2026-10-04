@@ -47,6 +47,13 @@ const showThemeImages = false;
             </div>
           </fieldset>
 
+          <section class="contact-reference-card" aria-labelledby="contact-favorites-title">
+            <h4 id="contact-favorites-title">我喜歡的作品 <span>選填</span></h4>
+            <p class="field-help" data-contact-favorites-help>逛作品時點愛心收藏，照片會自動帶到這裡。</p>
+            <a href="/portfolio/">前往作品集挑選</a>
+            <ul class="contact-favorites" data-contact-favorites></ul>
+          </section>
+
           <section class="contact-reference-card" aria-labelledby="reference-title">
             <h4 id="reference-title">b. 加入自己的參考照片 / 連結 <span>選填</span></h4>
             <div class="contact-reference-grid">
@@ -147,6 +154,10 @@ const showThemeImages = false;
           <ul data-review-link-list></ul>
           <p class="field-help">照片僅在此頁預覽，尚未上傳。</p>
         </div>
+        <div class="contact-review__section" data-review-favorites hidden>
+          <h4>我喜歡的作品</h4>
+          <ul class="contact-favorites" data-review-favorite-list></ul>
+        </div>
         <div class="contact-review__section">
           <h4>拍攝想法</h4>
           <p data-review-description></p>
@@ -156,6 +167,7 @@ const showThemeImages = false;
           <button class="button button--primary" type="button" data-confirm-inquiry>確認送出合作意向</button>
         </div>
       </section>
+      <section class="contact-received" data-contact-received hidden aria-labelledby="contact-received-title"><h3 id="contact-received-title">申請已送出，下一步開始討論。</h3><p>保存收件代碼後，可到預約中心暫留檔期、修改想法、準備拍攝與查看交件。</p><p>我會依主題與檔期評估，再透過你留下的聯絡方式回覆；若 3 個工作天後未收到回覆，歡迎附上收件編號詢問。</p><a class="button button--primary" data-received-next>收件完成與下一步</a></section>
       <p class="form-status" role="status" aria-live="polite" data-inquiry-status></p>
       <div class="contact-links" aria-label="其他聯絡方式">
         <a href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
@@ -174,10 +186,15 @@ const showThemeImages = false;
 
 <script>
   import { buildInquiryPayload, normalizeInquiryDraft, validateInquiryDraft } from '../lib/inquiry-form.js';
+  import { createSubmissionIdentity, receiptFromResponse, type SubmissionIdentity } from '../lib/inquiry-workflow';
+  import { favoriteHref } from '../lib/portfolio-favorites.js';
+  import { readFavorites, removeFavorite, favoritesPersistent, type Favorite } from '../lib/portfolio-favorites-client';
 
   const inquiryForm = document.querySelector('[data-inquiry-form]');
 
   if (inquiryForm instanceof HTMLFormElement) {
+    let submissionIdentity: SubmissionIdentity | null = null;
+    let submissionKey = '';
     const preferredDateInput = inquiryForm.querySelector<HTMLInputElement>('#preferred_date');
     const requestedDate = new URLSearchParams(window.location.search).get('preferred_date');
     const requestedDateValue = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
@@ -189,6 +206,9 @@ const showThemeImages = false;
       preferredDateInput.value = requestedDate.replaceAll('-', '/');
     }
 
+    const recommendation = new URLSearchParams(location.search).get('recommendation');
+    const planInput = inquiryForm.querySelector<HTMLSelectElement>('[name="collaboration_type"]');
+    if (planInput && ['general', 'theme'].includes(recommendation || '')) planInput.value = recommendation === 'theme' ? '主題合作' : '標準方案(3hr)';
     const editor = inquiryForm.querySelector('[data-contact-editor]');
     const review = inquiryForm.querySelector('[data-contact-review]');
     const status = inquiryForm.querySelector('[data-inquiry-status]');
@@ -202,13 +222,37 @@ const showThemeImages = false;
     const descriptionCount = inquiryForm.querySelector('[data-description-count]');
     let referenceFiles = [];
     let pending = false;
+    let reviewedFavorites: Favorite[] = [];
+    const renderFavorites = (target: Element | null, items: Favorite[], editable = false) => {
+      if (!target) return;
+      target.replaceChildren();
+      for (const item of items) {
+        const row = document.createElement('li');
+        const link = document.createElement('a'); link.href = favoriteHref(item); link.target = '_blank'; link.rel = 'noopener noreferrer';
+        const image = document.createElement('img'); image.src = item.image; image.alt = `${item.title} 照片 ${item.number}`; image.loading = 'lazy';
+        const caption = document.createElement('span'); caption.textContent = `${item.title} · ${item.number}`;
+        link.append(image, caption); row.append(link);
+        if (editable) {
+          const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '移除';
+          remove.setAttribute('aria-label', `移除 ${item.title} 照片 ${item.number}`);
+          remove.addEventListener('click', () => { if (!pending) { removeFavorite(item); inquiryForm.querySelector<HTMLElement>('[data-contact-favorites] button')?.focus(); } });
+          row.append(remove);
+        }
+        target.append(row);
+      }
+    };
+    const updateFavorites = () => {
+      renderFavorites(inquiryForm.querySelector('[data-contact-favorites]'), readFavorites(), true);
+      const help = inquiryForm.querySelector('[data-contact-favorites-help]');
+      if (help) help.textContent = !favoritesPersistent() ? '目前收藏僅保留於此頁，離開後可能消失。' : readFavorites().length ? `已帶入 ${readFavorites().length} 張；送出後攝影師可查看這些參考作品。` : '逛作品時點愛心收藏，照片會自動帶到這裡。';
+    };
 
     const selectedStyles = () => styleButtons
       .filter((button) => button.getAttribute('aria-pressed') === 'true')
       .map((button) => button.getAttribute('data-style-title'))
       .filter(Boolean);
 
-    const readDraft = () => normalizeInquiryDraft(new FormData(inquiryForm), selectedStyles());
+    const readDraft = () => normalizeInquiryDraft(new FormData(inquiryForm), selectedStyles(), readFavorites());
     const fieldSelectors = {
       name: '#name',
       contact_method: '#contact_method',
@@ -242,11 +286,15 @@ const showThemeImages = false;
     };
 
     const fillReview = (draft) => {
+      reviewedFavorites = readFavorites();
+      renderFavorites(inquiryForm.querySelector('[data-review-favorite-list]'), reviewedFavorites);
+      const favoritesPanel = inquiryForm.querySelector<HTMLElement>('[data-review-favorites]');
+      if (favoritesPanel) favoritesPanel.hidden = reviewedFavorites.length === 0;
       setReviewText('[data-review-name]', draft.name);
       setReviewText('[data-review-contact]', `${draft.contactMethod}｜${draft.contactAccount}`);
       setReviewText('[data-review-type]', draft.collaborationType);
       setReviewText('[data-review-date]', draft.preferredDate);
-      setReviewText('[data-review-description]', draft.description);
+      setReviewText('[data-review-description]', draft.description || (reviewedFavorites.length ? '以已收藏的作品作為拍攝參考。' : ''));
 
       const styles = selectedStyles();
       const stylesPanel = inquiryForm.querySelector('[data-review-styles]');
@@ -345,7 +393,14 @@ const showThemeImages = false;
         return;
       }
       const payload = buildInquiryPayload(draft);
+      if (reviewedFavorites.length) payload.portfolio_favorites = reviewedFavorites;
 
+      const nextKey = JSON.stringify(payload);
+      if (!submissionIdentity || nextKey !== submissionKey) {
+        try { submissionIdentity = createSubmissionIdentity(window.crypto); submissionKey = nextKey; }
+        catch (error) { if (status) status.textContent = error instanceof Error ? error.message : '暫時無法建立收件憑證。'; return; }
+      }
+      const identity = submissionIdentity;
       pending = true;
       if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = true;
       if (status) status.textContent = '送出中…';
@@ -355,11 +410,14 @@ const showThemeImages = false;
         const response = await fetch('/api/inquiries', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, ...identity }),
+          signal: AbortSignal.timeout(30000),
         });
         responseReceived = true;
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
+        if (!receiptFromResponse(result?.receipt, identity.receipt_token)) throw new Error('收件回條尚未確認。請保留內容重試，或開啟私人進度連結確認。');
+        submissionIdentity = null; submissionKey = '';
 
         inquiryForm.reset();
         styleButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
@@ -369,12 +427,20 @@ const showThemeImages = false;
         if (review) review.hidden = true;
         if (status) {
           const receiptUrl = result?.receipt?.url;
-          if (typeof receiptUrl === 'string' && /^\/cooperation-status\/#token=[a-f0-9]{64}$/i.test(receiptUrl)) {
-            status.replaceChildren(document.createTextNode('已收到合作意向。'));
+          const reference = result?.receipt?.reference;
+          const validUrl = typeof receiptUrl === 'string' && /^\/cooperation-status\/#token=[a-f0-9]{64}$/i.test(receiptUrl);
+          const validReference = typeof reference === 'string' && /^PHOX-[A-F0-9]{20}$/.test(reference);
+          if (validReference) {
+            status.replaceChildren(document.createTextNode('已收到合作意向。查詢代碼：'));
+            const code = document.createElement('code');
+            code.textContent = reference;
             const link = document.createElement('a');
-            link.href = receiptUrl;
-            link.textContent = '查看這次合作進度';
-            status.append(' ', link);
+            link.href = validUrl ? receiptUrl : '/cooperation-status/';
+            link.textContent = '查看申請狀況';
+            status.append(code, document.createTextNode('。請保存這組代碼。 '), link);
+            const next = inquiryForm.querySelector<HTMLAnchorElement>('[data-received-next]');
+            if (next) next.href = validUrl ? receiptUrl.replace('/cooperation-status/', '/cooperation-received/') : '/cooperation-status/';
+            const received = inquiryForm.querySelector<HTMLElement>('[data-contact-received]'); if (received) received.hidden = false;
           } else {
             status.textContent = '已收到合作意向，我會再回覆確認檔期。';
           }
@@ -383,7 +449,8 @@ const showThemeImages = false;
         if (status) {
           status.textContent = responseReceived
             ? (error instanceof Error ? error.message : '目前無法送出，請改用 Instagram 或 Google 表單聯絡。')
-            : '連線中斷，送出結果尚未確認。為避免重複，請先透過 Instagram 或 Email 與我確認；表單內容仍保留。';
+            : '連線中斷，送出結果尚未確認；內容仍保留。相同內容可安全重試，或先開啟私人進度連結查看。';
+          if (identity) { const link = document.createElement('a'); link.href = `/cooperation-status/#token=${identity.receipt_token}`; link.textContent = '查看本次收件結果'; status.append(' ', link); }
         }
       } finally {
         pending = false;
@@ -392,6 +459,17 @@ const showThemeImages = false;
     });
 
     updateDescriptionCount();
+    updateFavorites();
+    window.addEventListener('phox:favorites-change', () => {
+      if (pending) return;
+      updateFavorites();
+      if (review instanceof HTMLElement && !review.hidden) {
+        showEditor();
+        if (status) status.textContent = '收藏已變更，請重新確認合作內容後送出。';
+      }
+    });
     window.addEventListener('pagehide', clearPreviews);
   }
 </script>
+
+<style>.contact-received{margin-top:24px;padding:24px;background:#edf7fc;border-radius:20px;}.contact-received p{line-height:1.8;margin-block:14px;}.contact-received[hidden]{display:none;}</style>

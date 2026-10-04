@@ -1,0 +1,43 @@
+---
+const checks=[['wardrobe','確認服裝與造型'],['route','確認集合地點與交通'],['props','準備道具與攜帶物品'],['weather','確認天氣與雨備'],['rest','休息與補充水分'],['publication','確認交件與公開約定']];
+---
+<section class="cooperation-card center-card" aria-labelledby="center-title">
+ <p class="cooperation-eyebrow">預約後續中心</p><h2 id="center-title">下一步，都在這裡。</h2>
+ <p id="center-summary" role="status"></p>
+ <nav class="center-nav" aria-label="本次合作功能"><a href="#center-booking">檔期與調整</a><a href="#center-checklist">拍攝準備</a><a href="#center-delivery">選片與交件</a><a href="#center-notifications">接收通知</a></nav>
+ <p id="center-status" role="status" aria-live="polite"></p>
+</section>
+<section class="cooperation-card center-card" id="center-booking" aria-labelledby="booking-title">
+ <h2 id="booking-title">檔期與調整</h2>
+ <p id="center-hold" class="center-note"></p>
+ <form id="center-hold-form"><label for="center-slot">選擇未來 60 天內的開放時段</label><div class="center-row"><select id="center-slot" required disabled><option value="">請先載入檔期</option></select><button type="button" class="button button--secondary" id="center-slot-refresh">載入檔期</button></div><p class="cooperation-muted">成功暫留後保留 24 小時，最晚到拍攝開始。暫留不是正式預約；同一申請 24 小時內可暫留一個時段，避免反覆佔用檔期。</p><div class="cooperation-actions"><button type="submit" class="button button--primary" id="center-hold-save">暫留這個時段</button><button type="button" class="button button--secondary" id="center-hold-release" hidden>釋放暫留</button></div></form>
+ <details class="center-edit"><summary>修改想法或提出改期</summary><form id="center-change-form"><label for="center-date">希望日期</label><input id="center-date" type="text" maxlength="200" /><label for="center-description">拍攝想法／調整原因</label><textarea id="center-description" rows="5" maxlength="2000" required></textarea><p class="cooperation-muted">尚未確認的申請可直接修改。已有安排時會送出調整請求，原安排維持有效，直到攝影師重新確認。</p><button type="submit" class="button button--primary">送出調整</button></form></details>
+ <p id="center-change-request" class="center-note" hidden></p>
+ <details class="center-edit"><summary>取消本次預約</summary><p>取消後會釋放本次檔期、關閉選片入口。拍攝開始後，請直接聯繫攝影師。</p><label class="center-check"><input id="center-cancel-consent" type="checkbox" />我確認要取消本次合作</label><button type="button" class="button button--secondary" id="center-cancel">確認取消</button></details>
+</section>
+<section class="cooperation-card center-card" id="center-checklist" aria-labelledby="checklist-title"><h2 id="checklist-title">拍攝前，一項項準備。</h2><p class="cooperation-muted">勾選後會儲存到本次合作，重新開啟仍可查看。細節以確認單為準。</p><div class="center-checks">{checks.map(([key,label])=><label class="center-check"><input type="checkbox" data-center-check={key} />{label}</label>)}</div><p id="center-check-count"></p><button type="button" class="button button--secondary" id="center-brief">下載拍攝 Brief</button><p class="cooperation-muted">自動整理申請、收藏與已發布的安排；未確認的資訊會保留「待雙方確認」。</p><ul class="center-moodboard" id="center-favorites" aria-label="本次作品 Moodboard"></ul></section>
+<section class="cooperation-card center-card" id="center-delivery" aria-labelledby="delivery-title"><h2 id="delivery-title">選片與交件</h2><p id="center-gallery-info">相簿尚未開放，開放後入口會顯示在這裡。</p><button type="button" class="button button--primary" id="center-gallery" hidden>開啟私人相簿</button><p class="cooperation-muted">可用愛心挑選、只看已選、加註細節，再確認並鎖定清單。成品開放後可在相簿下載。</p></section>
+<section class="cooperation-card center-card" id="center-notifications" aria-labelledby="notifications-title"><h2 id="notifications-title">進度更新，讓你知道。</h2><p id="center-notification-info"></p><form id="center-email-form"><label for="center-email">Email 通知（選填）</label><input type="email" id="center-email" autocomplete="email" maxlength="254" required /><label class="center-check"><input type="checkbox" id="center-email-consent" required />同意以此地址接收本次合作的狀態通知</label><button type="submit" class="button button--secondary">寄送驗證碼</button></form><form id="center-email-verify-form" hidden><label for="center-email-code">輸入 Email 的 6 位驗證碼</label><input id="center-email-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required /><button type="submit" class="button button--primary">驗證並啟用通知</button></form><div id="center-line-wrap" hidden><p>先加入官方 LINE，再將一次性綁定碼傳給官方帳號。完成後才會接收通知。</p><a id="center-line-link" class="button button--secondary" target="_blank" rel="noopener noreferrer">開啟官方 LINE</a><button id="center-line" class="button button--secondary" type="button">取得綁定碼</button><p id="center-line-code" class="center-note"></p></div><button class="button button--secondary" id="center-notifications-stop" type="button" hidden>停止本次自動通知</button></section>
+<style>
+ .center-card { padding:clamp(24px,4vw,40px);margin-bottom:24px;border-radius:32px;background:#fff;box-shadow:var(--shadow-card);min-width:0; }
+ .center-card h2 { font-size:clamp(1.4rem,3vw,1.85rem);line-height:1.5; }
+ .center-card p { line-height:1.85;margin-block:14px; }
+ .center-card label { font-weight:600;line-height:1.8; }
+ .center-card form { display:grid;gap:14px;margin-top:22px; }
+ .center-card input:not([type=checkbox]),.center-card textarea,.center-card select { width:100%;min-width:0;min-height:48px;border:1px solid #c4d7e0;border-radius:14px;padding:12px;font:inherit;background:#fff;color:var(--color-text); }
+ .center-card :is(input,select,textarea,button,a):focus-visible { outline:3px solid var(--color-primary);outline-offset:3px; }
+ .center-card button:disabled { opacity:.5;cursor:wait; }
+ .center-nav { display:flex;flex-wrap:wrap;gap:12px; }
+ .center-nav a { min-height:44px;display:inline-flex;align-items:center;padding:8px 16px;background:#edf7fc;border-radius:30px;text-decoration:none;color:var(--color-primary-dark); }
+ .center-row { display:flex;gap:12px;align-items:start; }.center-row select { flex:1; }
+ .center-edit { margin-top:24px;border-top:1px solid #e7eff3;padding-top:18px; }.center-edit summary { cursor:pointer;min-height:44px;font-weight:700; }
+ .center-checks { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+ .center-check { display:flex;align-items:center;gap:12px;min-height:48px;font-weight:400!important; }.center-check input { width:20px;height:20px;flex-shrink:0; }
+ .center-note { padding:16px;background:#edf7fc;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere; }
+ .center-moodboard { display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;list-style:none;padding:0; }
+ .center-moodboard :global(img) { width:100%;height:150px;object-fit:cover;border-radius:12px; }.center-moodboard :global(a) { display:block;text-decoration:none;color:inherit;font-size:.9rem;overflow-wrap:anywhere; }
+ .cooperation-muted {color:var(--color-muted);font-size:.9375rem;}.cooperation-actions {display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;}.cooperation-eyebrow {color:var(--color-muted);}
+ .center-card [hidden] {display:none!important;}
+ @media(max-width:600px){.center-row{flex-direction:column;}.center-row>*{width:100%;}.center-checks{grid-template-columns:1fr;}.center-card .button{width:100%;}.center-nav a{flex:1;justify-content:center;white-space:nowrap;}}
+ @media print { .center-card { display:none!important; } }
+</style>

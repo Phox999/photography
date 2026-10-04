@@ -1,6 +1,6 @@
 # phox999 photography
 
-Static Astro landing page for phox999 photography, focused on mutual-benefit portrait photography collaborations.
+Astro photography site for phox999, focused on mutual-benefit portrait photography collaborations.
 
 ## Purpose
 
@@ -13,6 +13,7 @@ The site helps potential models and creators understand the photography style, c
 - HTML
 - CSS
 - Minimal vanilla JavaScript only if needed
+- Cloudflare Pages Functions / Worker routes for the existing admin APIs and server-rendered public SEO pages
 
 ## Local development
 
@@ -27,6 +28,8 @@ Run the built-in Node unit and mock API checks with:
 
 ```bash
 npm test
+npm run build
+npm run check:seo
 ```
 
 The PostgreSQL security tests in `supabase/tests/` require a disposable local Supabase project and its complete migration sequence. They have not been run against a production project.
@@ -52,15 +55,9 @@ Framework preset: Astro
 
 Root directory: project root
 
-## Asset replacement
+## SEO routes
 
-Replace image placeholders in `public/assets/` using the same filenames:
-
-- `hero.jpg`
-- `portfolio-01.jpg` through `portfolio-06.jpg`
-- `behind-01.jpg` through `behind-06.jpg`
-
-Keep public paths as `/assets/file-name.jpg` in components.
+The public home page and portfolio pages render the current published site and portfolio content in their initial HTML. Portfolio detail URLs use `/portfolio/{slug}/`; `/portfolio/?collection={slug}` redirects to the matching page. `/sitemap.xml` uses the same published portfolio source. Use `npm run check:seo` after a production build to inspect static output, private-page exclusions, structured data, sitemap URLs, and local image files.
 
 ## Contact link config
 

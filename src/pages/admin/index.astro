@@ -1,5 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminCooperationCenter from '../../components/AdminCooperationCenter.astro';
 ---
 <AdminLayout title="合作管理" current="inquiries">
   <header class="admin-page-heading"><div><span class="admin-eyebrow">合作管理</span><h1>合作意向</h1></div><button type="button" class="admin-button admin-button--quiet" id="inquiry-refresh">重新整理</button></header>
@@ -36,7 +37,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           <p class="admin-status" id="detail-references-status" role="status" aria-live="polite"></p>
           <div id="detail-reference-images-section" hidden><h4>參考照片</h4><ul class="admin-reference-images" id="detail-reference-images"></ul></div>
           <div id="detail-reference-links-section" hidden><h4>參考連結</h4><ul class="admin-reference-links" id="detail-reference-links"></ul></div>
+          <div id="detail-favorites-section" hidden><h4>使用者喜歡的作品</h4><ul class="admin-reference-images" id="detail-favorites"></ul></div>
         </section>
+        <AdminCooperationCenter />
         <hr />
         <form id="inquiry-edit-form" method="post" action="/api/admin/inquiries">
           <div class="admin-field"><label for="detail-status">處理狀態</label><select id="detail-status"><option value="new">待處理</option><option value="reviewing">評估中</option><option value="contacted">已聯繫</option><option value="closed">已結案</option></select></div>
@@ -95,12 +98,15 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   .admin-confirmation .admin-pill[data-status="confirmed"] { color: #246644; background: #edf6ee; }
 </style>
 <script>
+  import { initializeAdminCenter } from '../../lib/admin-cooperation-center';
+  const adminCenter = initializeAdminCenter();
+  import { favoriteHref, normalizeFavorite } from '../../lib/portfolio-favorites.js';
   import { requestAdmin, requireAdminSession, adminErrorMessage, formatAdminDate, setUnsavedChanges, confirmDiscardChanges, AdminApiError } from '../../lib/admin-client';
   import { confirmationBodyFits } from '../../lib/confirmation-request-size.js';
   type Status = 'new' | 'reviewing' | 'contacted' | 'closed';
   type Inquiry = { id: string; name: string; contact_method: string; contact_account: string; collaboration_type: string; preferred_date: string | null; description: string; consent: boolean; status: Status; admin_notes: string | null; created_at: string; updated_at: string; version: number };
   type InquiryList = { items: Inquiry[]; total: number; page: number; pageSize: number };
-  type InquiryReferences = { reference_links: string[]; reference_images: { name: string; type: string; size: number; url: string }[]; expires_in: number };
+  type InquiryReferences = { reference_links: string[]; reference_images: { name: string; type: string; size: number; url: string }[]; portfolio_favorites?: { slug: string; title: string; image: string; number: number }[]; expires_in: number };
   type ShootConfirmation = { version: number; status: 'draft' | 'confirmed'; slotId: string | null; startsAt: string | null; endsAt: string | null; location: string; mapUrl: string; wardrobe: string; bring: string; rainPlan: string; deliveryNote: string; publicationNote: string; updatedAt: string };
   type ShootSlot = { id: string; startsAt: string; endsAt: string; status: string; inquiryId: string | null; version: number };
   const labels: Record<Status, string> = { new: '待處理', reviewing: '評估中', contacted: '已聯繫', closed: '已結案' };
@@ -242,6 +248,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       if (!current()) return;
       if (!result?.item) throw new Error('Invalid confirmation response');
       confirmation = result.item;
+      void adminCenter.load(originalId);
       // Reflect this reservation locally without another request overwriting later edits.
       confirmationSlots = confirmationSlots.map((slot) => slot.id === confirmation?.slotId ? { ...slot, inquiryId: originalId, status: confirmation.status === 'confirmed' ? 'booked' : 'held' } : slot.inquiryId === originalId ? { ...slot, inquiryId: null, status: 'open' } : slot);
       renderConfirmation();
@@ -264,6 +271,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     window.clearTimeout(referencesExpiryTimer);
     referenceImages.replaceChildren();
     referenceLinks.replaceChildren();
+    $('#detail-favorites').replaceChildren();
+    $('#detail-favorites-section').hidden = true;
     $('#detail-reference-images-section').hidden = true;
     $('#detail-reference-links-section').hidden = true;
     references.setAttribute('aria-busy', 'false');
@@ -287,6 +296,17 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const data = await requestAdmin<InquiryReferences>(`/api/admin/inquiries/${encodeURIComponent(inquiryId)}/references`);
       if (!current()) return;
       if (!data || !Array.isArray(data.reference_links) || !Array.isArray(data.reference_images)) throw new Error('Invalid reference response');
+      for (const raw of data.portfolio_favorites ?? []) {
+        const item = normalizeFavorite(raw);
+        if (!item) throw new Error('Invalid favorite response');
+        const row = document.createElement('li');
+        const link = referenceAnchor(favoriteHref(item));
+        const image = document.createElement('img'); image.src = item.image; image.alt = `${item.title} 照片 ${item.number}`; image.loading = 'lazy';
+        image.addEventListener('error', () => { image.hidden = true; const hint = document.createElement('p'); hint.textContent = '此照片可能已更新或下架。'; row.append(hint); }, { once: true });
+        const caption = document.createElement('span'); caption.textContent = `${item.title} · 照片 ${item.number}`;
+        link.append(image, caption); row.append(link); $('#detail-favorites').append(row);
+      }
+      $('#detail-favorites-section').hidden = $('#detail-favorites').childElementCount === 0;
       let unavailable = 0;
       for (const [index, attachment] of data.reference_images.entries()) {
         const href = safeReferenceUrl(attachment?.url);
@@ -317,7 +337,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const hasLinks = referenceLinks.childElementCount > 0;
       $('#detail-reference-images-section').hidden = !hasImages;
       $('#detail-reference-links-section').hidden = !hasLinks;
-      message(referencesStatus, unavailable ? '部分參考資料無法顯示，請重新整理後再試。' : !hasImages && !hasLinks ? '這份申請未提供參考照片或連結。' : '', unavailable > 0);
+      message(referencesStatus, unavailable ? '部分參考資料無法顯示，請重新整理後再試。' : !hasImages && !hasLinks && !$('#detail-favorites').childElementCount ? '這份申請未提供參考照片、連結或收藏作品。' : '', unavailable > 0);
       if (hasImages) {
         const lifetime = Number.isFinite(data.expires_in) && data.expires_in > 0 ? Math.min(data.expires_in, 300) * 1000 : 300000;
         referencesExpiryTimer = window.setTimeout(() => {
@@ -355,6 +375,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   }
   function selectItem(item: Inquiry | null, focus = false) {
     selected = item;
+    adminCenter.reset();
     clearReferences();
     resetConfirmation();
     setUnsavedChanges(false);
@@ -377,6 +398,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       $('#detail-updated').textContent = `最後更新：${formatAdminDate(item.updated_at)} · 版本 ${item.version}`;
       if (focus) $('#inquiry-detail-title').focus({ preventScroll: false });
       void loadReferences(item.id);
+      void adminCenter.load(item.id);
     }
     renderList();
   }
