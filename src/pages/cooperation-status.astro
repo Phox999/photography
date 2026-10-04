@@ -5,7 +5,7 @@ import Footer from '../components/Footer.astro';
 import { siteConfig } from '../data/site';
 import '../styles/inner-pages.css';
 ---
-<BaseLayout title="合作進度｜phox999 photography" description="使用私人收件連結，查看本次合作意向與拍攝確認單。" noindex={true} referrer="no-referrer">
+<BaseLayout title="合作進度｜phox999 photography" description="使用查詢代碼或私人收件連結，查看本次合作意向與拍攝確認單。" noindex={true} referrer="no-referrer">
   <Header />
   <main id="main-content" class="cooperation-page inner-page" tabindex="-1">
     <div class="container cooperation-container">
@@ -36,7 +36,7 @@ import '../styles/inner-pages.css';
         </section>
         <section class="cooperation-card cooperation-summary" aria-labelledby="summary-title"><h2 id="summary-title">你送來的拍攝想法</h2><dl class="cooperation-details"><div><dt>姓名／暱稱</dt><dd data-summary-name></dd></div><div><dt>合作類型</dt><dd data-summary-type></dd></div><div><dt>偏好日期</dt><dd data-summary-date></dd></div></dl><p class="cooperation-copy" data-summary-description></p><div data-summary-links-wrap hidden><h3>參考連結</h3><ul class="cooperation-links" data-summary-links></ul></div></section>
         <section class="cooperation-card cooperation-confirmation" data-confirmation hidden aria-labelledby="confirmation-title"><div class="cooperation-card-heading"><div><p class="cooperation-eyebrow">拍攝確認單</p><h2 id="confirmation-title">把這一天，留給拍攝。</h2></div><span class="cooperation-pill">安排已確認</span></div><p class="cooperation-muted" data-confirmation-version></p><dl class="cooperation-details confirmation-details"><div><dt>收件編號</dt><dd data-confirmation-reference></dd></div><div><dt>拍攝時間</dt><dd data-confirmation-time></dd></div><div><dt>集合地點</dt><dd data-confirmation-location></dd></div><div data-confirmation-map-wrap hidden><dt>集合地圖</dt><dd><a data-confirmation-map target="_blank" rel="noopener noreferrer">查看地圖</a></dd></div><div><dt>服裝準備</dt><dd data-confirmation-wardrobe></dd></div><div><dt>攜帶物品</dt><dd data-confirmation-bring></dd></div><div><dt>雨備安排</dt><dd data-confirmation-rain></dd></div><div><dt>交件約定</dt><dd data-confirmation-delivery></dd></div><div><dt>公開方式</dt><dd data-confirmation-publication></dd></div></dl><p class="cooperation-muted">如需調整，請聯繫攝影師再次確認；行事曆檔案不會自動同步後續變更。</p><div class="cooperation-actions confirmation-actions"><button class="button button--secondary" type="button" data-confirmation-print>列印確認單</button><button class="button button--primary" type="button" data-confirmation-calendar>加入行事曆</button></div></section>
-        <p class="cooperation-private">私人連結僅供本次合作使用，請勿公開分享。</p>
+        <p class="cooperation-private">查詢代碼與私人連結都可查看本次合作內容，請勿公開分享。</p>
       </div>
       <noscript><p class="cooperation-card">請開啟 JavaScript 查看合作進度，或直接聯繫攝影師確認。</p></noscript>
     </div>
