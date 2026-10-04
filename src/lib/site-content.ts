@@ -24,6 +24,8 @@ function validHeroImageUrls(value: unknown): value is string[] {
       if (typeof item !== 'string') return false;
       if (STATIC_HERO_IMAGE_URLS.has(item)) return true;
       const url = new URL(item);
+      if (url.origin === 'https://phox999.com' && !url.search && !url.hash
+        && STATIC_HERO_IMAGE_URLS.has(decodeURI(url.pathname))) return true;
       return url.protocol === 'https:' && !url.username && !url.password
         && /^\/storage\/v1\/object\/public\/site-hero\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/.test(url.pathname);
     });
@@ -67,6 +69,18 @@ declare global { interface Window { __phox999PublicContent?: Promise<PublicSiteC
 export function loadPublicSiteContent(): Promise<PublicSiteContent> {
   if (typeof window === 'undefined') return Promise.resolve(staticSiteContent());
   if (window.__phox999PublicContent) return window.__phox999PublicContent;
+  // The server snapshot also produced the page's metadata and visible copy.
+  // Reuse it for every consumer instead of replacing it with a later API result.
+  const snapshot = document.querySelector<HTMLScriptElement>('#phox999-public-content');
+  if (snapshot?.textContent) {
+    try {
+      const content = validatePublicSiteContent(JSON.parse(snapshot.textContent));
+      if (content) {
+        window.__phox999PublicContent = Promise.resolve(content);
+        return window.__phox999PublicContent;
+      }
+    } catch { /* Static pages and invalid snapshots use the existing API path. */ }
+  }
   window.__phox999PublicContent = (async () => {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 8000);

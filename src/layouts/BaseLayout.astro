@@ -14,6 +14,7 @@ const {
   structuredData,
   allowStructuredDataWhenNoindex = false,
   noindex = false,
+  showPublicUi = !noindex,
   referrer,
 } = Astro.props;
 const pageCanonicalUrl = getCanonicalUrl(canonicalPath);
@@ -47,9 +48,9 @@ const schemaItems = noindex && !allowStructuredDataWhenNoindex
     {schemaItems.map((schema) => <script type="application/ld+json" data-seo-jsonld set:html={safeJsonLd(schema)}></script>)}
   </head>
   <body id="top">
-    {!noindex && <aside class="public-announcement" data-public-announcement role="status" hidden></aside>}
+    {showPublicUi && <aside class="public-announcement" data-public-announcement role="status" hidden></aside>}
     <slot />
-    {!noindex && <FloatingActions />}
+    {showPublicUi && <FloatingActions />}
   </body>
 </html>
 

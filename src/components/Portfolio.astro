@@ -31,7 +31,7 @@ const countFor = (category: string) =>
           data-portfolio-filter-button
           data-filter={filter}
         >
-          {filter}<span class="portfolio-filter__count" aria-hidden="true">{countFor(filter)}</span>
+          {filter}<span class="portfolio-filter__count" data-filter={filter} aria-hidden="true">{countFor(filter)}</span>
         </button>
       ))}
     </div>
@@ -203,7 +203,7 @@ const countFor = (category: string) =>
       cards = Array.from(portfolioSection.querySelectorAll<HTMLElement>('[data-portfolio-card]'));
       buttons.forEach((button) => {
         const category = button.dataset.filter || '全部';
-        const count = published.filter((item) => category === '全部' || item.category === category).length;
+        const count = featured.filter((item) => category === '全部' || item.category === category).length;
         const countLabel = button.querySelector<HTMLElement>('.portfolio-filter__count');
         if (countLabel) countLabel.textContent = String(count);
         button.setAttribute('aria-label', `${category}，${count} 組作品`);

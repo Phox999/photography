@@ -64,7 +64,7 @@ const structuredData = {
                     data-archive-filter
                     data-filter={category}
                   >
-                    {category}<span class="portfolio-filter__count" aria-hidden="true">{countFor(category)}</span>
+                    {category}<span class="portfolio-filter__count" data-filter={category} aria-hidden="true">{countFor(category)}</span>
                   </button>
                 ))}
               </div>

@@ -130,7 +130,9 @@ export async function supabaseRequest(config, path, options = {}) {
   else if (legacyRole(config.key)) headers.set('Authorization', `Bearer ${config.key}`);
   if (options.body !== undefined) headers.set('Content-Type', 'application/json');
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+    ? Math.min(options.timeoutMs, 12000) : 12000;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   let response;
   let data = null;
   try {

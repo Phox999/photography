@@ -1,18 +1,15 @@
 ---
 import PortfolioDetail from '../../components/PortfolioDetail.astro';
-import { portfolioCatalog } from '../../data/portfolioCatalog';
-
-const collection = portfolioCatalog[0];
 ---
 
-{collection && (
-  <PortfolioDetail
-    title={collection.title}
-    description={collection.description}
-    slug={collection.slug}
-    category={collection.category}
-    cover={collection.cover}
-    noindex={true}
-    images={collection.images}
-  />
-)}
+<!-- Always emit the shell, including when all published works live in Storage. -->
+<PortfolioDetail
+  title="作品"
+  description="公開人像作品"
+  slug="portfolio-template"
+  category="外拍"
+  cover="/assets/og-hero.jpg"
+  noindex={true}
+  showPublicUi={true}
+  images={[]}
+/>

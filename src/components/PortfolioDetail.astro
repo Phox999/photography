@@ -11,10 +11,11 @@ interface Props {
   category?: '外拍' | '棚拍';
   cover?: string;
   noindex?: boolean;
+  showPublicUi?: boolean;
   images: string[];
 }
 
-const { title, description, slug, category = '人像', cover, noindex = false, images } = Astro.props;
+const { title, description, slug, category = '人像', cover, noindex = false, showPublicUi = !noindex, images } = Astro.props;
 const canonicalPath = slug ? portfolioPath(slug) : Astro.url.pathname;
 const displayTitle = `${title}｜${category}人像作品・phox999 photography`;
 const shareImage = new URL(cover || images[0], SITE_ORIGIN).href;
@@ -68,6 +69,7 @@ const structuredData = {
   imageAlt={`${title}作品封面`}
   structuredData={structuredData}
   noindex={noindex}
+  showPublicUi={showPublicUi}
   allowStructuredDataWhenNoindex={noindex}
 >
   <Header />

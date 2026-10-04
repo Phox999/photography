@@ -25,6 +25,7 @@ function routeContext(context, url) {
     params: {},
     waitUntil: context.waitUntil || (() => {}),
     passThroughOnException: context.passThroughOnException || (() => {}),
+    publicReadTimeoutMs: 4000,
   };
 }
 
@@ -182,7 +183,13 @@ function featuredFilters(rewriter, collections) {
       const filter = element.getAttribute('data-filter') || '全部';
       const count = collections.filter((item) => filter === '全部' || item.category === filter).length;
       element.setAttribute('aria-label', `${filter}，${count} 組作品`);
-      element.setInnerContent(`${escapeHtml(filter)}<span class="portfolio-filter__count" aria-hidden="true">${count}</span>`, { html: true });
+    },
+  });
+  rewriter.on('[data-portfolio-filter-button] .portfolio-filter__count', {
+    element(element) {
+      const filter = element.getAttribute('data-filter') || '全部';
+      const count = collections.filter((item) => filter === '全部' || item.category === filter).length;
+      element.setInnerContent(String(count));
     },
   });
 }
@@ -193,7 +200,13 @@ function archiveFilters(rewriter, collections) {
       const filter = element.getAttribute('data-filter') || '全部';
       const count = collections.filter((item) => filter === '全部' || item.category === filter).length;
       element.setAttribute('aria-label', `${filter}，${count} 組作品`);
-      element.setInnerContent(`${escapeHtml(filter)}<span class="portfolio-filter__count" aria-hidden="true">${count}</span>`, { html: true });
+    },
+  });
+  rewriter.on('[data-archive-filter] .portfolio-filter__count', {
+    element(element) {
+      const filter = element.getAttribute('data-filter') || '全部';
+      const count = collections.filter((item) => filter === '全部' || item.category === filter).length;
+      element.setInnerContent(String(count));
     },
   });
 }
@@ -227,6 +240,12 @@ function featuredSchema(collections) {
 function homeRewriter(response, siteContent, collections) {
   const rewriter = new HTMLRewriter();
   if (siteContent) {
+    rewriter.on('head', {
+      element(element) {
+        const { announcement, faqs, hero_title, hero_copy, hero_image_urls } = siteContent;
+        element.append(`<script type="application/json" id="phox999-public-content">${safeJsonLd({ announcement, faqs, hero_title, hero_copy, hero_image_urls })}</script>`, { html: true });
+      },
+    });
     const title = `${siteContent.hero_title.trim()}｜台北互惠人像攝影・phox999`;
     const description = cleanDescription(siteContent.hero_copy, HOME_DESCRIPTION);
     const image = siteContent.hero_image_urls[0] || `${SITE_ORIGIN}/assets/og-hero.jpg`;

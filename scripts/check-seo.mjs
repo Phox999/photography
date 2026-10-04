@@ -117,6 +117,10 @@ for (const [relative, expected] of [
 
 const template = await readOutput('seo-internal/portfolio-template/index.html');
 assert.match(template, /name="robots" content="noindex, nofollow, noarchive"/i);
+assert.match(template, /aria-label="快捷功能"/, 'dynamic collection template must retain public floating actions');
+assert.match(template, /data-support-launcher/, 'dynamic collection template must retain the support helper');
+assert.match(template, /data-floating-top/, 'dynamic collection template must retain the back-to-top control');
+assert.match(template, /data-lightbox-dialog/, 'dynamic collection template must retain its lightbox');
 assert.ok(!locs.some((loc) => loc.includes('/seo-internal/')));
 
 if (lfsPointers.size) {
