@@ -427,6 +427,8 @@ function collectionHtmlRewriter(response, collection, path) {
       .on('[data-justified-gallery]', {
         element: (element) => {
           element.setAttribute('aria-label', `${collection.title}照片集`);
+          element.setAttribute('data-favorite-slug', collection.slug);
+          element.setAttribute('data-favorite-title', collection.title);
           element.setInnerContent(collection.images.map((_, index) => imageMarkup(collection, { index })).join(''), { html: true });
         },
       });

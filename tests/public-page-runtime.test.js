@@ -56,6 +56,8 @@ test('native Worker renders current public HTML and consistent GET/HEAD routes',
       assert.match(html, /index, follow, max-image-preview:large/);
       assert.match(html, /"@type":"ImageGallery"/);
       assert.match(html, /data-lightbox-open/);
+      assert.ok(html.includes(`data-favorite-slug="${work.slug}"`));
+      assert.match(html, /data-favorite-title="新作品"/);
       assert.match(html, /site-portfolio/);
     });
     await t.test('archive rewriting preserves scoped filter attributes', async () => {

@@ -1,10 +1,11 @@
 import { HttpError, readJson, supabaseRequest } from './auth.js';
 import { existingReceipt, receiptResult } from './inquiry-workflow.js';
+import { validateFavoriteReferences } from './portfolio-favorites.js';
 
 export const REFERENCE_BUCKET = 'inquiry-references';
 export const REFERENCE_LIMIT = 3;
 export const REFERENCE_MAX_BYTES = 4 * 1024 * 1024;
-export const INQUIRY_JSON_MAX_BYTES = 20 * 1024;
+export const INQUIRY_JSON_MAX_BYTES = 32 * 1024;
 export const MULTIPART_MAX_BYTES = REFERENCE_LIMIT * REFERENCE_MAX_BYTES + INQUIRY_JSON_MAX_BYTES + 64 * 1024;
 export const REFERENCE_URL_TTL = 300;
 const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -208,6 +209,9 @@ export async function persistInquiry(config, payload, images, workflow) {
 }
 
 export async function signedInquiryReferences(config, row) {
+  let favorites;
+  try { favorites = validateFavoriteReferences(row.portfolio_favorites ?? []); } catch { throw storageError(); }
+  const favoriteResult = { portfolio_favorites: favorites };
   let links;
   try { links = referenceLinks(row.reference_links ?? []); } catch { throw storageError(); }
   const images = row.reference_images ?? [];
@@ -220,7 +224,7 @@ export async function signedInquiryReferences(config, row) {
   }
   const paths = images.map((item) => item.path);
   if (new Set(paths).size !== paths.length) throw storageError();
-  if (!paths.length) return { reference_links: links, reference_images: [], expires_in: REFERENCE_URL_TTL };
+  if (!paths.length) return { ...favoriteResult, reference_links: links, reference_images: [], expires_in: REFERENCE_URL_TTL };
   const { data } = await supabaseRequest(config, `/storage/v1/object/sign/${REFERENCE_BUCKET}`, { method: 'POST', body: { paths, expiresIn: REFERENCE_URL_TTL } });
   if (!Array.isArray(data) || data.length !== paths.length) throw storageError();
   const urls = new Map();
@@ -235,6 +239,5 @@ export async function signedInquiryReferences(config, row) {
     } catch { throw storageError(); }
     urls.set(item.path, url.href);
   }
-  return { reference_links: links, reference_images: images.map(({ name, type, size, path }) => ({ name, type, size, url: urls.get(path) })), expires_in: REFERENCE_URL_TTL };
+  return { ...favoriteResult, reference_links: links, reference_images: images.map(({ name, type, size, path }) => ({ name, type, size, url: urls.get(path) })), expires_in: REFERENCE_URL_TTL };
 }
-

@@ -1,0 +1,106 @@
+<aside class="favorite-bar" data-favorite-bar hidden aria-label="作品收藏">
+  <button type="button" data-favorite-manage>♥ <span class="favorite-label-long">我喜歡的作品</span><span class="favorite-label-short">收藏</span> <span data-favorite-count>0</span></button>
+  <a href="/#contact">帶入預約</a>
+</aside>
+<p class="favorite-notice" data-favorite-notice role="status" aria-live="polite" hidden></p>
+<dialog class="favorite-dialog" data-favorite-dialog aria-labelledby="favorite-dialog-title">
+  <div class="favorite-dialog__heading"><h2 id="favorite-dialog-title">我喜歡的作品</h2><button type="button" data-favorite-close aria-label="關閉收藏">×</button></div>
+  <p>最多收藏 12 張，預約時會一併附上。收藏保存在目前瀏覽器，無痕模式或清除資料後可能消失。</p>
+  <ul class="favorite-grid" data-favorite-list></ul>
+  <p data-favorite-empty hidden>還沒有收藏，逛作品時點照片上的愛心即可加入。</p>
+  <div class="favorite-dialog__actions"><button type="button" data-favorite-clear>清空收藏</button><a class="button button--primary" href="/#contact" data-favorite-apply>帶入預約表單</a></div>
+</dialog>
+<script>
+  import { favoriteHref, favoriteKey, normalizeFavorite, normalizeFavoriteImage } from '../lib/portfolio-favorites.js';
+  import { readFavorites, saveFavorites, removeFavorite, toggleClientFavorite, favoritesPersistent, type Favorite } from '../lib/portfolio-favorites-client';
+  const dialog = document.querySelector<HTMLDialogElement>('[data-favorite-dialog]');
+  const bar = document.querySelector<HTMLElement>('[data-favorite-bar]');
+  const notice = document.querySelector<HTMLElement>('[data-favorite-notice]');
+  const list = document.querySelector<HTMLElement>('[data-favorite-list]');
+  let noticeTimer = 0;
+  function announce(value: string) {
+    if (!notice) return;
+    notice.textContent = value; notice.hidden = false;
+    document.querySelectorAll<HTMLElement>('[data-favorite-lightbox-status]').forEach(node => { node.textContent = value; });
+    window.clearTimeout(noticeTimer);
+    noticeTimer = window.setTimeout(() => { notice.hidden = true; document.querySelectorAll('[data-favorite-lightbox-status]').forEach(node => { node.textContent = ''; }); }, 6000);
+  }
+  function buttonState(button: HTMLButtonElement, item: Favorite) {
+    const selected = readFavorites().some(entry => favoriteKey(entry) === favoriteKey(item));
+    button.textContent = selected ? '♥' : '♡';
+    button.setAttribute('aria-pressed', String(selected));
+    button.setAttribute('aria-label', `${selected ? '取消收藏' : '收藏'} ${item.title} 照片 ${item.number}`);
+  }
+  function itemForImage(image: HTMLImageElement): Favorite | null {
+    const gallery = image.closest<HTMLElement>('[data-favorite-slug]');
+    const number = Number(image.closest<HTMLElement>('[data-lightbox-index]')?.dataset.lightboxIndex ?? -1) + 1;
+    return normalizeFavorite({ slug: gallery?.dataset.favoriteSlug, title: gallery?.dataset.favoriteTitle, image: image.getAttribute('src'), number });
+  }
+  function bindFavorite(button: HTMLButtonElement, getItem: () => Favorite | null) {
+    button.type = 'button'; button.className = 'favorite-photo';
+    button.dataset.favoriteToggle = '';
+    button.addEventListener('click', () => {
+      const item = getItem(); if (!item) return;
+      const result = toggleClientFavorite(item);
+      announce(result.error || (!favoritesPersistent() ? '瀏覽器無法保存收藏；目前頁面仍可使用，離開後可能消失。' : result.added ? '已收藏，可帶入預約表單。' : '已取消收藏。'));
+    });
+  }
+  function refresh() {
+    const items = readFavorites();
+    if (bar) bar.hidden = items.length === 0;
+    document.querySelectorAll('[data-favorite-count]').forEach(node => { node.textContent = String(items.length); });
+    document.querySelectorAll<HTMLButtonElement>('.portfolio-justified__item [data-favorite-toggle]').forEach(button => {
+      const image = button.parentElement?.querySelector<HTMLImageElement>('.portfolio-justified__button img');
+      const item = image && itemForImage(image); if (item) buttonState(button, item);
+    });
+    if (!list) return;
+    const focusedKey = document.activeElement instanceof HTMLElement ? document.activeElement.dataset.favoriteRemove : undefined;
+    list.replaceChildren();
+    for (const item of items) {
+      const row = document.createElement('li');
+      const link = document.createElement('a'); link.href = favoriteHref(item);
+      const image = document.createElement('img'); image.src = item.image; image.alt = `${item.title} 照片 ${item.number}`; image.loading = 'lazy';
+      const caption = document.createElement('span'); caption.textContent = `${item.title} · ${item.number}`;
+      link.append(image, caption);
+      const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '移除'; remove.dataset.favoriteRemove = favoriteKey(item);
+      remove.setAttribute('aria-label', `移除 ${item.title} 照片 ${item.number}`);
+      remove.addEventListener('click', () => { removeFavorite(item); announce('已移除收藏。'); });
+      row.append(link, remove); list.append(row);
+    }
+    if (focusedKey) (Array.from(list.querySelectorAll<HTMLButtonElement>('[data-favorite-remove]')).find(button => button.dataset.favoriteRemove === focusedKey) || list.querySelector<HTMLButtonElement>('button') || dialog?.querySelector<HTMLButtonElement>('[data-favorite-close]'))?.focus();
+    const empty = document.querySelector<HTMLElement>('[data-favorite-empty]'); if (empty) empty.hidden = items.length > 0;
+    const clear = document.querySelector<HTMLButtonElement>('[data-favorite-clear]'); if (clear) clear.disabled = !items.length;
+  }
+  function enhanceGalleries() {
+    document.querySelectorAll<HTMLImageElement>('[data-favorite-slug] .portfolio-justified__button img').forEach(image => {
+      const figure = image.closest<HTMLElement>('.portfolio-justified__item');
+      if (!figure || figure.querySelector('[data-favorite-toggle]') || !itemForImage(image)) return;
+      const button = document.createElement('button'); bindFavorite(button, () => itemForImage(image));
+      figure.append(button); buttonState(button, itemForImage(image)!);
+    });
+  }
+  document.querySelector('[data-favorite-manage]')?.addEventListener('click', () => { refresh(); dialog?.showModal(); });
+  document.querySelector('[data-favorite-close]')?.addEventListener('click', () => dialog?.close());
+  document.querySelector('[data-favorite-apply]')?.addEventListener('click', () => dialog?.close());
+  document.querySelector('[data-favorite-clear]')?.addEventListener('click', () => { saveFavorites([]); announce('已清空收藏。'); });
+  dialog?.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+  window.addEventListener('phox:favorites-change', refresh);
+  const galleries = document.querySelectorAll('[data-justified-gallery], [data-portfolio-detail-images]');
+  galleries.forEach(gallery => new MutationObserver(enhanceGalleries).observe(gallery, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-favorite-slug', 'data-favorite-title'] }));
+  enhanceGalleries(); refresh();
+  // Keep the lightbox heart in sync when navigating between photos.
+  document.querySelectorAll<HTMLDialogElement>('[data-lightbox-dialog]').forEach(lightbox => {
+    const displayed = lightbox.querySelector<HTMLImageElement>('[data-lightbox-image]');
+    const inner = lightbox.querySelector<HTMLElement>('.portfolio-lightbox__inner');
+    if (!displayed || !inner) return;
+    const current = () => {
+      const source = Array.from(document.querySelectorAll<HTMLImageElement>('[data-favorite-slug] .portfolio-justified__button img')).find(image => normalizeFavoriteImage(image.getAttribute('src')) === normalizeFavoriteImage(displayed.getAttribute('src')?.replace(window.location.origin, '')));
+      return source ? itemForImage(source) : null;
+    };
+    const button = document.createElement('button'); bindFavorite(button, current); button.classList.add('favorite-photo--lightbox'); inner.append(button);
+    const hint = document.createElement('p'); hint.className = 'favorite-lightbox-status'; hint.dataset.favoriteLightboxStatus = ''; hint.setAttribute('role', 'status'); inner.append(hint);
+    const sync = () => { const item = current(); button.hidden = !item; if (item) buttonState(button, item); };
+    new MutationObserver(sync).observe(displayed, { attributes: true, attributeFilter: ['src'] });
+    window.addEventListener('phox:favorites-change', sync); sync();
+  });
+</script>

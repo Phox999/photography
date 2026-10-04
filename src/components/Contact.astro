@@ -47,6 +47,13 @@ const showThemeImages = false;
             </div>
           </fieldset>
 
+          <section class="contact-reference-card" aria-labelledby="contact-favorites-title">
+            <h4 id="contact-favorites-title">我喜歡的作品 <span>選填</span></h4>
+            <p class="field-help" data-contact-favorites-help>逛作品時點愛心收藏，照片會自動帶到這裡。</p>
+            <a href="/portfolio/">前往作品集挑選</a>
+            <ul class="contact-favorites" data-contact-favorites></ul>
+          </section>
+
           <section class="contact-reference-card" aria-labelledby="reference-title">
             <h4 id="reference-title">b. 加入自己的參考照片 / 連結 <span>選填</span></h4>
             <div class="contact-reference-grid">
@@ -147,6 +154,10 @@ const showThemeImages = false;
           <ul data-review-link-list></ul>
           <p class="field-help">照片僅在此頁預覽，尚未上傳。</p>
         </div>
+        <div class="contact-review__section" data-review-favorites hidden>
+          <h4>我喜歡的作品</h4>
+          <ul class="contact-favorites" data-review-favorite-list></ul>
+        </div>
         <div class="contact-review__section">
           <h4>拍攝想法</h4>
           <p data-review-description></p>
@@ -174,6 +185,8 @@ const showThemeImages = false;
 
 <script>
   import { buildInquiryPayload, normalizeInquiryDraft, validateInquiryDraft } from '../lib/inquiry-form.js';
+  import { favoriteHref } from '../lib/portfolio-favorites.js';
+  import { readFavorites, removeFavorite, favoritesPersistent, type Favorite } from '../lib/portfolio-favorites-client';
 
   const inquiryForm = document.querySelector('[data-inquiry-form]');
 
@@ -202,13 +215,37 @@ const showThemeImages = false;
     const descriptionCount = inquiryForm.querySelector('[data-description-count]');
     let referenceFiles = [];
     let pending = false;
+    let reviewedFavorites: Favorite[] = [];
+    const renderFavorites = (target: Element | null, items: Favorite[], editable = false) => {
+      if (!target) return;
+      target.replaceChildren();
+      for (const item of items) {
+        const row = document.createElement('li');
+        const link = document.createElement('a'); link.href = favoriteHref(item); link.target = '_blank'; link.rel = 'noopener noreferrer';
+        const image = document.createElement('img'); image.src = item.image; image.alt = `${item.title} 照片 ${item.number}`; image.loading = 'lazy';
+        const caption = document.createElement('span'); caption.textContent = `${item.title} · ${item.number}`;
+        link.append(image, caption); row.append(link);
+        if (editable) {
+          const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '移除';
+          remove.setAttribute('aria-label', `移除 ${item.title} 照片 ${item.number}`);
+          remove.addEventListener('click', () => { if (!pending) { removeFavorite(item); inquiryForm.querySelector<HTMLElement>('[data-contact-favorites] button')?.focus(); } });
+          row.append(remove);
+        }
+        target.append(row);
+      }
+    };
+    const updateFavorites = () => {
+      renderFavorites(inquiryForm.querySelector('[data-contact-favorites]'), readFavorites(), true);
+      const help = inquiryForm.querySelector('[data-contact-favorites-help]');
+      if (help) help.textContent = !favoritesPersistent() ? '目前收藏僅保留於此頁，離開後可能消失。' : readFavorites().length ? `已帶入 ${readFavorites().length} 張；送出後攝影師可查看這些參考作品。` : '逛作品時點愛心收藏，照片會自動帶到這裡。';
+    };
 
     const selectedStyles = () => styleButtons
       .filter((button) => button.getAttribute('aria-pressed') === 'true')
       .map((button) => button.getAttribute('data-style-title'))
       .filter(Boolean);
 
-    const readDraft = () => normalizeInquiryDraft(new FormData(inquiryForm), selectedStyles());
+    const readDraft = () => normalizeInquiryDraft(new FormData(inquiryForm), selectedStyles(), readFavorites());
     const fieldSelectors = {
       name: '#name',
       contact_method: '#contact_method',
@@ -242,11 +279,15 @@ const showThemeImages = false;
     };
 
     const fillReview = (draft) => {
+      reviewedFavorites = readFavorites();
+      renderFavorites(inquiryForm.querySelector('[data-review-favorite-list]'), reviewedFavorites);
+      const favoritesPanel = inquiryForm.querySelector<HTMLElement>('[data-review-favorites]');
+      if (favoritesPanel) favoritesPanel.hidden = reviewedFavorites.length === 0;
       setReviewText('[data-review-name]', draft.name);
       setReviewText('[data-review-contact]', `${draft.contactMethod}｜${draft.contactAccount}`);
       setReviewText('[data-review-type]', draft.collaborationType);
       setReviewText('[data-review-date]', draft.preferredDate);
-      setReviewText('[data-review-description]', draft.description);
+      setReviewText('[data-review-description]', draft.description || (reviewedFavorites.length ? '以已收藏的作品作為拍攝參考。' : ''));
 
       const styles = selectedStyles();
       const stylesPanel = inquiryForm.querySelector('[data-review-styles]');
@@ -345,6 +386,7 @@ const showThemeImages = false;
         return;
       }
       const payload = buildInquiryPayload(draft);
+      if (reviewedFavorites.length) payload.portfolio_favorites = reviewedFavorites;
 
       pending = true;
       if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = true;
@@ -392,6 +434,15 @@ const showThemeImages = false;
     });
 
     updateDescriptionCount();
+    updateFavorites();
+    window.addEventListener('phox:favorites-change', () => {
+      if (pending) return;
+      updateFavorites();
+      if (review instanceof HTMLElement && !review.hidden) {
+        showEditor();
+        if (status) status.textContent = '收藏已變更，請重新確認合作內容後送出。';
+      }
+    });
     window.addEventListener('pagehide', clearPreviews);
   }
 </script>
