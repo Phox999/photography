@@ -175,7 +175,7 @@ export function portfolioUpdate(body) {
   const collections = body.collections.map((item) => {
     objectBody(item, ['slug', 'title', 'category', 'description', 'cover', 'images', 'totalImages']);
     const slug = portfolioText(item.slug, 120, '作品集識別名稱', { required: true });
-    if (/[\\/?#]/.test(slug) || slugs.has(slug)) invalid('作品集名稱重複或格式不正確。');
+    if (slug === '.' || slug === '..' || /[\\/?#]/.test(slug) || slugs.has(slug)) invalid('作品集名稱重複或格式不正確。');
     slugs.add(slug);
     const title = portfolioText(item.title, 120, '作品名稱', { required: true });
     if (!['外拍', '棚拍'].includes(item.category)) invalid('請選擇有效的作品分類。');

@@ -3,16 +3,24 @@ import '../styles/global.css';
 import '../styles/shell-refresh.css';
 import '../styles/inner-refresh.css';
 import FloatingActions from '../components/FloatingActions.astro';
-
-const siteOrigin = 'https://phox999.com';
-const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).href;
+import { canonicalUrl as getCanonicalUrl, DEFAULT_DESCRIPTION, safeJsonLd } from '../../server/seo.js';
 
 const {
   title = 'phox999 photography｜互惠人像攝影合作',
-  description = 'phox999 photography 提供自然、真實、有故事感的人像互惠攝影合作，適合想累積形象作品、個人品牌內容或社群照片的你。',
+  description = DEFAULT_DESCRIPTION,
+  canonicalPath = Astro.url.pathname,
+  image = 'https://phox999.com/assets/og-hero.jpg',
+  imageAlt = 'phox999 photography 首頁主視覺',
+  structuredData,
+  allowStructuredDataWhenNoindex = false,
   noindex = false,
   referrer,
 } = Astro.props;
+const pageCanonicalUrl = getCanonicalUrl(canonicalPath);
+const robots = noindex ? 'noindex, nofollow, noarchive' : 'index, follow, max-image-preview:large';
+const schemaItems = noindex && !allowStructuredDataWhenNoindex
+  ? []
+  : (Array.isArray(structuredData) ? structuredData : structuredData ? [structuredData] : []);
 ---
 
 <!doctype html>
@@ -21,21 +29,22 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
+    <meta name="robots" content={robots} />
+    <link rel="canonical" href={pageCanonicalUrl} />
     {referrer && <meta name="referrer" content={referrer} />}
-    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content="phox999 photography" />
+    <meta property="og:url" content={pageCanonicalUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content="https://phox999.com/assets/og-hero.jpg" />
-    <meta property="og:image:secure_url" content="https://phox999.com/assets/og-hero.jpg" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="phox999 photography 首頁主視覺" />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:alt" content={imageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://phox999.com/assets/og-hero.jpg" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
     <meta property="og:type" content="website" />
     <title>{title}</title>
+    {schemaItems.map((schema) => <script type="application/ld+json" data-seo-jsonld set:html={safeJsonLd(schema)}></script>)}
   </head>
   <body id="top">
     {!noindex && <aside class="public-announcement" data-public-announcement role="status" hidden></aside>}

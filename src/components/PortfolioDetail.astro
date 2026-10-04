@@ -2,25 +2,83 @@
 import Layout from '../layouts/BaseLayout.astro';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
+import { SITE_ORIGIN, portfolioPath } from '../../server/seo.js';
 
 interface Props {
   title: string;
   description: string;
+  slug?: string;
+  category?: '外拍' | '棚拍';
+  cover?: string;
+  noindex?: boolean;
   images: string[];
 }
 
-const { title, description, images } = Astro.props;
+const { title, description, slug, category = '人像', cover, noindex = false, images } = Astro.props;
+const canonicalPath = slug ? portfolioPath(slug) : Astro.url.pathname;
+const displayTitle = `${title}｜${category}人像作品・phox999 photography`;
+const shareImage = new URL(cover || images[0], SITE_ORIGIN).href;
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      '@id': `${SITE_ORIGIN}${canonicalPath}#webpage`,
+      url: `${SITE_ORIGIN}${canonicalPath}`,
+      name: displayTitle,
+      description,
+      inLanguage: 'zh-Hant-TW',
+      isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+      mainEntity: { '@id': `${SITE_ORIGIN}${canonicalPath}#gallery` },
+      breadcrumb: { '@id': `${SITE_ORIGIN}${canonicalPath}#breadcrumb` },
+    },
+    {
+      '@type': 'ImageGallery',
+      '@id': `${SITE_ORIGIN}${canonicalPath}#gallery`,
+      url: `${SITE_ORIGIN}${canonicalPath}`,
+      name: title,
+      description,
+      creator: { '@id': `${SITE_ORIGIN}/about/#person` },
+      image: images.map((url, index) => ({
+        '@type': 'ImageObject',
+        contentUrl: new URL(url, SITE_ORIGIN).href,
+        name: `${title}作品照片 ${index + 1}`,
+        description: `${title}人像作品照片。`,
+        creator: { '@id': `${SITE_ORIGIN}/about/#person` },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${SITE_ORIGIN}${canonicalPath}#breadcrumb`,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: '首頁', item: `${SITE_ORIGIN}/` },
+        { '@type': 'ListItem', position: 2, name: '作品集', item: `${SITE_ORIGIN}/portfolio/` },
+        { '@type': 'ListItem', position: 3, name: title, item: `${SITE_ORIGIN}${canonicalPath}` },
+      ],
+    },
+  ],
+};
 ---
 
-<Layout title={`${title}｜phox999 photography`}>
+<Layout
+  title={displayTitle}
+  description={description}
+  canonicalPath={canonicalPath}
+  image={shareImage}
+  imageAlt={`${title}作品封面`}
+  structuredData={structuredData}
+  noindex={noindex}
+  allowStructuredDataWhenNoindex={noindex}
+>
   <Header />
   <main class="portfolio-detail">
     <section class="portfolio-detail__hero container">
       <a class="portfolio-detail__back" href="/portfolio/">← 回全部作品</a>
 
-      <p class="eyebrow">PORTFOLIO</p>
-      <h1>{title}</h1>
-      <p class="portfolio-detail__description">{description}</p>
+      <p class="eyebrow" data-portfolio-category>PORTFOLIO · {category}</p>
+      <h1 data-portfolio-title>{title}</h1>
+      <p class="portfolio-detail__description" data-portfolio-description>{description}</p>
+      <p><a href="/cooperation/">了解互惠攝影合作方式</a> · <a href="/#contact">填寫合作意向</a></p>
     </section>
 
     <section
@@ -86,7 +144,7 @@ const { title, description, images } = Astro.props;
   </main>
   <Footer />
 
-  <script>
+<script>
     const setupPortfolioLightbox = () => {
       const gallery = document.querySelector('[data-justified-gallery]');
       const dialog = document.querySelector('[data-lightbox-dialog]');

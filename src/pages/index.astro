@@ -11,10 +11,38 @@ import Dates from '../components/Dates.astro';
 import FAQ from '../components/FAQ.astro';
 import Contact from '../components/Contact.astro';
 import Footer from '../components/Footer.astro';
+import { SITE_ORIGIN, SITE_NAME } from '../../server/seo.js';
 import '../styles/home-refresh.css';
+const canonical = `${SITE_ORIGIN}/`;
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${SITE_ORIGIN}/#website`,
+    name: SITE_NAME,
+    url: `${SITE_ORIGIN}/`,
+    inLanguage: 'zh-Hant-TW',
+    publisher: { '@id': `${SITE_ORIGIN}/about/#person` },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${SITE_ORIGIN}/#webpage`,
+    url: `${SITE_ORIGIN}/`,
+    name: '台北互惠人像攝影｜phox999 photography',
+    description: '在台北創作自然、有故事感的人像作品；先討論主題與拍攝方式，再確認彼此是否適合合作。',
+    inLanguage: 'zh-Hant-TW',
+    isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+    about: { '@id': `${SITE_ORIGIN}/about/#person` },
+  },
+];
 ---
 
-<BaseLayout>
+<BaseLayout
+  title="台北互惠人像攝影｜phox999 photography"
+  description="在台北創作自然、有故事感的人像作品。了解互惠攝影合作方式、外拍與棚拍作品，從討論主題開始。"
+  structuredData={structuredData}
+>
   <Header home />
   <main class="home-page">
     <Hero />

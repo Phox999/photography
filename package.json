@@ -9,6 +9,7 @@
     "build:worker": "npm run build && node scripts/prepare-worker-assets.mjs",
     "images:webp": "node scripts/convert-webp.mjs",
     "preview": "astro preview",
+    "check:seo": "node scripts/check-seo.mjs",
     "test": "node --test"
   },
   "dependencies": {

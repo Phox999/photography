@@ -27,7 +27,7 @@ export async function loadPublishedPortfolio(): Promise<PublishedPortfolioCollec
     const response = await fetch('/api/portfolio', { credentials: 'omit', cache: 'no-store' });
     if (!response.ok) return null;
     const value = await response.json();
-    if (!Array.isArray(value.collections) || value.collections.length < 1 || value.collections.length > 80) return null;
+    if (!Array.isArray(value.collections) || value.collections.length > 80) return null;
     const collections = value.collections as Partial<PublishedPortfolioCollection>[];
     if (!collections.every((item) => item && typeof item.slug === 'string' && item.slug.length > 0 && !/[\\/?#]/.test(item.slug)
       && typeof item.title === 'string' && item.title.trim().length > 0 && item.title.length <= 120
@@ -38,7 +38,8 @@ export async function loadPublishedPortfolio(): Promise<PublishedPortfolioCollec
       && Number.isInteger(item.totalImages) && item.totalImages! >= item.images.length)) return null;
     return collections.map((item) => ({
       slug: item.slug!, title: item.title!, category: item.category!, description: item.description!,
-      cover: item.cover!, images: item.images!, totalImages: item.totalImages!, href: `/portfolio/?collection=${encodeURIComponent(item.slug!)}`,
+      cover: item.cover!, images: item.images!, totalImages: item.totalImages!,
+      href: `/portfolio/${encodeURIComponent(item.slug!).replace(/[!'()*]/g, character => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)}/`,
     }));
   } catch { return null; }
 }
