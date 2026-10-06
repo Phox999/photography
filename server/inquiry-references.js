@@ -13,6 +13,13 @@ const OBJECT_PATH = new RegExp(`^${UUID}/${UUID}\\.(jpg|png|webp)$`);
 const invalid = (message = '參考資料格式不正確。') => new HttpError(400, message, 'invalid_references');
 const tooLarge = () => new HttpError(413, '參考圖片每張最多 4 MiB，最多 3 張。', 'payload_too_large');
 const storageError = () => new HttpError(503, '參考圖片暫時無法儲存或讀取，請稍後再試。', 'storage_unavailable');
+const DEFINITIVE_SUBMISSION_STATUSES = new Set([400, 401, 403, 404, 409, 413, 429]);
+
+function upstreamStatus(error) {
+  if (!(error instanceof HttpError)) return null;
+  const match = /^upstream_http_(\d{3})$/.exec(error.code);
+  return match ? Number(match[1]) : error.status;
+}
 
 // Content-Length alone is insufficient: chunked bodies are capped before formData
 // can buffer or parse any multipart parts.
@@ -195,10 +202,11 @@ export async function persistInquiry(config, payload, images, workflow) {
     // The database can commit before its response is lost. Delete only when the
     // existing helper identifies a definitive rejection; preserving the objects
     // on an ambiguous 5xx/transport failure avoids breaking a saved inquiry.
-    if (error instanceof HttpError && [400, 401, 403, 404, 409, 413, 429].includes(error.status)) {
+    if (DEFINITIVE_SUBMISSION_STATUSES.has(upstreamStatus(error))) {
       await removeObjects(config, attemptedPaths);
       throw error;
     }
+    console.error('Inquiry submission result is ambiguous', error instanceof HttpError ? error.code : 'unexpected_error');
     throw new HttpError(503, workflow ? '暫時無法確認是否送出，請保留表單並重試；相同資料不會重複建立。' : '暫時無法確認是否送出，請聯絡攝影師確認，避免重複提交。', 'inquiry_submission_unconfirmed');
   }
   // Two identical requests can both finish uploading before the RPC serializes

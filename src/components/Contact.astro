@@ -174,6 +174,7 @@ const showThemeImages = false;
 
 <script>
   import { buildInquiryPayload, normalizeInquiryDraft, validateInquiryDraft } from '../lib/inquiry-form.js';
+  import { submissionIdentityFor } from '../lib/inquiry-workflow';
 
   const inquiryForm = document.querySelector('[data-inquiry-form]');
 
@@ -202,6 +203,7 @@ const showThemeImages = false;
     const descriptionCount = inquiryForm.querySelector('[data-description-count]');
     let referenceFiles = [];
     let pending = false;
+    const retryIdentities = new Map();
 
     const selectedStyles = () => styleButtons
       .filter((button) => button.getAttribute('aria-pressed') === 'true')
@@ -344,7 +346,16 @@ const showThemeImages = false;
         reportValidationError(validationError);
         return;
       }
-      const payload = buildInquiryPayload(draft);
+      let payload;
+      try {
+        const details = buildInquiryPayload(draft);
+        payload = { ...details, ...submissionIdentityFor(details, retryIdentities, window.crypto) };
+      } catch (error) {
+        if (status) status.textContent = error instanceof Error
+          ? error.message
+          : '目前無法建立安全的提交識別，請改用 Instagram 或 Email 聯絡。';
+        return;
+      }
 
       pending = true;
       if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = true;
@@ -362,6 +373,7 @@ const showThemeImages = false;
         if (!response.ok) throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
 
         inquiryForm.reset();
+        retryIdentities.clear();
         styleButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
         clearPreviews();
         updateDescriptionCount();

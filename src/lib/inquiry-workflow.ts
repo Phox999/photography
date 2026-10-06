@@ -26,6 +26,15 @@ export function createSubmissionIdentity(source: Crypto): SubmissionIdentity {
   const receipt_token = Array.from(source.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('');
   return { submission_id: `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`, receipt_token };
 }
+export function submissionIdentityFor(payload: unknown, cache: Map<string, SubmissionIdentity>, source: Crypto): SubmissionIdentity {
+  const fingerprint = JSON.stringify(payload);
+  if (fingerprint === undefined) throw new Error('提交內容格式不正確，請重新檢查表單。');
+  const existing = cache.get(fingerprint);
+  if (existing) return existing;
+  const identity = createSubmissionIdentity(source);
+  cache.set(fingerprint, identity);
+  return identity;
+}
 export function receiptFromResponse(value: unknown, expectedToken: string): InquiryReceipt | null {
   if (!record(value) || !tokenPattern.test(expectedToken) || !text(value.reference, 80) || !referencePattern.test(value.reference) || !validTimestamp(value.createdAt) || value.url !== `/cooperation-status/#token=${expectedToken}`) return null;
   return { reference: value.reference, createdAt: value.createdAt, url: value.url };

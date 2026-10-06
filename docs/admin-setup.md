@@ -55,8 +55,11 @@ Worker 需要設定與 Pages 相同的 Supabase 變數名稱，secret key 必須
 - `202609260003_portfolio_management.sql`
 - `202609270001_portfolio_image_limit.sql`
 - `202610010001_portfolio_incremental_updates.sql`
+- `202610060001_inquiry_collaboration_types.sql`
 
 不要重新執行已套用的 migration，也不要只套用舊版清單。這些 migration 涵蓋後台、檔期、回饋、合作流程、私人相簿、檔案上傳、首頁內容與公開作品集所需的資料表、RPC、RLS 和 Storage 設定。`202609240010_inquiry_contact_account.sql` 會為舊版合作申請表補上 `contact_account`，並在欄位空白時由既有 Instagram／Email 欄位回填聯絡資料；不會刪除申請或覆寫已填內容。
+
+`202610060001_inquiry_collaboration_types.sql` 會更新舊資料表留下的合作類型 CHECK 限制，接受目前表單的「輕量體驗(2hr)」、「標準方案(3hr)」與「主題合作」，並保留四種歷史類型。若提交 RPC 回傳 SQLSTATE `23514` 並指出 `collaboration_requests_collaboration_type_check`，請檢查此 migration；僅重跑 `CREATE TABLE IF NOT EXISTS` 不會更新既有的限制。
 
 接著在 Supabase Authentication 關閉公開註冊與匿名登入，由專案管理者建立並驗證管理員帳號，最後把該帳號的 UUID 加入管理員名單：
 
