@@ -1,0 +1,67 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getPortfolioCollection } from '../../data/portfolioCatalog';
+import { getPublicImageDimensions, type ImageDimensions } from '../../lib/image-dimensions';
+import '../../styles/journal.css';
+
+const posts = (await getCollection('journal'))
+  .filter((post) => !post.data.draft)
+  .sort((left, right) => right.data.publishDate.getTime() - left.data.publishDate.getTime());
+
+const coverInfo = new Map<string, { src: string; dimensions?: ImageDimensions }>();
+await Promise.all(posts.map(async (post) => {
+  const src = post.data.cover ?? getPortfolioCollection(post.data.relatedWorks[0] ?? '')?.cover ?? '/assets/hero.webp';
+  coverInfo.set(post.id, { src, dimensions: await getPublicImageDimensions(src) });
+}));
+
+const formatDate = (date: Date) => new Intl.DateTimeFormat('zh-TW', {
+  year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Taipei',
+}).format(date);
+---
+
+<BaseLayout
+  title="拍攝筆記｜人像攝影與外拍準備指南｜Phox999"
+  description="從互惠攝影、第一次外拍到台北拍攝地點，整理人像拍攝前值得先知道的事。由 Phox999 分享合作流程、造型準備與場景選擇方向。"
+>
+  <Header />
+  <main class="journal-page inner-page">
+    <header class="journal-index-hero container" aria-labelledby="journal-title">
+      <p class="eyebrow">JOURNAL</p>
+      <h1 id="journal-title">拍攝筆記</h1>
+      <p>從拍攝準備到場景選擇，先把想法整理好，再一起完成喜歡的畫面。</p>
+    </header>
+
+    <section class="journal-index-content container" aria-labelledby="journal-list-title">
+      <div class="section-heading">
+        <p class="eyebrow">PHOTOGRAPHY NOTES</p>
+        <h2 id="journal-list-title">攝影指南</h2>
+      </div>
+      {posts.length > 0 ? (
+        <div class="journal-card-grid">
+          {posts.map((post) => {
+            const { src: cover, dimensions } = coverInfo.get(post.id)!;
+            return (
+              <article class="journal-card">
+                <a href={`/journal/${post.id}/`} class="journal-card__cover">
+                  <img src={cover} alt={`${post.data.title}文章封面`} width={dimensions?.width} height={dimensions?.height} loading="lazy" decoding="async" />
+                </a>
+                <div class="journal-card__content">
+                  <p class="journal-card__meta"><span>{post.data.category}</span><time datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate)}</time></p>
+                  <h2><a href={`/journal/${post.id}/`}>{post.data.title}</a></h2>
+                  <p>{post.data.description}</p>
+                  <a class="journal-card__link" href={`/journal/${post.id}/`} aria-label={`閱讀：${post.data.title}`}>閱讀文章 <span aria-hidden="true">→</span></a>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <p class="journal-empty">拍攝筆記正在整理中。</p>
+      )}
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

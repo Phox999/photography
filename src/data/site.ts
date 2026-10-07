@@ -1,7 +1,9 @@
+const googleFormUrl = 'https://forms.gle/8V17E3gPVf3NdEaY8';
+
 export const siteConfig = {
   brandName: 'phox999 photography',
-  googleFormUrl: 'https://forms.gle/8V17E3gPVf3NdEaY8',
-  inquiryUrl: '/#contact',
+  googleFormUrl,
+  inquiryUrl: googleFormUrl,
   adminUrl: '/admin/login/',
   portfolioUrl: '/portfolio/',
   aboutUrl: '/about/',
@@ -10,11 +12,17 @@ export const siteConfig = {
   mailtoUrl: 'mailto:chuajinglun@ymail.com',
 };
 
+export const defaultHeroContent = {
+  title: '第一次互惠拍攝，\n也能安心開始。',
+  copy: '在台北拍人像，也提供雙北互惠外拍、棚拍與主題攝影合作。不論你是第一次拍照，還是想累積作品，拍攝前都會一起討論需求、服裝與風格，完成自然、有故事的畫面。',
+};
+
 export const navItems = [
   { label: '作品集', href: '/portfolio/' },
   { label: '合作方式', href: '/cooperation/' },
   { label: '關於我', href: '/about/' },
   { label: '拍攝花絮', href: '/behind-scenes/' },
+  { label: '拍攝筆記', href: '/journal/' },
 ];
 
 export const portfolioFilters = ['全部', '外拍', '棚拍'];
@@ -129,6 +137,6 @@ export const faqItems = [
   },
   {
     question: '如何申請合作？',
-    answer: '點擊「立即預約」填寫合作資訊，我會依主題、檔期與合作方式回覆是否能安排。',
+    answer: '點擊「填寫合作意向」送出資料，我會依主題、檔期與合作方式回覆是否能安排。',
   },
 ];

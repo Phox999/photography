@@ -1,0 +1,22 @@
+# Phox999 photography
+
+Phox999 是台北人像攝影網站，由攝影師小蔡經營，主要分享互惠人像、戶外人像、棚拍與主題攝影。
+
+## 主要內容
+
+- 台北與雙北人像攝影合作
+- 互惠攝影與拍攝準備指南
+- 外拍、棚拍及主題攝影作品
+- 拍攝場景與合作流程資訊
+
+## 網站
+
+- 首頁：https://phox999.com/
+- 作品集：https://phox999.com/portfolio/
+- 合作方式：https://phox999.com/cooperation/
+- 關於攝影師：https://phox999.com/about/
+- 拍攝花絮：https://phox999.com/behind-scenes/
+- 拍攝筆記：https://phox999.com/journal/
+- Sitemap：https://phox999.com/sitemap-index.xml
+
+合作方式與檔期請以網站當前公開資訊為準。私人相簿、管理頁面和合作狀態頁面不是公開內容。

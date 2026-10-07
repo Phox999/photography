@@ -7,11 +7,13 @@
     "dev": "astro dev",
     "build": "astro build",
     "build:worker": "npm run build && node scripts/prepare-worker-assets.mjs",
+    "verify:seo": "node scripts/verify-seo.mjs",
     "images:webp": "node scripts/convert-webp.mjs",
     "preview": "astro preview",
     "test": "node --test"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
     "@supabase/supabase-js": "^2.110.7",
     "astro": "^5.10.0",
     "sharp": "^0.35.1"

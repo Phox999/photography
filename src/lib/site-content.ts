@@ -1,4 +1,4 @@
-import { faqItems } from '../data/site';
+import { defaultHeroContent, faqItems } from '../data/site';
 
 export type PublishedFAQ = { question: string; answer: string };
 export type PublicSiteContent = {
@@ -9,13 +9,13 @@ export type PublicSiteContent = {
   hero_image_urls: string[];
 };
 
-const DEFAULT_HERO_TITLE = '第一次互惠拍攝，\n也能安心開始。';
-const DEFAULT_HERO_COPY = '不論你是第一次拍照，還是想累積作品，\n拍攝前都會充分溝通需求與風格，尊重彼此的想法，一起完成自然、有故事的作品。';
 const STATIC_HERO_IMAGE_URLS = new Set([
   '/assets/hero.webp', '/assets/hero-02.webp', '/assets/hero-03.webp', '/assets/hero-04.webp',
   '/assets/portfolio/6-20海邊jk_/IMG_9630.webp', '/assets/portfolio/照片分享/IMG_6114.webp',
   '/assets/portfolio/地雷系/LINE_ALBUM_202681_260921_7.webp', '/assets/portfolio/興華天橋/13.webp', '/assets/portfolio/maid/01.webp',
 ]);
+
+const LEGACY_DEFAULT_HERO_COPY = '不論你是第一次拍照，還是想累積作品，\n拍攝前都會充分溝通需求與風格，尊重彼此的想法，一起完成自然、有故事的作品。';
 
 function validHeroImageUrls(value: unknown): value is string[] {
   if (!Array.isArray(value) || value.length > 10) return false;
@@ -45,7 +45,7 @@ export function validatePublicSiteContent(value: unknown): PublicSiteContent | n
     announcement: content.announcement,
     faqs: content.faqs.map(({ question, answer }) => ({ question, answer })),
     hero_title: content.hero_title,
-    hero_copy: content.hero_copy,
+    hero_copy: content.hero_copy === LEGACY_DEFAULT_HERO_COPY ? defaultHeroContent.copy : content.hero_copy,
     hero_image_urls: content.hero_image_urls,
   };
 }
@@ -54,8 +54,8 @@ export function staticSiteContent(): PublicSiteContent {
   return {
     announcement: '',
     faqs: faqItems.map(item => ({ ...item })),
-    hero_title: DEFAULT_HERO_TITLE,
-    hero_copy: DEFAULT_HERO_COPY,
+    hero_title: defaultHeroContent.title,
+    hero_copy: defaultHeroContent.copy,
     hero_image_urls: [],
   };
 }

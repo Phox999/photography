@@ -1,13 +1,20 @@
 ---
-import { siteConfig } from '../data/site';
+import { defaultHeroContent, siteConfig } from '../data/site';
+import { getPublicImageDimensions } from '../lib/image-dimensions';
+
+const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.webp');
 ---
 
 <section class="hero" id="hero" aria-labelledby="hero-title" data-hero-carousel>
   <div class="hero__media" aria-hidden="true">
     <img
       class="hero__image is-active"
-      src="/assets/hero.webp"
+      src="/assets/hero-2560.webp"
+      srcset="/assets/hero-960.webp 960w, /assets/hero-1440.webp 1440w, /assets/hero-2560.webp 2560w"
+      sizes="100vw"
       alt=""
+      width={heroImageDimensions?.width}
+      height={heroImageDimensions?.height}
       loading="eager"
       fetchpriority="high"
       decoding="async"
@@ -22,13 +29,13 @@ import { siteConfig } from '../data/site';
 
     <p class="hero__subtitle"></p>
 
-    <p class="hero__copy" data-hero-copy>不論你是第一次拍照，還是想累積作品，<br />拍攝前都會充分溝通需求與風格，尊重彼此的想法，一起完成自然、有故事的作品。</p>
+    <p class="hero__copy" data-hero-copy>{defaultHeroContent.copy}</p>
 
     <a
       class="button button--primary"
       href={siteConfig.inquiryUrl}
     >
-      立即預約
+      填寫合作意向
     </a>
   </div>
 </section>
@@ -61,7 +68,14 @@ import { siteConfig } from '../data/site';
         const apiImages = content.hero_image_urls.map((url, index) => {
           const image = document.createElement('img');
           image.className = `hero__image ${index === 0 ? 'is-active' : ''}`;
-          image.src = url;
+          const isOptimizedHero = url === '/assets/hero.webp';
+          image.src = isOptimizedHero ? '/assets/hero-2560.webp' : url;
+          if (isOptimizedHero) {
+            image.srcset = '/assets/hero-960.webp 960w, /assets/hero-1440.webp 1440w, /assets/hero-2560.webp 2560w';
+            image.sizes = '100vw';
+            image.width = 2560;
+            image.height = 1707;
+          }
           image.alt = '';
           image.loading = index === 0 ? 'eager' : 'lazy';
           image.decoding = 'async';

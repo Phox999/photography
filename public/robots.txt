@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /client/
+Disallow: /cooperation-status/
+
+Sitemap: https://phox999.com/sitemap-index.xml

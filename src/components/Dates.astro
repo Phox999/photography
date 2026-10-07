@@ -1,4 +1,6 @@
 ---
+import { siteConfig } from '../data/site';
+
 interface Props { id?: string; }
 const { id = 'dates' } = Astro.props;
 ---
@@ -26,14 +28,16 @@ const { id = 'dates' } = Astro.props;
         <div data-date-picker hidden>
           <div class="availability-label-row"><label for="date-preference">日期 <span>由可洽詢日期選取</span></label><button class="availability-clear" type="button" data-date-clear disabled>清除日期</button></div>
           <input id="date-preference" type="date" readonly />
+          <p class="availability-summary" data-date-summary aria-live="polite">尚未選擇日期，也可以在合作意向表單說明偏好時間。</p>
         </div>
-        <a class="button button--primary" href="/#contact" data-date-continue>填寫合作意向</a>
+        <a class="button button--primary" href={siteConfig.inquiryUrl} data-date-continue>填寫合作意向</a>
 
       </div>
     </div>
   </div>
 </section>
 <script>
+  import { siteConfig } from '../data/site';
   import { openSlotsForDay, parsePublicSlots, slotsForDay, taipeiDate, type PublicSlot } from '../lib/availability';
   import { calendarRangeFor } from '../lib/calendar-months.js';
   const root = document.querySelector<HTMLElement>('[data-availability]');
@@ -56,8 +60,10 @@ const { id = 'dates' } = Astro.props;
     const dateKey = (value: Date) => value.toISOString().slice(0, 10);
     function updateSummary() {
       const preferredDate = dateInput.value;
-      if (summary) summary.textContent = preferredDate ? `偏好日期：${preferredDate.replaceAll('-', '/')}。實際檔期仍需雙方確認。` : '日期未定，也可以直接詢問。';
-      continueLink.href = preferredDate && !document.querySelector('#preferred_date') ? `/?preferred_date=${encodeURIComponent(preferredDate)}#contact` : '/#contact';
+      if (summary) summary.textContent = preferredDate
+        ? `已選擇 ${preferredDate.replaceAll('-', '/')}，請在合作意向表單備註日期；實際檔期仍需雙方確認。`
+        : '尚未選擇日期，也可以在合作意向表單說明偏好時間。';
+      continueLink.href = siteConfig.inquiryUrl;
       if (clear) clear.disabled = !dateInput.value;
     }
     function chooseDate(value = '') {

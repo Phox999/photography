@@ -4,15 +4,42 @@ import '../styles/shell-refresh.css';
 import '../styles/inner-refresh.css';
 import FloatingActions from '../components/FloatingActions.astro';
 
-const siteOrigin = 'https://phox999.com';
-const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).href;
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  ogImage?: string;
+  ogImageAlt?: string;
+  ogType?: 'website' | 'article';
+  noindex?: boolean;
+  referrer?: string;
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
+}
 
+const siteOrigin = 'https://phox999.com';
 const {
-  title = 'phox999 photography｜互惠人像攝影合作',
-  description = 'phox999 photography 提供自然、真實、有故事感的人像互惠攝影合作，適合想累積形象作品、個人品牌內容或社群照片的你。',
+  title = '台北人像攝影・互惠外拍｜Phox999 photography',
+  description = 'Phox999 是台北人像攝影師，提供雙北互惠攝影、戶外人像、棚拍與主題創作。第一次拍攝也能從主題、服裝與場景一起討論。',
+  canonical,
+  ogImage = '/assets/og-hero.jpg',
+  ogImageAlt = 'Phox999 photography 人像攝影作品',
+  ogType = 'website',
   noindex = false,
   referrer,
+  structuredData,
 } = Astro.props;
+
+const canonicalUrl = new URL(canonical ?? Astro.url.pathname, siteOrigin).href;
+const ogImageUrl = new URL(ogImage, siteOrigin).href;
+const imagePath = new URL(ogImageUrl).pathname.toLowerCase();
+const ogImageType = imagePath.endsWith('.webp')
+  ? 'image/webp'
+  : imagePath.endsWith('.png')
+    ? 'image/png'
+    : 'image/jpeg';
+const structuredDataJson = structuredData
+  ? JSON.stringify(structuredData).replace(/</g, '\\u003c')
+  : undefined;
 ---
 
 <!doctype html>
@@ -23,18 +50,30 @@ const {
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
     {referrer && <meta name="referrer" content={referrer} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&amp;family=Noto+Serif+TC:wght@600;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap"
+    />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:site_name" content="Phox999 photography" />
+    <meta property="og:locale" content="zh_TW" />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content="https://phox999.com/assets/og-hero.jpg" />
-    <meta property="og:image:secure_url" content="https://phox999.com/assets/og-hero.jpg" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="phox999 photography 首頁主視覺" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:secure_url" content={ogImageUrl} />
+    <meta property="og:image:type" content={ogImageType} />
+    <meta property="og:image:alt" content={ogImageAlt} />
+    <meta property="og:type" content={ogType} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://phox999.com/assets/og-hero.jpg" />
-    <meta property="og:type" content="website" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    {structuredDataJson && <script type="application/ld+json" set:html={structuredDataJson} />}
     <title>{title}</title>
   </head>
   <body id="top">

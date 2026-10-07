@@ -2,24 +2,73 @@
 import Layout from '../layouts/BaseLayout.astro';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
+import { getRelatedPortfolioCollections, type PortfolioCollection } from '../data/portfolioCatalog';
+import { siteConfig } from '../data/site';
+import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
 
 interface Props {
-  title: string;
-  description: string;
-  images: string[];
+  collection: PortfolioCollection;
 }
 
-const { title, description, images } = Astro.props;
+const { collection } = Astro.props;
+const { title, description, images, cover, href, category, location, styles, seoTitle, seoDescription } = collection;
+const relatedCollections = getRelatedPortfolioCollections(collection.slug);
+const imageSources = [...new Set([cover, ...images, ...relatedCollections.map((item) => item.cover)])];
+const imageDimensions = new Map<string, ImageDimensions>();
+await Promise.all(imageSources.map(async (src) => {
+  const dimensions = await getPublicImageDimensions(src);
+  if (dimensions) imageDimensions.set(src, dimensions);
+}));
+const pageUrl = new URL(Astro.url.pathname, 'https://phox999.com').href;
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '首頁', item: 'https://phox999.com/' },
+      { '@type': 'ListItem', position: 2, name: '作品集', item: 'https://phox999.com/portfolio/' },
+      { '@type': 'ListItem', position: 3, name: title, item: pageUrl },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ImageObject',
+    '@id': `${pageUrl}#cover-image`,
+    contentUrl: new URL(cover, 'https://phox999.com').href,
+    url: new URL(cover, 'https://phox999.com').href,
+    name: `${title} 人像攝影作品封面`,
+    caption: description,
+    inLanguage: 'zh-Hant-TW',
+  },
+];
+const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外人像', ...styles.slice(0, 2)].filter(Boolean);
 ---
 
-<Layout title={`${title}｜phox999 photography`}>
+<Layout
+  title={seoTitle}
+  description={seoDescription}
+  canonical={pageUrl}
+  ogImage={cover}
+  ogImageAlt={`${title}人像攝影作品封面`}
+  ogType="article"
+  structuredData={structuredData}
+>
   <Header />
   <main class="portfolio-detail">
     <section class="portfolio-detail__hero container">
+      <nav class="portfolio-detail__breadcrumb" aria-label="麵包屑導覽">
+        <ol>
+          <li><a href="/">首頁</a></li>
+          <li><a href="/portfolio/">作品集</a></li>
+          <li aria-current="page">{title}</li>
+        </ol>
+      </nav>
       <a class="portfolio-detail__back" href="/portfolio/">← 回全部作品</a>
-
       <p class="eyebrow">PORTFOLIO</p>
       <h1>{title}</h1>
+      <ul class="portfolio-detail__meta" aria-label="作品資訊">
+        {visibleMeta.map((item) => <li>{item}</li>)}
+      </ul>
       <p class="portfolio-detail__description">{description}</p>
     </section>
 
@@ -40,8 +89,12 @@ const { title, description, images } = Astro.props;
             >
               <img
                 src={image}
-                alt={`${title}作品照片 ${index + 1}`}
+                alt={`${title}｜${styles[0] ?? category}人像攝影作品 ${String(index + 1).padStart(2, '0')}`}
+                width={imageDimensions.get(image)?.width}
+                height={imageDimensions.get(image)?.height}
                 loading={index < 3 ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchpriority={index === 0 ? 'high' : undefined}
               />
             </button>
           </figure>
@@ -49,42 +102,47 @@ const { title, description, images } = Astro.props;
       }
     </section>
 
-    <dialog class="portfolio-lightbox" data-lightbox-dialog>
-      <div class="portfolio-lightbox__inner">
-        <button
-          class="portfolio-lightbox__close"
-          type="button"
-          aria-label="關閉照片"
-          data-lightbox-close
-        >
-          ×
-        </button>
+    {relatedCollections.length > 0 && (
+      <section class="portfolio-related container" aria-labelledby="portfolio-related-title">
+        <div class="section-heading">
+          <p class="eyebrow">KEEP EXPLORING</p>
+          <h2 id="portfolio-related-title">你可能也會喜歡</h2>
+        </div>
+        <div class="portfolio-related__grid">
+          {relatedCollections.map((item) => (
+            <article class="portfolio-related__card">
+              <a href={item.href} aria-label={`瀏覽${item.title}系列作品`}>
+                <img src={item.cover} alt={`${item.title}人像攝影作品封面`} width={imageDimensions.get(item.cover)?.width} height={imageDimensions.get(item.cover)?.height} loading="lazy" decoding="async" />
+                <span>{item.category}</span>
+                <h3>{item.title}</h3>
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
 
-        <button
-          class="portfolio-lightbox__nav portfolio-lightbox__nav--prev"
-          type="button"
-          aria-label="上一張照片"
-          data-lightbox-prev
-        >
-          ‹
-        </button>
-
-        <img class="portfolio-lightbox__image" src="" alt="" data-lightbox-image />
-
-        <button
-          class="portfolio-lightbox__nav portfolio-lightbox__nav--next"
-          type="button"
-          aria-label="下一張照片"
-          data-lightbox-next
-        >
-          ›
-        </button>
-
-        <p class="portfolio-lightbox__count" data-lightbox-count></p>
+    <section class="portfolio-detail__cta container" aria-labelledby="portfolio-cta-title">
+      <div>
+        <p class="eyebrow">LET’S CREATE</p>
+        <h2 id="portfolio-cta-title">喜歡這種拍攝方向？</h2>
+        <p>有類似的主題或畫面想法，也可以一起討論。</p>
       </div>
-    </dialog>
+      <a class="button button--primary" href={siteConfig.inquiryUrl}>開始討論拍攝</a>
+    </section>
   </main>
+
   <Footer />
+
+  <dialog class="portfolio-lightbox" data-lightbox-dialog>
+    <div class="portfolio-lightbox__inner">
+      <button class="portfolio-lightbox__close" type="button" aria-label="關閉照片" data-lightbox-close>×</button>
+      <button class="portfolio-lightbox__nav portfolio-lightbox__nav--prev" type="button" aria-label="上一張照片" data-lightbox-prev>‹</button>
+      <img class="portfolio-lightbox__image" src="" alt="" data-lightbox-image />
+      <button class="portfolio-lightbox__nav portfolio-lightbox__nav--next" type="button" aria-label="下一張照片" data-lightbox-next>›</button>
+      <p class="portfolio-lightbox__count" data-lightbox-count></p>
+    </div>
+  </dialog>
 
   <script>
     const setupPortfolioLightbox = () => {
@@ -103,27 +161,17 @@ const { title, description, images } = Astro.props;
 
       const updateLightbox = (index) => {
         if (!images.length) return;
-
         currentIndex = (index + images.length) % images.length;
-
         const currentImage = images[currentIndex];
-
         lightboxImage.src = currentImage.currentSrc || currentImage.src;
         lightboxImage.alt = currentImage.alt || '';
-
-        if (count) {
-          count.textContent = `${currentIndex + 1} / ${images.length}`;
-        }
+        if (count) count.textContent = `${currentIndex + 1} / ${images.length}`;
       };
 
       const openLightbox = (index) => {
         updateLightbox(index);
-
-        if (typeof dialog.showModal === 'function') {
-          dialog.showModal();
-        } else {
-          dialog.setAttribute('open', '');
-        }
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+        else dialog.setAttribute('open', '');
       };
 
       const closeLightbox = () => {
@@ -134,45 +182,53 @@ const { title, description, images } = Astro.props;
 
       gallery.addEventListener('click', (event) => {
         const target = event.target;
-
         if (!(target instanceof HTMLElement)) return;
-
         const button = target.closest('[data-lightbox-open]');
         if (!button) return;
-
-        const index = Number.parseInt(button.dataset.lightboxIndex || '0', 10);
-        openLightbox(index);
+        openLightbox(Number.parseInt(button.dataset.lightboxIndex || '0', 10));
       });
 
       closeButton?.addEventListener('click', closeLightbox);
-
-      prevButton?.addEventListener('click', () => {
-        updateLightbox(currentIndex - 1);
-      });
-
-      nextButton?.addEventListener('click', () => {
-        updateLightbox(currentIndex + 1);
-      });
-
+      prevButton?.addEventListener('click', () => updateLightbox(currentIndex - 1));
+      nextButton?.addEventListener('click', () => updateLightbox(currentIndex + 1));
       dialog.addEventListener('click', (event) => {
-        if (event.target === dialog) {
-          closeLightbox();
-        }
+        if (event.target === dialog) closeLightbox();
       });
-
       window.addEventListener('keydown', (event) => {
         if (!dialog.open) return;
-
-        if (event.key === 'ArrowLeft') {
-          updateLightbox(currentIndex - 1);
-        }
-
-        if (event.key === 'ArrowRight') {
-          updateLightbox(currentIndex + 1);
-        }
+        if (event.key === 'ArrowLeft') updateLightbox(currentIndex - 1);
+        if (event.key === 'ArrowRight') updateLightbox(currentIndex + 1);
       });
     };
 
     setupPortfolioLightbox();
   </script>
 </Layout>
+
+<style>
+  .portfolio-detail__breadcrumb { margin-bottom: 18px; color: var(--color-muted); font-size: .88rem; }
+  .portfolio-detail__breadcrumb ol { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .portfolio-detail__breadcrumb li + li::before { content: '/'; margin-right: 8px; color: var(--color-muted); }
+  .portfolio-detail__breadcrumb a { color: inherit; text-decoration: none; }
+  .portfolio-detail__breadcrumb a:hover { color: var(--color-primary-dark); text-decoration: underline; }
+  .portfolio-detail__meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
+  .portfolio-detail__meta li { padding: 5px 11px; border-radius: var(--radius-pill); background: var(--color-surface-soft); color: var(--color-muted); font-size: .84rem; }
+  .portfolio-detail__description { max-width: 48rem; }
+  .portfolio-related { padding-block: 24px 64px; }
+  .portfolio-related .section-heading { margin-bottom: 22px; }
+  .portfolio-related__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .portfolio-related__card { position: relative; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-card); }
+  .portfolio-related__card a { display: block; color: inherit; text-decoration: none; }
+  .portfolio-related__card img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  .portfolio-related__card span { display: block; padding: 16px 18px 0; color: var(--color-muted); font-size: .82rem; }
+  .portfolio-related__card h3 { margin: 5px 18px 18px; font-family: var(--font-heading); font-size: 1.12rem; }
+  .portfolio-detail__cta { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 72px; padding: clamp(24px, 5vw, 48px); border-radius: var(--radius-xl); background: var(--color-surface-soft); }
+  .portfolio-detail__cta h2 { margin: 0 0 8px; font-family: var(--font-heading); }
+  .portfolio-detail__cta p:not(.eyebrow) { margin: 0; color: var(--color-muted); }
+  @media (max-width: 720px) {
+    .portfolio-related__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .portfolio-related__card span { padding: 12px 12px 0; }
+    .portfolio-related__card h3 { margin: 5px 12px 14px; font-size: 1rem; }
+    .portfolio-detail__cta { align-items: flex-start; flex-direction: column; margin-bottom: 48px; }
+  }
+</style>

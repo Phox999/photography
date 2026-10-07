@@ -1,0 +1,136 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getPortfolioCollection } from '../../data/portfolioCatalog';
+import { siteConfig } from '../../data/site';
+import { getPublicImageDimensions } from '../../lib/image-dimensions';
+import '../../styles/journal.css';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('journal', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const allPosts = (await getCollection('journal')).filter((entry) => !entry.data.draft);
+const relatedPosts = post.data.relatedArticles
+  .map((id) => allPosts.find((entry) => entry.id === id))
+  .filter((entry): entry is (typeof allPosts)[number] => Boolean(entry));
+const relatedWorks = post.data.relatedWorks
+  .map((slug) => getPortfolioCollection(slug))
+  .filter((collection): collection is NonNullable<typeof collection> => Boolean(collection));
+const cover = post.data.cover ?? relatedWorks[0]?.cover ?? '/assets/hero.webp';
+const coverDimensions = await getPublicImageDimensions(cover);
+const canonical = new URL(`/journal/${post.id}/`, 'https://phox999.com').href;
+const updatedDate = post.data.updatedDate ?? post.data.publishDate;
+const formatDate = (date: Date) => new Intl.DateTimeFormat('zh-TW', {
+  year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Taipei',
+}).format(date);
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `${canonical}#article`,
+    headline: post.data.title,
+    description: post.data.description,
+    image: new URL(cover, 'https://phox999.com').href,
+    datePublished: post.data.publishDate.toISOString(),
+    dateModified: updatedDate.toISOString(),
+    author: { '@type': 'Person', name: '小蔡', url: 'https://phox999.com/about/' },
+    publisher: { '@type': 'Organization', name: 'Phox999 photography', url: 'https://phox999.com/' },
+    mainEntityOfPage: canonical,
+    articleSection: post.data.category,
+    keywords: post.data.tags,
+    inLanguage: 'zh-Hant-TW',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '首頁', item: 'https://phox999.com/' },
+      { '@type': 'ListItem', position: 2, name: '拍攝筆記', item: 'https://phox999.com/journal/' },
+      { '@type': 'ListItem', position: 3, name: post.data.title, item: canonical },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title={`${post.data.title}｜Phox999 拍攝筆記`}
+  description={post.data.description}
+  canonical={canonical}
+  ogImage={cover}
+  ogImageAlt={`${post.data.title}文章封面`}
+  ogType="article"
+  structuredData={structuredData}
+>
+  <Header />
+  <main class="journal-article-page inner-page">
+    <nav class="journal-breadcrumb container" aria-label="麵包屑導覽">
+      <ol>
+        <li><a href="/">首頁</a></li>
+        <li><a href="/journal/">拍攝筆記</a></li>
+        <li aria-current="page">{post.data.title}</li>
+      </ol>
+    </nav>
+    <article class="journal-article container">
+      <header class="journal-article__header">
+        <p class="eyebrow">{post.data.category}</p>
+        <h1>{post.data.title}</h1>
+        <p class="journal-article__summary">{post.data.description}</p>
+        <div class="journal-article__byline">
+          <span>小蔡 · Phox999 photography</span>
+          <span><time datetime={post.data.publishDate.toISOString()}>發布於 {formatDate(post.data.publishDate)}</time></span>
+          {post.data.updatedDate && post.data.updatedDate.getTime() !== post.data.publishDate.getTime() && (
+            <span><time datetime={post.data.updatedDate.toISOString()}>更新於 {formatDate(post.data.updatedDate)}</time></span>
+          )}
+        </div>
+      </header>
+
+      <figure class="journal-article__cover">
+        <img src={cover} alt={`${post.data.title}文章封面`} width={coverDimensions?.width} height={coverDimensions?.height} fetchpriority="high" decoding="async" />
+      </figure>
+
+      <div class="journal-article__body">
+        <Content />
+      </div>
+
+      {relatedPosts.length > 0 && (
+        <section class="journal-related" aria-labelledby="journal-related-title">
+          <div class="section-heading">
+            <p class="eyebrow">READ NEXT</p>
+            <h2 id="journal-related-title">延伸閱讀</h2>
+          </div>
+          <ul>
+            {relatedPosts.map((entry) => <li><a href={`/journal/${entry.id}/`}>{entry.data.title}</a></li>)}
+          </ul>
+        </section>
+      )}
+
+      {relatedWorks.length > 0 && (
+        <section class="journal-related journal-related--works" aria-labelledby="journal-works-title">
+          <div class="section-heading">
+            <p class="eyebrow">RELATED PORTFOLIO</p>
+            <h2 id="journal-works-title">相關作品</h2>
+          </div>
+          <ul>
+            {relatedWorks.slice(0, 3).map((work) => <li><a href={work.href}>{work.title}</a></li>)}
+          </ul>
+        </section>
+      )}
+
+      <aside class="journal-article__cta">
+        <div>
+          <p class="eyebrow">LET’S TALK</p>
+          <h2>有想拍的主題嗎？</h2>
+          <p>先分享你的想法和參考方向，我們再一起討論適合的安排。</p>
+        </div>
+        <a class="button button--primary" href={siteConfig.inquiryUrl}>填寫合作意向</a>
+      </aside>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>

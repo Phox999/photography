@@ -1,5 +1,6 @@
 ---
 import { faqItems } from '../data/site';
+import { faqPageSchema } from '../lib/faq-state.js';
 ---
 
 <section class="section container" id="faq" aria-labelledby="faq-title">
@@ -18,16 +19,18 @@ import { faqItems } from '../data/site';
       ))
     }
   </div>
+  <script type="application/ld+json" data-faq-schema set:html={JSON.stringify(faqPageSchema(faqItems)).replace(/</g, '\\u003c')} />
 </section>
 
 <script>
   import { loadPublicSiteContent } from '../lib/site-content';
-  import { publicFaqView } from '../lib/faq-state.js';
+  import { faqPageSchema, publicFaqView } from '../lib/faq-state.js';
   const grid = document.querySelector<HTMLElement>('#faq .faq-grid');
   if (grid) {
     const section = grid.closest<HTMLElement>('#faq');
     const { faqs: contentFaqs } = await loadPublicSiteContent();
     const view = publicFaqView(contentFaqs);
+    const structuredData = section?.querySelector<HTMLScriptElement>('[data-faq-schema]');
     const items = view.items.map(({ question, answer }) => {
       const detail = document.createElement('details');
       detail.className = 'faq-item';
@@ -40,5 +43,12 @@ import { faqItems } from '../data/site';
     });
     grid.replaceChildren(...items);
     if (section) section.hidden = !view.visible;
+    if (structuredData) {
+      if (view.visible) {
+        structuredData.textContent = JSON.stringify(faqPageSchema(view.items));
+      } else {
+        structuredData.remove();
+      }
+    }
   }
 </script>

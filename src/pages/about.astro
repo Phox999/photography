@@ -3,11 +3,26 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { siteConfig } from '../data/site';
+
+const aboutStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': 'https://phox999.com/#photographer',
+  name: '小蔡',
+  jobTitle: '人像攝影師',
+  url: 'https://phox999.com/about/',
+  sameAs: [siteConfig.instagramUrl],
+  areaServed: [
+    { '@type': 'City', name: '台北市' },
+    { '@type': 'City', name: '新北市' },
+  ],
+};
 ---
 
 <BaseLayout
   title="關於我｜phox999 photography"
-  description="認識 phox999 攝影師小蔡：在台北拍攝人像，重視事前溝通、現場引導，以及自然、有故事感的畫面。"
+  description="小蔡是以台北為主要活動範圍的人像攝影師，主要拍攝互惠人像、戶外人像、棚拍及主題攝影。從事前討論到現場引導，一起找到舒服的拍攝節奏。"
+  structuredData={aboutStructuredData}
 >
   <Header />
 
@@ -20,7 +35,7 @@ import { siteConfig } from '../data/site';
       <div class="inner-heading about-profile__copy">
         <p class="eyebrow">ABOUT</p>
         <h1 id="about-title">嗨，我是小蔡。</h1>
-        <p class="about-profile__lead">在台北拍人像，也是一名有設計背景的攝影師。</p>
+        <p class="about-profile__lead">小蔡是以台北為主要活動範圍的人像攝影師，主要拍攝互惠人像、戶外人像、棚拍及主題攝影。</p>
         <p class="inner-intro">我喜歡自然、有故事的畫面。從事前討論到現場引導，一起找到舒服的拍攝節奏。第一次拍攝也沒關係，主題、服裝與場景都能一起討論。</p>
         <div class="about-profile__actions">
           <a class="button button--primary" href={siteConfig.inquiryUrl}>填寫合作意向</a>

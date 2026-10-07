@@ -12,9 +12,34 @@ import FAQ from '../components/FAQ.astro';
 import Contact from '../components/Contact.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/home-refresh.css';
+import { siteConfig } from '../data/site';
+
+const pageDescription = 'Phox999 是台北人像攝影師，提供雙北互惠攝影、外拍、棚拍與主題人像創作。第一次拍攝也沒關係，從主題、服裝到現場引導一起完成喜歡的作品。';
+const homepageStructuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    '@id': 'https://phox999.com/#photography-service',
+    name: 'Phox999 photography',
+    url: 'https://phox999.com/',
+    description: pageDescription,
+    image: 'https://phox999.com/assets/hero.webp',
+    serviceType: ['人像攝影', '互惠攝影', '戶外人像', '棚拍', '主題攝影'],
+    areaServed: [
+      { '@type': 'City', name: '台北市' },
+      { '@type': 'City', name: '新北市' },
+    ],
+    sameAs: [siteConfig.instagramUrl],
+  },
+];
 ---
 
-<BaseLayout>
+<BaseLayout
+  title="台北人像攝影・互惠外拍｜Phox999 photography"
+  description={pageDescription}
+  ogImage="/assets/hero.webp"
+  structuredData={homepageStructuredData}
+>
   <Header home />
   <main class="home-page">
     <Hero />

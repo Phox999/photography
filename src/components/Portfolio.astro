@@ -1,7 +1,13 @@
 ---
 import { portfolioCatalog, portfolioCategories } from '../data/portfolioCatalog';
+import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
 
 const portfolioItems = portfolioCatalog.slice(0, 12);
+const imageDimensions = new Map<string, ImageDimensions>();
+await Promise.all(portfolioItems.map(async (item) => {
+  const dimensions = await getPublicImageDimensions(item.cover);
+  if (dimensions) imageDimensions.set(item.cover, dimensions);
+}));
 const countFor = (category: string) =>
   portfolioItems.filter((item) => category === '全部' || item.category === category).length;
 ---
@@ -43,7 +49,7 @@ const countFor = (category: string) =>
       <article class="portfolio-card" data-portfolio-card data-tags={item.category}>
         <a class="portfolio-card__link" href={item.href} aria-label={`查看${item.title}作品`}>
           <div class="portfolio-card__media">
-            <img src={item.cover} alt={`${item.title}作品封面`} loading="lazy" decoding="async" />
+            <img src={item.cover} alt={`${item.title}作品封面`} width={imageDimensions.get(item.cover)?.width} height={imageDimensions.get(item.cover)?.height} loading="lazy" decoding="async" />
           </div>
           <div class="portfolio-card__caption">
             <h3>{item.title}</h3>

@@ -1,5 +1,6 @@
 ---
 import { siteConfig } from '../data/site';
+import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
 
 interface Props {
   id?: string;
@@ -39,6 +40,12 @@ const plans = [
     ],
   },
 ];
+
+const iconDimensions = new Map<string, ImageDimensions>();
+await Promise.all(plans.map(async (plan) => {
+  const dimensions = await getPublicImageDimensions(plan.icon);
+  if (dimensions) iconDimensions.set(plan.icon, dimensions);
+}));
 ---
 
 <section
@@ -55,7 +62,7 @@ const plans = [
   <div class="plan-grid">
     {plans.map((plan) => (
       <article class="plan-card">
-        <img class="plan-card__icon" src={plan.icon} alt="" aria-hidden="true" />
+        <img class="plan-card__icon" src={plan.icon} alt="" aria-hidden="true" width={iconDimensions.get(plan.icon)?.width} height={iconDimensions.get(plan.icon)?.height} />
         <h3>{plan.title}</h3>
         <p class="plan-card__subtitle">{plan.subtitle}</p>
 

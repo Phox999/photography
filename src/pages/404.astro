@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout
+  title="找不到這個頁面｜Phox999 photography"
+  description="這個頁面可能已移動或不存在。回到首頁，或繼續瀏覽人像攝影作品。"
+  noindex={true}
+>
+  <Header />
+  <main class="not-found-page inner-page">
+    <section class="not-found-page__content container" aria-labelledby="not-found-title">
+      <p class="eyebrow">404 · PAGE NOT FOUND</p>
+      <h1 id="not-found-title">找不到這個頁面</h1>
+      <p>這個連結可能已經更新，從作品集或首頁繼續逛逛吧。</p>
+      <div class="not-found-page__actions">
+        <a class="button button--primary" href="/">回首頁</a>
+        <a class="button button--secondary" href="/portfolio/">查看作品</a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .not-found-page { min-height: 70vh; display: grid; align-items: center; padding-block: 112px 64px; }
+  .not-found-page__content { max-width: 760px; text-align: center; }
+  .not-found-page h1 { margin: 12px 0; font-family: var(--font-heading); font-size: clamp(2.25rem, 6vw, 4rem); }
+  .not-found-page__content > p:not(.eyebrow) { color: var(--color-muted); }
+  .not-found-page__actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+</style>

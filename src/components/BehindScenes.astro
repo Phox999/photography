@@ -1,7 +1,13 @@
 ---
 import { portfolioCatalog } from '../data/portfolioCatalog';
+import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
 
 const stories = portfolioCatalog.slice(0, 6);
+const imageDimensions = new Map<string, ImageDimensions>();
+await Promise.all(stories.map(async (story) => {
+  const dimensions = await getPublicImageDimensions(story.cover);
+  if (dimensions) imageDimensions.set(story.cover, dimensions);
+}));
 ---
 
 <section class="behind-page-section container" aria-labelledby="behind-title">
@@ -29,7 +35,7 @@ const stories = portfolioCatalog.slice(0, 6);
       <article class="behind-story-card">
         <a href={story.href} aria-label={`瀏覽${story.title}拍攝記錄`}>
           <div class="behind-story-card__image">
-            <img src={story.cover} alt={`${story.title}拍攝作品`} loading={index < 3 ? 'eager' : 'lazy'} decoding="async" />
+            <img src={story.cover} alt={`${story.title}拍攝作品`} width={imageDimensions.get(story.cover)?.width} height={imageDimensions.get(story.cover)?.height} loading={index < 3 ? 'eager' : 'lazy'} decoding="async" />
             <span>{story.category}</span>
           </div>
           <div class="behind-story-card__copy">

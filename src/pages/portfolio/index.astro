@@ -3,6 +3,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { portfolioCatalog, portfolioCategories } from '../../data/portfolioCatalog';
+import { siteConfig } from '../../data/site';
+import { getPublicImageDimensions, type ImageDimensions } from '../../lib/image-dimensions';
+
+const coverDimensions = new Map<string, ImageDimensions>();
+await Promise.all(portfolioCatalog.map(async (collection) => {
+  const dimensions = await getPublicImageDimensions(collection.cover);
+  if (dimensions) coverDimensions.set(collection.cover, dimensions);
+}));
 
 const countFor = (category: string) =>
   portfolioCatalog.filter((item) => category === '全部' || item.category === category).length;
@@ -13,8 +21,8 @@ const getShootDate = (slug: string) => {
 ---
 
 <BaseLayout
-  title="全部作品｜phox999 photography"
-  description="瀏覽 phox999 photography 的人像攝影作品，包含外拍、棚拍、日系、Cosplay 與城市寫真系列。"
+  title="台北人像攝影作品集｜外拍與棚拍｜Phox999"
+  description="瀏覽 Phox999 的人像攝影作品，包含台北與其他城市的外拍、棚拍、角色造型和主題創作。每組作品都有獨立介紹，方便找到喜歡的場景與拍攝方向。"
 >
   <Header />
 
@@ -88,6 +96,8 @@ const getShootDate = (slug: string) => {
                     <img
                       src={collection.cover}
                       alt={`${collection.title}作品封面`}
+                      width={coverDimensions.get(collection.cover)?.width}
+                      height={coverDimensions.get(collection.cover)?.height}
                       loading={index < 3 ? 'eager' : 'lazy'}
                       decoding="async"
                     />
@@ -141,7 +151,7 @@ const getShootDate = (slug: string) => {
       </div>
       <div class="inner-actions">
         <a class="button button--primary" href="/cooperation/">了解合作方式</a>
-        <a class="button button--secondary" href="/#contact">填寫合作意向</a>
+        <a class="button button--secondary" href={siteConfig.inquiryUrl}>填寫合作意向</a>
       </div>
     </section>
   </main>
