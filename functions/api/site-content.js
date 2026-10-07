@@ -9,7 +9,7 @@ export const onRequest = endpoint(async (context) => {
     // The database function only exposes published fields. An anonymous request
     // cannot select the content table or recover a disabled announcement.
     const result = await supabaseRequest(config, '/rest/v1/rpc/get_public_site_content', {
-      method: 'POST', body: {},
+      method: 'POST', body: {}, timeoutMs: context.publicReadTimeoutMs,
     });
     const content = result.data;
     const heroPaths = content?.hero_image_paths;

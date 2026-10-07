@@ -4,11 +4,22 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import BehindScenes from '../components/BehindScenes.astro';
 import { siteConfig } from '../data/site';
+import { SITE_ORIGIN } from '../../server/seo.js';
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  '@id': `${SITE_ORIGIN}/behind-scenes/#webpage`,
+  url: `${SITE_ORIGIN}/behind-scenes/`,
+  name: '人像拍攝花絮與合作過程｜phox999 photography',
+  description: '看看不同主題的拍攝記錄，從事前討論、自在拍攝到完成作品。',
+  inLanguage: 'zh-Hant-TW',
+};
 ---
 
 <BaseLayout
   title="拍攝花絮｜phox999 photography"
   description="看看不同主題的拍攝記錄，從事前討論、自在拍攝到完成作品。"
+  structuredData={structuredData}
 >
   <Header />
   <main class="behind-scenes-page inner-page" id="main-content" tabindex="-1">

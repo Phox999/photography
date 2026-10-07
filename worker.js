@@ -20,6 +20,7 @@ import { onRequest as adminGalleries } from './functions/api/admin/galleries.js'
 import { onRequest as adminGalleryUpload } from './functions/api/admin/gallery-upload.js';
 import { onRequest as adminFeedback } from './functions/api/admin/feedback.js';
 import { onRequest as portfolio } from './functions/api/portfolio.js';
+import { handlePublicPage } from './server/public-page-routing.js';
 import { onRequest as clientSelection } from './functions/api/client/selection.js';
 import { onRequest as clientGallery } from './functions/api/client/gallery.js';
 import { onRequest as clientDraft } from './functions/api/client/draft.js';
@@ -78,6 +79,9 @@ function decodeParams(match, names = []) {
 export default {
   async fetch(request, env, executionContext) {
     const { pathname } = new URL(request.url);
+
+    const publicPage = await handlePublicPage({ request, env, waitUntil: executionContext.waitUntil.bind(executionContext) });
+    if (publicPage) return publicPage;
 
     if (pathname.startsWith('/api/')) {
       for (const [pattern, handler, paramNames = []] of apiRoutes) {

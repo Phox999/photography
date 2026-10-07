@@ -24,9 +24,11 @@
 
 登入與一般管理 API 使用 publishable key 和登入者 session；secret key 僅留在伺服器端供受限資料操作使用。不要在前端程式、`PUBLIC_` 變數或 Git 中加入任何金鑰。
 
+根目錄 `functions/` 也處理公開 SEO HTML：首頁、作品總覽、作品詳情和 `/sitemap.xml` 會從既有公開 RPC 取得已發布資料，再與靜態 Astro 範本合併。作品與首頁公開內容即時輸出，不需新增 migration；動態 HTML 使用 `Cache-Control: no-store`。一般靜態頁面仍由 Astro 預先建置。
+
 ## Cloudflare Worker
 
-專案根目錄的 `wrangler.jsonc` 另設定 `worker.js` 為 Worker 入口，並將 `worker-dist/` 作為靜態資產目錄；`/api/*` 由 Worker 先處理。建置與本機預覽指令為：
+專案根目錄的 `wrangler.jsonc` 另設定 `worker.js` 為 Worker 入口，並將 `worker-dist/` 作為靜態資產目錄；`/api/*`、首頁、作品頁和 `/sitemap.xml` 由 Worker 先處理。Worker 與 Pages 共用同一份公開 HTML helper。建置與本機預覽指令為：
 
 ```bash
 npm run build:worker
@@ -79,12 +81,17 @@ on conflict (user_id) do update set active = true;
 
 ```bash
 npm run build
+npm run check:seo
 npx wrangler pages dev dist --port 4321
 ```
 
 本機 `AUTH_ALLOW_LOCALHOST=true` 只用於 localhost 測試；正式 Cloudflare 環境不要設定。請先停止佔用 4321 的 Astro 開發伺服器，再啟動 Wrangler Pages 預覽。
 
 Worker 預覽使用 `npm run build:worker` 與 `npx wrangler dev`。兩種預覽都須使用合成資料；不要把真實客戶資料複製到測試系統。
+
+SEO 輸出檢查會驗證 canonical、公開頁 JSON-LD、sitemap、私人頁 noindex 和建置產物的本機圖片。動態作品的新增、修改、移除與錯誤狀態另由 `npm test` 的合成資料案例驗證。正式站 Cloudflare 部署模式、代管 robots 規則、搜尋站長工具帳號與部署狀態，仍須依目標帳號檢查；本機建置不代表已發布或已被索引。
+
+目前不新增自訂 `robots.txt`：正式站的 Cloudflare 回應可能包含代管 Content Signals，必須先從正式站和 Cloudflare 專案確認完整規則，避免提交檔案時覆蓋原有控制。這次本機無法讀取正式站該路徑，收到的是 HTTP 403。
 
 ## 功能驗收
 

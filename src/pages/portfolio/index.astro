@@ -3,18 +3,40 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { portfolioCatalog, portfolioCategories } from '../../data/portfolioCatalog';
+import { SITE_ORIGIN, portfolioPath } from '../../../server/seo.js';
 
 const countFor = (category: string) =>
   portfolioCatalog.filter((item) => category === '全部' || item.category === category).length;
-const getShootDate = (slug: string) => {
-  const date = slug.match(/^(\d{2})(\d{2})(\d{2})/);
-  return date ? `20${date[1]}-${date[2]}-${date[3]}` : '';
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'CollectionPage',
+      '@id': `${SITE_ORIGIN}/portfolio/#webpage`,
+      url: `${SITE_ORIGIN}/portfolio/`,
+      name: '人像攝影作品集・外拍與棚拍｜phox999 photography',
+      description: '瀏覽 phox999 photography 的外拍與棚拍人像系列，依作品風格探索每組公開照片。',
+      inLanguage: 'zh-Hant-TW',
+      mainEntity: { '@id': `${SITE_ORIGIN}/portfolio/#item-list` },
+    },
+    {
+      '@type': 'ItemList',
+      '@id': `${SITE_ORIGIN}/portfolio/#item-list`,
+      numberOfItems: portfolioCatalog.length,
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      itemListElement: portfolioCatalog.map((item, index) => ({
+        '@type': 'ListItem', position: index + 1, name: item.title,
+        url: `${SITE_ORIGIN}${portfolioPath(item.slug)}`,
+      })),
+    },
+  ],
 };
 ---
 
 <BaseLayout
   title="全部作品｜phox999 photography"
   description="瀏覽 phox999 photography 的人像攝影作品，包含外拍、棚拍、日系、Cosplay 與城市寫真系列。"
+  structuredData={structuredData}
 >
   <Header />
 
@@ -42,7 +64,7 @@ const getShootDate = (slug: string) => {
                     data-archive-filter
                     data-filter={category}
                   >
-                    {category}<span class="portfolio-filter__count" aria-hidden="true">{countFor(category)}</span>
+                    {category}<span class="portfolio-filter__count" data-filter={category} aria-hidden="true">{countFor(category)}</span>
                   </button>
                 ))}
               </div>
@@ -58,8 +80,6 @@ const getShootDate = (slug: string) => {
                   <span>排列方式</span>
                   <select id="archive-sort" data-archive-sort>
                     <option value="default">原始編排</option>
-                    <option value="date-desc">拍攝時間（新到舊）</option>
-                    <option value="date-asc">拍攝時間（舊到新）</option>
                     <option value="title">名稱順序</option>
                   </select>
                 </label>
@@ -80,7 +100,6 @@ const getShootDate = (slug: string) => {
                 data-category={collection.category}
                 data-title={collection.title}
                 data-description={collection.description}
-                data-date={getShootDate(collection.slug)}
                 data-original-index={index}
               >
                 <a href={collection.href} aria-label={`瀏覽${collection.title}系列作品`}>
@@ -463,11 +482,6 @@ const getShootDate = (slug: string) => {
 <script>
   import { loadPublishedPortfolio } from '../../lib/portfolio-content';
 
-  const getShootDate = (slug: string) => {
-    const date = slug.match(/^(\d{2})(\d{2})(\d{2})/);
-    return date ? `20${date[1]}-${date[2]}-${date[3]}` : '';
-  };
-
   const archive = document.querySelector<HTMLElement>('[data-portfolio-archive]');
 
   if (archive) {
@@ -612,15 +626,6 @@ const getShootDate = (slug: string) => {
           if (order === 'title') {
             return (left.dataset.title || '').localeCompare(right.dataset.title || '', 'zh-Hant', { numeric: true });
           }
-          if (order === 'date-desc' || order === 'date-asc') {
-            const leftDate = left.dataset.date || '';
-            const rightDate = right.dataset.date || '';
-            if (!leftDate && rightDate) return 1;
-            if (leftDate && !rightDate) return -1;
-            return order === 'date-desc'
-              ? rightDate.localeCompare(leftDate)
-              : leftDate.localeCompare(rightDate);
-          }
           return Number(left.dataset.originalIndex) - Number(right.dataset.originalIndex);
         });
         sorted.forEach((card) => grid.append(card));
@@ -677,7 +682,6 @@ const getShootDate = (slug: string) => {
         article.dataset.category = collection.category;
         article.dataset.title = collection.title;
         article.dataset.description = collection.description;
-        article.dataset.date = getShootDate(collection.slug);
         article.dataset.originalIndex = String(index);
         const link = document.createElement('a');
         link.href = collection.href;

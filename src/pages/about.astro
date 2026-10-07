@@ -3,11 +3,36 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { siteConfig } from '../data/site';
+import { SITE_ORIGIN } from '../../server/seo.js';
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    '@id': `${SITE_ORIGIN}/about/#webpage`,
+    url: `${SITE_ORIGIN}/about/`,
+    name: '攝影師小蔡｜台北人像攝影・phox999',
+    description: '認識在台北拍攝人像的攝影師小蔡，了解事前溝通、現場引導與創作方式。',
+    inLanguage: 'zh-Hant-TW',
+    mainEntity: { '@id': `${SITE_ORIGIN}/about/#person` },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    '@id': `${SITE_ORIGIN}/about/#person`,
+    name: '小蔡',
+    jobTitle: '人像攝影師',
+    description: '在台北拍攝人像，重視事前討論、現場引導，以及自然、有故事感的畫面。',
+    image: `${SITE_ORIGIN}/assets/Profile-pic.jpg`,
+    sameAs: [siteConfig.instagramUrl],
+    knowsAbout: ['人像攝影', '外拍', '棚拍'],
+  },
+];
 ---
 
 <BaseLayout
   title="關於我｜phox999 photography"
   description="認識 phox999 攝影師小蔡：在台北拍攝人像，重視事前溝通、現場引導，以及自然、有故事感的畫面。"
+  structuredData={structuredData}
 >
   <Header />
 
