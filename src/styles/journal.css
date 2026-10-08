@@ -42,14 +42,17 @@
   box-shadow: var(--shadow-card);
 }
 
-.journal-card__cover,
-.journal-card__cover img {
+.journal-card__cover {
   display: block;
   width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
 }
 
 .journal-card__cover img {
-  aspect-ratio: 4 / 3;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
