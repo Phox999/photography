@@ -50,14 +50,17 @@ npx wrangler dev --local
 | `npm run dev` | 隔離預覽已 ready；首頁與 `/assets/hero-960.webp` 都回傳 HTTP 200。Vite 同時印出 `aria-query`／`axobject-query` 模組解析錯誤；此項目未影響 production build，但本機 dev 診斷仍有環境限制 |
 | 變更過的 TypeScript 資料模組 | 以已安裝的 `tsc --noEmit` 檢查通過 |
 
-前一輪檢查發現 1,206 個圖片標記沒有 `width`／`height`；本階段已在 1,217 個靜態圖片參照中補齊，SEO 檢查器現在會把尺寸缺漏列為失敗。作品總覽的互動圖庫在瀏覽器端才建立圖片節點，不計入靜態 HTML 數量；其格線使用固定列高。無頭瀏覽器的 Google Fonts 外部請求被此執行環境拒絕，因此這次只能確認 stylesheet link 已輸出，不能確認 Google 字型實際下載；未執行 Lighthouse，也沒有正式流量的 CrUX 資料，所以沒有可報告的 CWV 效能分數。未在 Worker runtime 驗證正式 404 或 API 行為。檔期選取值會留在本頁供使用者參照；因為目前沒有 Google Form 預填欄位 ID，CTA 不能自動帶入日期，頁面已提示使用者在表單中註明。
+前一輪檢查發現 1,206 個圖片標記沒有 `width`／`height`；本階段已在 1,217 個靜態圖片參照中補齊，SEO 檢查器現在會把尺寸缺漏列為失敗。作品總覽的互動圖庫在瀏覽器端才建立圖片節點，不計入靜態 HTML 數量；其格線使用固定列高。無頭瀏覽器的 Google Fonts 外部請求被此執行環境拒絕，因此這次只能確認 stylesheet link 已輸出，不能確認 Google 字型實際下載；未執行 Lighthouse，也沒有正式流量的 CrUX 資料，所以沒有可報告的 CWV 效能分數。檔期選取值會留在本頁供使用者參照；因為目前沒有 Google Form 預填欄位 ID，CTA 不能自動帶入日期，頁面已提示使用者在表單中註明。本機 Worker 已抽查靜態路由與 404，API 行為未在 Worker runtime 驗證。
 
 Astro 的 `dev` 和 `build` 不執行 TypeScript 型別檢查。目前專案未直接安裝 `@astrojs/check`；因此 build 成功不代表型別檢查通過。性能分數也必須附上實際 Lighthouse 報告，不能由靜態 HTML 檢查推定。
 
 ## 發布後檢查
 
-- Worker 發布後確認 `/robots.txt`、`/sitemap-index.xml` 和 `/llms.txt` 可讀取。
-- 抽查首頁、Journal 與作品頁的 canonical、OG 圖片和圖片回應。
-- 確認 `/admin/`、`/client/`、`/cooperation-status/` 不在 sitemap，並保留 `noindex`。
-- 用不存在的路徑確認回應狀態為 404，且顯示自訂 404 頁。
-- 以 Search Console 觀察檢索和索引；收錄、排名與 rich result 不由本機程式檢查保證。
+### 2026-10-09 發布後抽查
+
+- 正式站 GET `/robots.txt`、`/sitemap-index.xml`、`/llms.txt` 都回傳 HTTP 200；不存在的路徑回傳 HTTP 404 並顯示自訂 404 頁。
+- 正式首頁及 Journal 文章有自我 canonical；首頁只有一個 H1。互惠攝影指南顯示 2026-10-09 更新日期與已核對的目前合作安排。
+- 正式 Journal 列表的六張封面都載入成功；在 836px 寬視窗中圖片各自顯示為 368×276，沒有文件水平溢位。
+- Wrangler 本機預覽抽查首頁、robots、sitemap、llms、Journal 文章、Hero WebP 和不存在路徑；前六項回傳 200，不存在路徑回傳 404。預覽使用隔離建置輸出和抽查頁面所需圖片，沒有測試完整 `worker-dist` 套件或 API。
+- 為確認完整套件，曾在乾淨 worktree 安裝鎖定依賴後執行 `npm run build:worker`；Astro 在產生 Portfolio 靜態路由時以 Windows 原生程序錯誤中止，沒有留下可判讀的 Astro 錯誤訊息。前述完整隔離 Astro build 與 SEO 驗證已成功，但這次沒有宣稱 fresh Worker bundle build 成功。
+- Search Console、商家檔案和社群外部引用仍依 `docs/SEO-SETUP.md` 由網站擁有者完成；索引狀態、排名、rich result 和正式流量 CWV 需在 Google 工具觀察。
