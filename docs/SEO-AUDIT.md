@@ -1,6 +1,6 @@
 # Phox999 SEO 實作檢查紀錄
 
-日期：2026-10-08
+實作日期：2026-10-08；內容覆核：2026-10-09
 
 ## 專案與檢查範圍
 
@@ -27,6 +27,7 @@ npx wrangler dev --local
 - Worker 靜態資產設定使用自訂 `404.html` 處理不存在的資產路徑。
 - Portfolio 描述移除面向編輯者的「地點未記錄／不推測」說明，改以作品主題、服裝、光線和已記錄場景撰寫。
 - 六篇 Journal 導言加入與本站公開合作流程一致的第一人稱說明，並保留實際作品連結；沒有加入未核實的拍攝故事。
+- 互惠攝影指南補上目前公開的一般互惠規格：拍攝時長、服裝套數、交件數量與時間，並連回合作方式頁；文章更新日期同步標記為 2026-10-09。
 - Google Fonts 樣式表從 `global.css` 的 `@import` 移至 HTML `<head>` 的 stylesheet link，讓瀏覽器讀取頁面時就能發現字體請求。
 - Hero 加入 `srcset`／`sizes`，為 960、1440、2560px 螢幕提供對應 WebP；資料庫輪播指向原始 `/assets/hero.webp` 時也會改用響應式副本。原始照片和 OG 圖片路徑保留不動。
 
@@ -39,7 +40,8 @@ npx wrangler dev --local
 | 檢查 | 結果 |
 | --- | --- |
 | Astro production build | 成功，輸出 52 個 HTML 頁面，含 29 個 Portfolio 與 6 篇 Journal |
-| `npm run verify:seo` | 通過，52 頁、41 個 sitemap URL、1,316 個站內連結、1,217 張圖片參照、38 個 JSON-LD 區塊；靜態圖片尺寸缺漏 0 項 |
+| `npm run verify:seo` | 通過，52 頁、41 個 sitemap URL、1,317 個站內連結、1,217 張圖片參照、38 個 JSON-LD 區塊；靜態圖片尺寸缺漏 0 項 |
+| Journal 內容覆核 | 六篇文章有明確問題導向、分段建議、相關文章／作品連結與合作入口；Roadmap 首批三篇各超過 1,000 個中文字元 |
 | 合作 CTA | 所有「填寫合作意向／開始討論拍攝」連結都指向指定的 Google 表單 |
 | FAQ | 本機瀏覽器點開第一題後，答案正常顯示 |
 | 首頁與 Hero | 本機瀏覽器預覽首屏填滿視窗；Hero 圖有 `fetchpriority="high"`，CTA 使用合作意向表單網址 |
