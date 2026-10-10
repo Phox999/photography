@@ -75,6 +75,9 @@ dev server 可啟動並提供頁面；本機 Astro dev 對 Worker-only `/api/sit
 - 首頁 HTML 沒有 GA4 `G-...` Measurement ID，也沒有實際 Google Analytics `<script src>`；未讀取 GA4 DebugView／Network 收件資料，事件接收未驗。
 - Search Console／Bing 帳戶驗證、sitemap 提交、URL inspection／索引證據均未取得；公開 sitemap 200 不是提交或索引證明。
 - Push 後唯讀 Wrangler 仍報 serving version `18297947-c7fa-44ba-a67a-77c267c68aa4`、100% traffic，建立於 2026-10-10 09:19:34 UTC；結果沒有對應 Git SHA，不能歸因本次補修。API 現行三筆分類仍是預期的棚拍／外拍／外拍，但正式學院風頁與 `what-is-tfp` HTML 仍回舊描述，故本次修正已 push 到 `origin/main`、尚無正式站已更新的證據。沒有手動 deploy。
+- 再刷新時 `origin/main` 已是 `100850b3e7d98dddfeccf928f0d931b06ba4e8a2`，Worker `c612015b-7983-4818-bea9-925461aea8ac` 服務 100%（建立於 2026-10-10 10:21:58 UTC）。正式學院風與 Journal 封面已顯示修正描述，三個作品詳情頁已顯示棚拍／外拍／外拍對應標題與標籤；這確認本次程式修正已上線。Wrangler 沒有提供 Git SHA 對照。
+- 仍待處理的 P0 是 apex HTTP→HTTPS 與 www DNS／轉址、GA4 正式 Measurement ID 和事件收件，以及 Search Console／Bing 的帳戶驗證、sitemap 提交和索引證據。只讀 Wrangler 權限目前僅顯示 `zone:read`，不足以寫入 DNS／Redirect Rule。
+- P1 原創案例須有攝影師確認的現場紀錄；Behind Scenes 目前明示後續才補現場側拍，不能把照片觀察擴寫成未證實的拍攝經歷。網站 About 已連結「小蔡」、Phox999 photography 與 Instagram，外部平台文案一致性及合作方／場地連結仍需核對實際帳戶與取得對方同意。
 
 待辦是：Cloudflare proxied `www` DNS 與 HTTP→HTTPS／www→apex redirects；既有 GA4 ID 的環境接線與 DebugView 單筆事件驗收；Search Console／Bing 的既有帳戶驗證、提交 sitemap 和索引抽查；取得 Chrome DevTools MCP 後完成效能 trace；由有權限的人檢視 API 中敦煌／小桃兩段分類詞句。未建立帳號、升級付費方案、修改正式資料庫或送出合作表單。
 

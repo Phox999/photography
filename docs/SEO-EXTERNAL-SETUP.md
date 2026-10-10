@@ -8,6 +8,10 @@
 
 Push `6d4429967443c17ba7979cccd808a12f00a8913b` 後的刷新（2026-10-10 10:17–10:18 UTC / 18:17–18:18 Asia/Taipei）仍見 apex HTTP 200、無 `Location`；HTTPS apex 200；www HTTP／HTTPS 仍因 DNS 不存在而失敗。首頁仍無 GA4 Measurement ID 或 Google Analytics script。公開 API 仍回 200，29 組資料的現行分類為敦煌 `棚拍`、天使與惡魔 `外拍`、小桃 `外拍`。唯讀 Wrangler 狀態仍是 `18297947-c7fa-44ba-a67a-77c267c68aa4` 100% serving，建立時間未變；公開學院風詳情及 `what-is-tfp` HTML 仍含舊「雙手抬到額前」描述。故本次程式修正已 push 到 `origin/main`，但這次刷新沒有證據顯示新修正已進入正式 Worker／靜態頁面；沒有執行手動 deploy。正式站已有部分第二輪內容這一點仍成立。
 
+再刷新（2026-10-10，本輪查核；Worker 版本建立於 10:21:58 UTC）確認 GitHub `origin/main` 為 `100850b3e7d98dddfeccf928f0d931b06ba4e8a2`，Worker `c612015b-7983-4818-bea9-925461aea8ac` 服務 100%。公開 `學院風棚拍` 詳情與 `what-is-tfp` 已輸出「雙手自然垂在身側」；敦煌、天使與惡魔、小桃詳情頁都回 200，標題與可見分類分別是棚拍／外拍／外拍。Wrangler 狀態未提供 Git SHA 對照，因此以公開內容核對同步，不推測版本來源。此回查確認本次程式修正已出現在正式站。
+
+這次更新後仍有未完成項目：apex HTTP 依舊 200 且沒有 `Location`；`www` 仍無 DNS；首頁沒有 GA4 Measurement ID／Analytics script。只讀 `wrangler whoami` 顯示 `zone:read`，未提供 DNS／Redirect Rule 寫入權限；未透過不足權限嘗試修改正式設定。Search Console／Bing 的驗證、提交與索引仍無帳戶證據。作品頁原創拍攝經驗與第三方佐證也未新增：既有 `src/components/BehindScenes.astro` 說明目前先用作品記錄拍攝方向，現場側拍素材後續整理；本輪不以照片推測或代寫未確認的現場經歷。網站側 About／Person 結構資料已有「小蔡」、人像攝影師職稱及 Instagram `sameAs`，跨平台文案一致性仍需以實際帳戶內容核對。
+
 ## 1. Cloudflare 網域統一
 
 先在 Cloudflare Zone 核對 apex 記錄及現有規則，再修復或新增 proxied `www` DNS 記錄；本次檢查 `www` 無法解析。Single Redirect 需要請求主機經 Cloudflare proxy。[Cloudflare 操作文件](https://developers.cloudflare.com/rules/url-forwarding/single-redirects/create-dashboard/)說明建立方式；目前[官方方案配額表](https://developers.cloudflare.com/rules/url-forwarding/)列出 Free 可用 Single Redirects（每個 Zone 最多 10 條）。先確認既有規則數量，兩條規則可用現有方案完成，**不要升級方案**。
