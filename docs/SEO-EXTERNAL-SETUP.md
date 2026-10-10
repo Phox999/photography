@@ -10,7 +10,7 @@ Push `6d4429967443c17ba7979cccd808a12f00a8913b` 後的刷新（2026-10-10 10:17�
 
 再刷新（2026-10-10，本輪查核；Worker 版本建立於 10:21:58 UTC）確認 GitHub `origin/main` 為 `100850b3e7d98dddfeccf928f0d931b06ba4e8a2`，Worker `c612015b-7983-4818-bea9-925461aea8ac` 服務 100%。公開 `學院風棚拍` 詳情與 `what-is-tfp` 已輸出「雙手自然垂在身側」；敦煌、天使與惡魔、小桃詳情頁都回 200，標題與可見分類分別是棚拍／外拍／外拍。Wrangler 狀態未提供 Git SHA 對照，因此以公開內容核對同步，不推測版本來源。此回查確認本次程式修正已出現在正式站。
 
-這次更新後仍有未完成項目：apex HTTP 依舊 200 且沒有 `Location`；`www` 仍無 DNS；首頁沒有 GA4 Measurement ID／Analytics script。只讀 `wrangler whoami` 顯示 `zone:read`，未提供 DNS／Redirect Rule 寫入權限；未透過不足權限嘗試修改正式設定。Search Console／Bing 的驗證、提交與索引仍無帳戶證據。作品頁原創拍攝經驗與第三方佐證也未新增：既有 `src/components/BehindScenes.astro` 說明目前先用作品記錄拍攝方向，現場側拍素材後續整理；本輪不以照片推測或代寫未確認的現場經歷。網站側 About／Person 結構資料已有「小蔡」、人像攝影師職稱及 Instagram `sameAs`，跨平台文案一致性仍需以實際帳戶內容核對。
+這次更新後仍有未完成項目：apex HTTP 依舊 200 且沒有 `Location`；`www` 仍無 DNS；首頁沒有 GA4 Measurement ID／Analytics script。只讀 `wrangler whoami` 顯示 `zone:read`，未提供 DNS／Redirect Rule 寫入權限；未透過不足權限嘗試修改正式設定。Search Console／Bing 的驗證、提交與索引仍無帳戶證據。作品頁已補入攝影師提供的三組第一手案例；`src/components/BehindScenes.astro` 的現場側拍素材仍待整理。合作方／場地外部連結未新增，待取得對方同意。網站側 About／Person 結構資料已有「小蔡」、人像攝影師職稱及 Instagram `sameAs`；Instagram 公開頁本次回傳 cache miss，無法核對當前自介，跨平台文案一致性未驗。
 
 ## 1. Cloudflare 網域統一
 
