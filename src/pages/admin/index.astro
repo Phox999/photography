@@ -1,5 +1,8 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getPublicShootProjects } from '../../../shared/shoot-projects.js';
+
+const shootProjects = getPublicShootProjects();
 ---
 <AdminLayout title="合作管理" current="inquiries">
   <header class="admin-page-heading"><div><span class="admin-eyebrow">合作管理</span><h1>合作意向</h1></div><button type="button" class="admin-button admin-button--quiet" id="inquiry-refresh">重新整理</button></header>
@@ -14,6 +17,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   <div class="admin-filters" role="search" aria-label="搜尋合作意向">
     <div class="admin-field"><label for="inquiry-query">搜尋申請</label><input type="search" id="inquiry-query" placeholder="姓名或聯絡帳號" maxlength="120" autocomplete="off" /></div>
     <div class="admin-field"><label for="inquiry-filter">處理狀態</label><select id="inquiry-filter"><option value="all">全部狀態</option><option value="new">待處理</option><option value="reviewing">評估中</option><option value="contacted">已聯繫</option><option value="closed">已結案</option></select></div>
+    <div class="admin-field"><label for="inquiry-project-filter">申請企劃</label><select id="inquiry-project-filter"><option value="all">全部合作</option><option value="general">一般合作</option>{shootProjects.map((project) => <option value={project.id}>{project.title}</option>)}</select></div>
     <button type="button" class="admin-button admin-button--quiet" id="inquiry-reset">清除篩選</button>
   </div>
   <p class="admin-status" id="inquiry-status" role="status" aria-live="polite"></p>
@@ -28,7 +32,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       <div id="inquiry-detail-empty" class="admin-empty"><strong>先選擇一份合作意向</strong><p>查看拍攝想法與聯絡資訊，並記錄下一步。</p></div>
       <div id="inquiry-detail" hidden>
         <div class="admin-detail__top"><div><span class="admin-eyebrow">INQUIRY DETAILS</span><h2 id="inquiry-detail-title" tabindex="-1"></h2></div><span class="admin-pill" id="detail-badge"></span></div>
-        <dl><dt>申請時間</dt><dd id="detail-created"></dd><dt>聯絡方式</dt><dd id="detail-contact-method"></dd><dt>聯絡帳號</dt><dd id="detail-contact"></dd><dt>合作類型</dt><dd id="detail-type"></dd><dt>希望日期</dt><dd id="detail-date"></dd><dt>個資同意</dt><dd id="detail-consent"></dd></dl>
+        <dl><dt>申請時間</dt><dd id="detail-created"></dd><dt>聯絡方式</dt><dd id="detail-contact-method"></dd><dt>聯絡帳號</dt><dd id="detail-contact"></dd><dt>合作類型</dt><dd id="detail-type"></dd><dt>申請企劃</dt><dd id="detail-project"></dd><dt>企劃版本</dt><dd id="detail-project-revision"></dd><dt>希望日期</dt><dd id="detail-date"></dd><dt>個資同意</dt><dd id="detail-consent"></dd></dl>
+        <section id="detail-project-snapshot" hidden><h3>收件時的企劃條件</h3><p class="admin-detail-description" id="detail-project-conditions"></p></section>
         <h3>拍攝想法</h3><p class="admin-detail-description" id="detail-description"></p>
         <section class="admin-references" id="detail-references" aria-labelledby="detail-references-heading" aria-busy="false">
           <div class="admin-references__heading"><h3 id="detail-references-heading">參考資料</h3><button type="button" class="admin-button admin-button--quiet admin-button--small" id="detail-references-refresh">重新整理參考資料</button></div>
@@ -98,7 +103,8 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   import { requestAdmin, requireAdminSession, adminErrorMessage, formatAdminDate, setUnsavedChanges, confirmDiscardChanges, AdminApiError } from '../../lib/admin-client';
   import { confirmationBodyFits } from '../../lib/confirmation-request-size.js';
   type Status = 'new' | 'reviewing' | 'contacted' | 'closed';
-  type Inquiry = { id: string; name: string; contact_method: string; contact_account: string; collaboration_type: string; preferred_date: string | null; description: string; consent: boolean; status: Status; admin_notes: string | null; created_at: string; updated_at: string; version: number };
+  type ShootProjectSnapshot = { id: string; revision: number; slug: string; title: string; summary: string; concept: string; area: string; dateNote: string; deadlineAt: string | null; costNote: string; deliveryNote: string; publicationNote: string };
+  type Inquiry = { id: string; name: string; contact_method: string; contact_account: string; collaboration_type: string; preferred_date: string | null; description: string; consent: boolean; status: Status; admin_notes: string | null; created_at: string; updated_at: string; version: number; shoot_project_id: string | null; shoot_project_snapshot: ShootProjectSnapshot | null };
   type InquiryList = { items: Inquiry[]; total: number; page: number; pageSize: number };
   type InquiryReferences = { reference_links: string[]; reference_images: { name: string; type: string; size: number; url: string }[]; expires_in: number };
   type ShootConfirmation = { version: number; status: 'draft' | 'confirmed'; slotId: string | null; startsAt: string | null; endsAt: string | null; location: string; mapUrl: string; wardrobe: string; bring: string; rainPlan: string; deliveryNote: string; publicationNote: string; updatedAt: string };
@@ -107,6 +113,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
   const query = $<HTMLInputElement>('#inquiry-query');
   const filter = $<HTMLSelectElement>('#inquiry-filter');
+  const projectFilter = $<HTMLSelectElement>('#inquiry-project-filter');
   const list = $('#inquiry-list');
   const empty = $('#inquiry-empty');
   const status = $('#inquiry-status');
@@ -136,8 +143,14 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
   let appliedQuery = (url.searchParams.get('q') || '').trim().slice(0, 120);
   let appliedStatus = url.searchParams.get('status') || 'all';
   if (appliedStatus !== 'all' && !Object.hasOwn(labels, appliedStatus)) appliedStatus = 'all';
+  let appliedProject = url.searchParams.get('project') || 'all';
+  if (appliedProject !== 'all' && appliedProject !== 'general' && !/^[a-z0-9][a-z0-9-]{1,63}$/.test(appliedProject)) appliedProject = 'all';
+  if (appliedProject !== 'all' && appliedProject !== 'general' && !Array.from(projectFilter.options).some((option) => option.value === appliedProject)) {
+    const archived = document.createElement('option'); archived.value = appliedProject; archived.textContent = `歷史企劃（${appliedProject}）`; projectFilter.append(archived);
+  }
   query.value = appliedQuery;
   filter.value = appliedStatus;
+  projectFilter.value = appliedProject;
   let items: Inquiry[] = [];
   let selected: Inquiry | null = null;
   let total = 0;
@@ -340,13 +353,13 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const button = document.createElement('button'); button.type = 'button'; button.dataset.inquiryId = item.id; button.setAttribute('aria-pressed', String(selected?.id === item.id));
       const name = document.createElement('span'); name.className = 'admin-inquiry-item__name'; name.textContent = item.name || '未填寫姓名';
       const badge = document.createElement('span'); badge.className = 'admin-pill'; badge.dataset.status = item.status; badge.textContent = labels[item.status] || '未知狀態';
-      const description = document.createElement('span'); description.className = 'admin-inquiry-item__sub'; description.textContent = `${formatAdminDate(item.created_at)} · ${item.collaboration_type || '未提供類型'}`;
+      const description = document.createElement('span'); description.className = 'admin-inquiry-item__sub'; description.textContent = `${formatAdminDate(item.created_at)} · ${item.shoot_project_snapshot?.title || (item.shoot_project_id ? '企劃申請' : '一般合作')} · ${item.collaboration_type || '未提供類型'}`;
       button.append(name, badge, description); row.append(button); list.append(row);
     }
     empty.hidden = items.length > 0;
     if (!items.length) {
       empty.querySelector('strong')!.textContent = loading ? '正在載入' : listError ? '無法載入合作意向' : total ? '這一頁沒有資料' : '目前沒有符合的申請';
-      empty.querySelector('p')!.textContent = loading ? '正在取得符合條件的合作意向。' : listError ? '請稍後按「重新整理」再試。' : appliedQuery || appliedStatus !== 'all' ? '試著調整搜尋條件，或清除篩選。' : '新的站內合作意向會出現在這裡。';
+      empty.querySelector('p')!.textContent = loading ? '正在取得符合條件的合作意向。' : listError ? '請稍後按「重新整理」再試。' : appliedQuery || appliedStatus !== 'all' || appliedProject !== 'all' ? '試著調整搜尋條件，或清除篩選。' : '新的站內合作意向會出現在這裡。';
     }
     $('#inquiry-total').textContent = loading ? '載入中' : `共 ${total} 筆`;
     $('#inquiry-page-label').textContent = `第 ${page} / ${Math.max(1, Math.ceil(total / 20))} 頁`;
@@ -367,6 +380,20 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       $('#detail-contact-method').textContent = item.contact_method || '未提供';
       $('#detail-contact').textContent = item.contact_account || '未提供';
       $('#detail-type').textContent = item.collaboration_type || '未提供';
+      const projectSnapshot = item.shoot_project_snapshot;
+      $('#detail-project').textContent = projectSnapshot?.title || (item.shoot_project_id ? '企劃資料快照缺漏' : '一般合作');
+      $('#detail-project-revision').textContent = projectSnapshot ? `第 ${projectSnapshot.revision} 版` : '—';
+      const projectSnapshotPanel = $('#detail-project-snapshot');
+      projectSnapshotPanel.hidden = !projectSnapshot;
+      $('#detail-project-conditions').textContent = projectSnapshot ? [
+        projectSnapshot.summary,
+        projectSnapshot.concept,
+        `區域：${projectSnapshot.area}`,
+        `日期：${projectSnapshot.dateNote}`,
+        `費用：${projectSnapshot.costNote}`,
+        `交付：${projectSnapshot.deliveryNote}`,
+        `公開：${projectSnapshot.publicationNote}`,
+      ].filter(Boolean).join('\n') : '';
       $('#detail-date').textContent = item.preferred_date || '尚未指定';
       $('#detail-consent').textContent = item.consent ? '已同意' : '未同意';
       $('#detail-description').textContent = item.description || '未提供';
@@ -400,7 +427,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     $<HTMLButtonElement>('#inquiry-prev').disabled = true;
     $<HTMLButtonElement>('#inquiry-next').disabled = true;
     message(status, '正在載入合作意向…');
-    const params = new URLSearchParams({ page: String(page), status: appliedStatus, q: appliedQuery });
+    const params = new URLSearchParams({ page: String(page), status: appliedStatus, q: appliedQuery, project: appliedProject });
     try {
       const data = await requestAdmin<InquiryList>(`/api/admin/inquiries?${params}`);
       if (id !== generation) return;
@@ -409,6 +436,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       if (page > 1) nextUrl.searchParams.set('page', String(page)); else nextUrl.searchParams.delete('page');
       if (appliedQuery) nextUrl.searchParams.set('q', appliedQuery); else nextUrl.searchParams.delete('q');
       if (appliedStatus !== 'all') nextUrl.searchParams.set('status', appliedStatus); else nextUrl.searchParams.delete('status');
+      if (appliedProject !== 'all') nextUrl.searchParams.set('project', appliedProject); else nextUrl.searchParams.delete('project');
       let replacement = previousId ? items.find((item) => item.id === previousId) || null : null;
       let selectionError = '';
       if (previousId && !replacement) {
@@ -435,15 +463,16 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     }
   }
   function changeFilters(reset = false) {
-    if (!ready || busySaving()) { query.value = appliedQuery; filter.value = appliedStatus; return; }
-    if (!confirmDiscardChanges()) { query.value = appliedQuery; filter.value = appliedStatus; return; }
+    if (!ready || busySaving()) { query.value = appliedQuery; filter.value = appliedStatus; projectFilter.value = appliedProject; return; }
+    if (!confirmDiscardChanges()) { query.value = appliedQuery; filter.value = appliedStatus; projectFilter.value = appliedProject; return; }
     setUnsavedChanges(false);
-    if (reset) { query.value = ''; filter.value = 'all'; }
-    appliedQuery = query.value.trim().slice(0, 120); appliedStatus = filter.value; page = 1;
+    if (reset) { query.value = ''; filter.value = 'all'; projectFilter.value = 'all'; }
+    appliedQuery = query.value.trim().slice(0, 120); appliedStatus = filter.value; appliedProject = projectFilter.value; page = 1;
     void loadList();
   }
   query.addEventListener('input', () => { window.clearTimeout(searchTimer); searchTimer = window.setTimeout(() => changeFilters(), 350); });
   filter.addEventListener('change', () => { window.clearTimeout(searchTimer); changeFilters(); });
+  projectFilter.addEventListener('change', () => { window.clearTimeout(searchTimer); changeFilters(); });
   $('#inquiry-reset').addEventListener('click', () => { window.clearTimeout(searchTimer); changeFilters(true); });
   for (const [selector, delta] of [['#inquiry-prev', -1], ['#inquiry-next', 1]] as const) $(selector).addEventListener('click', () => {
     if (!ready || loading || busySaving() || !confirmDiscardChanges()) return;

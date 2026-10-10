@@ -1,0 +1,96 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getPublicShootProjects } from '../../../shared/shoot-projects.js';
+import '../../styles/inner-pages.css';
+
+export function getStaticPaths() {
+  return getPublicShootProjects().map((project) => ({ params: { slug: project.slug }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const canApply = project.status === 'open' && (!project.deadlineAt || Date.parse(project.deadlineAt) > Date.now());
+const statusLabel = project.status === 'completed' ? '已完成' : canApply ? '開放申請' : '已截止';
+---
+
+<BaseLayout title={`${project.title}｜拍攝企劃｜Phox999`} description={project.summary} ogImage={project.cover} ogImageAlt={project.coverAlt}>
+  <Header />
+  <main class="inner-page shoot-project-detail" id="main-content" tabindex="-1">
+    <div class="container">
+      <nav class="shoot-project-breadcrumb" aria-label="麵包屑"><a href="/projects/">拍攝企劃</a><span aria-hidden="true">/</span><span>{project.title}</span></nav>
+      <article>
+        <header class="shoot-project-detail__hero inner-panel">
+          <div class="shoot-project-detail__copy">
+            <p class="inner-kicker">SHOOT PROJECT</p>
+            <span class={`shoot-project-badge shoot-project-badge--${project.status}`}>{statusLabel}</span>
+            <h1>{project.title}</h1>
+            <p class="shoot-project-detail__summary">{project.summary}</p>
+            <p>{project.concept}</p>
+            {canApply ? <a class="button button--primary" href={`/apply/?project=${encodeURIComponent(project.slug)}`}>申請這個企劃</a> : <p class="shoot-project-closed">這個企劃目前沒有開放申請。你仍可查看內容，或改走一般合作入口。</p>}
+          </div>
+          <img src={project.cover} alt={project.coverAlt} fetchpriority="high" decoding="async" />
+        </header>
+
+        {project.referenceImages.length > 0 && <section class="shoot-project-detail__references" aria-labelledby="project-references-title">
+          <div><p class="eyebrow">VISUAL REFERENCES</p><h2 id="project-references-title">風格參考</h2><p>以下照片僅供這份企劃的畫面方向參考，不代表企劃已經執行。</p></div>
+          <div class="shoot-project-reference-grid">{project.referenceImages.map((image) => <figure><img src={image.src} alt={image.alt} loading="lazy" decoding="async" /><figcaption>{image.alt}</figcaption></figure>)}</div>
+        </section>}
+
+        <section class="shoot-project-detail__facts inner-panel" aria-labelledby="project-facts-title">
+          <h2 id="project-facts-title">合作安排</h2>
+          <dl>
+            <div><dt>適合對象</dt><dd>{project.suitableFor}</dd></div>
+            <div><dt>服裝與準備</dt><dd>{project.wardrobe}<br />{project.preparation}</dd></div>
+            <div><dt>拍攝區域</dt><dd>{project.area}</dd></div>
+            <div><dt>時間安排</dt><dd>{project.dateNote}{project.deadlineAt && <span>（申請截止：{new Intl.DateTimeFormat('zh-TW', { timeZone: 'Asia/Taipei', dateStyle: 'medium', timeStyle: 'short', hour12: false }).format(new Date(project.deadlineAt))}）</span>}</dd></div>
+            <div><dt>費用分攤</dt><dd>{project.costNote}</dd></div>
+            <div><dt>照片交付</dt><dd>{project.deliveryNote}</dd></div>
+            <div><dt>公開與標註</dt><dd>{project.publicationNote}</dd></div>
+          </dl>
+        </section>
+
+        {project.relatedPortfolioSlugs.length > 0 && <nav class="shoot-project-related" aria-label="相關作品"><h2>相關作品</h2><ul>{project.relatedPortfolioSlugs.map((slug) => <li><a href={`/portfolio/${encodeURIComponent(slug)}/`}>{slug}</a></li>)}</ul></nav>}
+
+        <section class="shoot-project-next inner-next" aria-label="企劃下一步">
+          <div><p class="eyebrow">NEXT STEP</p><h2>{canApply ? '想參與這個企劃嗎？' : '想從一般合作開始？'}</h2><p>送出企劃申請後會再確認內容與日期，並不會自動錄取或預約。</p></div>
+          <div class="inner-actions">{canApply && <a class="button button--primary" href={`/apply/?project=${encodeURIComponent(project.slug)}`}>申請這個企劃</a>}<a class="button button--secondary" href="/cooperation/">了解一般合作</a></div>
+        </section>
+      </article>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .shoot-project-detail { padding-bottom: 84px; }
+  .shoot-project-breadcrumb { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 22px; color: var(--color-muted); font-size: .92rem; }
+  .shoot-project-breadcrumb a { color: var(--color-primary-dark); }
+  .shoot-project-detail__hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, .9fr); gap: clamp(24px, 5vw, 64px); align-items: center; }
+  .shoot-project-detail__copy h1 { margin: 14px 0; font: 600 clamp(32px, 4.5vw, 56px)/1.3 var(--font-heading); }
+  .shoot-project-detail__copy > p { color: var(--color-muted); line-height: 1.9; white-space: pre-line; }
+  .shoot-project-detail__copy .shoot-project-detail__summary { color: var(--color-text, #263d47); font-size: 1.15rem; font-weight: 600; }
+  .shoot-project-detail__hero > img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 24px; background: #edf6fa; }
+  .shoot-project-badge { display: inline-flex; padding: 5px 12px; border-radius: 999px; background: #eaf4f8; color: #456c7d; font-size: .86rem; font-weight: 700; }
+  .shoot-project-badge--open { background: #dff3fb; color: #246b88; }
+  .shoot-project-closed { margin-top: 18px; }
+  .shoot-project-detail__references, .shoot-project-detail__facts, .shoot-project-related { margin-top: 34px; }
+  .shoot-project-detail__references h2, .shoot-project-detail__facts h2, .shoot-project-related h2 { margin: 0 0 10px; font: 600 clamp(25px, 3vw, 34px)/1.4 var(--font-heading); }
+  .shoot-project-detail__references > div:first-child > p:not(.eyebrow) { color: var(--color-muted); line-height: 1.8; }
+  .shoot-project-reference-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+  .shoot-project-reference-grid figure { min-width: 0; margin: 0; }
+  .shoot-project-reference-grid img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 18px; background: #edf6fa; }
+  .shoot-project-reference-grid figcaption { margin-top: 8px; color: var(--color-muted); font-size: .9rem; line-height: 1.7; }
+  .shoot-project-detail__facts dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 32px; margin: 22px 0 0; }
+  .shoot-project-detail__facts dt { margin-bottom: 8px; color: var(--color-muted); font-size: .94rem; }
+  .shoot-project-detail__facts dd { margin: 0; line-height: 1.85; white-space: pre-line; overflow-wrap: anywhere; }
+  .shoot-project-related ul { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; list-style: none; }
+  .shoot-project-related a { display: inline-flex; min-height: 44px; align-items: center; padding: 9px 16px; border-radius: 999px; background: #edf7fc; color: var(--color-primary-dark); }
+  .shoot-project-next { margin-top: 42px; }
+  @media (max-width: 760px) {
+    .shoot-project-detail__hero { grid-template-columns: minmax(0, 1fr); }
+    .shoot-project-detail__hero > img { grid-row: 1; }
+    .shoot-project-reference-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .shoot-project-detail__facts dl { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>

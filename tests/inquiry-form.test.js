@@ -44,6 +44,22 @@ test('選擇風格但沒有自由描述時，仍可形成伺服器要求的描�
   assert.equal(buildInquiryPayload(draft).description, '偏好風格：OL 制服');
 });
 
+test('企劃申請可不重複輸入拍攝想法，並只送出企劃 ID 與 revision', () => {
+  const draft = normalizeInquiryDraft(makeFormData({
+    ...validValues,
+    collaboration_type: '主題合作',
+    description: '',
+    shoot_project_id: 'city-night-portrait',
+    shoot_project_revision: '3',
+  }));
+  assert.equal(validateInquiryDraft(draft), null);
+  const payload = buildInquiryPayload(draft);
+  assert.equal(payload.shoot_project_id, 'city-night-portrait');
+  assert.equal(payload.shoot_project_revision, 3);
+  assert.equal(Object.hasOwn(payload, 'shoot_project_title'), false);
+  assert.equal(payload.description, '');
+});
+
 test('中文多行想法與參考連結分欄，連結不併入描述', () => {
   const draft = normalizeInquiryDraft(makeFormData({
     ...validValues,

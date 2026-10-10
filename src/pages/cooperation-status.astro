@@ -19,7 +19,7 @@ import '../styles/inner-pages.css';
           <ol class="cooperation-timeline" aria-label="處理進度"><li data-progress-step="new"><span>01</span>收到意向</li><li data-progress-step="reviewing"><span>02</span>查看內容</li><li data-progress-step="contacted"><span>03</span>聯繫討論</li><li data-progress-step="closed"><span>04</span>本次結束</li></ol>
           <p data-progress-explanation></p><button class="cooperation-text-button" type="button" data-progress-refresh>更新進度</button>
         </section>
-        <section class="cooperation-card cooperation-summary" aria-labelledby="summary-title"><h2 id="summary-title">你送來的拍攝想法</h2><dl class="cooperation-details"><div><dt>姓名／暱稱</dt><dd data-summary-name></dd></div><div><dt>合作類型</dt><dd data-summary-type></dd></div><div><dt>偏好日期</dt><dd data-summary-date></dd></div></dl><p class="cooperation-copy" data-summary-description></p><div data-summary-links-wrap hidden><h3>參考連結</h3><ul class="cooperation-links" data-summary-links></ul></div></section>
+        <section class="cooperation-card cooperation-summary" aria-labelledby="summary-title"><h2 id="summary-title">你送來的拍攝想法</h2><dl class="cooperation-details"><div><dt>姓名／暱稱</dt><dd data-summary-name></dd></div><div><dt>合作類型</dt><dd data-summary-type></dd></div><div><dt>偏好日期</dt><dd data-summary-date></dd></div></dl><p class="cooperation-copy" data-summary-description></p><section class="cooperation-project-snapshot" data-summary-shoot-project hidden aria-labelledby="summary-project-title"><h3 id="summary-project-title">申請企劃</h3><p class="cooperation-project-snapshot__title" data-summary-project-title></p><p data-summary-project-summary></p><dl class="cooperation-details"><div><dt>拍攝區域</dt><dd data-summary-project-area></dd></div><div><dt>日期安排</dt><dd data-summary-project-date></dd></div><div><dt>費用分攤</dt><dd data-summary-project-cost></dd></div><div><dt>照片交付</dt><dd data-summary-project-delivery></dd></div><div><dt>公開與標註</dt><dd data-summary-project-publication></dd></div></dl></section><div data-summary-links-wrap hidden><h3>參考連結</h3><ul class="cooperation-links" data-summary-links></ul></div></section>
         <section class="cooperation-card cooperation-confirmation" data-confirmation hidden aria-labelledby="confirmation-title"><div class="cooperation-card-heading"><div><p class="cooperation-eyebrow">拍攝確認單</p><h2 id="confirmation-title">把這一天，留給拍攝。</h2></div><span class="cooperation-pill">安排已確認</span></div><p class="cooperation-muted" data-confirmation-version></p><dl class="cooperation-details confirmation-details"><div><dt>收件編號</dt><dd data-confirmation-reference></dd></div><div><dt>拍攝時間</dt><dd data-confirmation-time></dd></div><div><dt>集合地點</dt><dd data-confirmation-location></dd></div><div data-confirmation-map-wrap hidden><dt>集合地圖</dt><dd><a data-confirmation-map target="_blank" rel="noopener noreferrer">查看地圖</a></dd></div><div><dt>服裝準備</dt><dd data-confirmation-wardrobe></dd></div><div><dt>攜帶物品</dt><dd data-confirmation-bring></dd></div><div><dt>雨備安排</dt><dd data-confirmation-rain></dd></div><div><dt>交件約定</dt><dd data-confirmation-delivery></dd></div><div><dt>公開方式</dt><dd data-confirmation-publication></dd></div></dl><p class="cooperation-muted">如需調整，請聯繫攝影師再次確認；行事曆檔案不會自動同步後續變更。</p><div class="cooperation-actions confirmation-actions"><button class="button button--secondary" type="button" data-confirmation-print>列印確認單</button><button class="button button--primary" type="button" data-confirmation-calendar>加入行事曆</button></div></section>
         <p class="cooperation-private">私人連結僅供本次合作使用，請勿公開分享。</p>
       </div>
@@ -59,6 +59,17 @@ import '../styles/inner-pages.css';
     });
     write('[data-summary-name]', progress.summary.name); write('[data-summary-type]', progress.summary.collaborationType);
     write('[data-summary-date]', progress.summary.preferredDate || '一起討論'); write('[data-summary-description]', progress.summary.description);
+    const shootProject = progress.shootProject;
+    $('[data-summary-shoot-project]').hidden = !shootProject;
+    if (shootProject) {
+      write('[data-summary-project-title]', shootProject.title);
+      write('[data-summary-project-summary]', shootProject.summary);
+      write('[data-summary-project-area]', shootProject.area);
+      write('[data-summary-project-date]', shootProject.dateNote);
+      write('[data-summary-project-cost]', shootProject.costNote);
+      write('[data-summary-project-delivery]', shootProject.deliveryNote);
+      write('[data-summary-project-publication]', shootProject.publicationNote);
+    }
     const links = $('[data-summary-links]'); links.replaceChildren();
     progress.summary.referenceLinks.forEach(link => { const li = document.createElement('li'); const anchor = document.createElement('a'); anchor.href = safeWebLink(link); anchor.target = '_blank'; anchor.rel = 'noopener noreferrer'; anchor.textContent = new URL(link).hostname; anchor.setAttribute('aria-label', `開啟參考：${link}`); li.appendChild(anchor); links.appendChild(li); });
     $('[data-summary-links-wrap]').hidden = !progress.summary.referenceLinks.length;
@@ -139,6 +150,10 @@ import '../styles/inner-pages.css';
   .cooperation-details dt { color: var(--color-muted); font-size: .9375rem; margin-bottom: 7px; }
   .cooperation-details dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; }
   .cooperation-copy { white-space: pre-wrap; overflow-wrap: anywhere; margin: 24px 0; }
+  .cooperation-project-snapshot { margin: 26px 0; padding: 22px; border-radius: 20px; background: #f4fafc; }
+  .cooperation-project-snapshot h3 { margin: 0 0 10px; }
+  .cooperation-project-snapshot__title { margin: 0; font-weight: 700; }
+  .cooperation-project-snapshot > p { white-space: pre-wrap; overflow-wrap: anywhere; }
   .cooperation-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
   .cooperation-links :global(a), .cooperation-details a { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: 999px; background: #edf7fc; color: var(--color-primary-dark); text-decoration: none; overflow-wrap: anywhere; }
   .cooperation-private { text-align: center; line-height: 1.8; }

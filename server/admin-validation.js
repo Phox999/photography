@@ -2,7 +2,7 @@ import { HttpError, json } from './auth.js';
 
 export const PAGE_SIZE = 20;
 export const STATUSES = ['new', 'reviewing', 'contacted', 'closed'];
-export const INQUIRY_FIELDS = 'id,name,contact_method,contact_account,collaboration_type,preferred_date,description,consent,status,admin_notes,created_at,updated_at,version';
+export const INQUIRY_FIELDS = 'id,name,contact_method,contact_account,collaboration_type,preferred_date,description,consent,status,admin_notes,created_at,updated_at,version,shoot_project_id,shoot_project_snapshot';
 export const CONTENT_FIELDS = 'id,announcement,announcement_enabled,faqs,hero_title,hero_copy,hero_image_paths,version,updated_at';
 export const STATIC_HERO_IMAGE_PATHS = Object.freeze([
   'static:/assets/hero.webp',
@@ -113,6 +113,8 @@ export function inquiryQuery(url) {
   const status = url.searchParams.get('status') ?? 'all';
   if (status !== 'all') parseStatus(status);
   const query = plainText(url.searchParams.get('q') ?? '', 120, '搜尋文字');
+  const project = url.searchParams.get('project') ?? 'all';
+  if (project !== 'all' && project !== 'general' && !/^[a-z0-9][a-z0-9-]{1,63}$/.test(project)) invalid('企劃篩選格式不正確。');
   const params = new URLSearchParams({
     select: INQUIRY_FIELDS,
     order: 'created_at.desc,id.desc',
@@ -120,6 +122,8 @@ export function inquiryQuery(url) {
     offset: String((page - 1) * PAGE_SIZE),
   });
   if (status !== 'all') params.set('status', `eq.${status}`);
+  if (project === 'general') params.set('shoot_project_id', 'is.null');
+  else if (project !== 'all') params.set('shoot_project_id', `eq.${project}`);
   if (query) {
     // Keep user input inside a quoted PostgREST value. Quotes and backslashes
     // cannot break out into additional filters; URLSearchParams encodes the URL.

@@ -9,6 +9,7 @@ export type ShootConfirmation = {
 export type CooperationProgress = {
   reference: string; createdAt: string; status: InquiryStatus;
   summary: { name: string; collaborationType: string; preferredDate: string; description: string; referenceLinks: string[] };
+  shootProject: { id: string; revision: number; title: string; summary: string; area: string; dateNote: string; costNote: string; deliveryNote: string; publicationNote: string } | null;
   confirmation: ShootConfirmation | null;
 };
 const tokenPattern = /^[a-f0-9]{64}$/;
@@ -59,7 +60,14 @@ export function progressFromResponse(value: unknown): CooperationProgress | null
     if (item.mapUrl && !safeWebLink(item.mapUrl)) return null;
     confirmation = item as ShootConfirmation;
   }
-  return { reference: value.reference, createdAt: value.createdAt, status: value.status as InquiryStatus, summary: { name: summary.name, collaborationType: summary.collaborationType, preferredDate: summary.preferredDate || '', description: summary.description || '', referenceLinks: summary.referenceLinks as string[] }, confirmation };
+  let shootProject: CooperationProgress['shootProject'] = null;
+  if (value.shootProject !== undefined && value.shootProject !== null) {
+    const project = value.shootProject;
+    if (!record(project) || !/^[a-z0-9][a-z0-9-]{1,63}$/.test(String(project.id)) || !Number.isInteger(project.revision) || Number(project.revision) < 1 || Number(project.revision) > 1_000_000
+      || ['title', 'summary', 'area', 'dateNote', 'costNote', 'deliveryNote', 'publicationNote'].some(key => !text(project[key], key === 'title' ? 120 : key === 'summary' ? 400 : key === 'area' ? 160 : 1000) || !String(project[key]).trim())) return null;
+    shootProject = { id: String(project.id), revision: Number(project.revision), title: String(project.title), summary: String(project.summary), area: String(project.area), dateNote: String(project.dateNote), costNote: String(project.costNote), deliveryNote: String(project.deliveryNote), publicationNote: String(project.publicationNote) };
+  }
+  return { reference: value.reference, createdAt: value.createdAt, status: value.status as InquiryStatus, summary: { name: summary.name, collaborationType: summary.collaborationType, preferredDate: summary.preferredDate || '', description: summary.description || '', referenceLinks: summary.referenceLinks as string[] }, shootProject, confirmation };
 }
 export function formatShootTime(value: string): string {
   return new Intl.DateTimeFormat('zh-TW', { timeZone: 'Asia/Taipei', dateStyle: 'medium', timeStyle: 'short', hour12: false }).format(new Date(value));

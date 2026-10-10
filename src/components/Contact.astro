@@ -1,6 +1,19 @@
 ---
 import { siteConfig } from '../data/site';
 
+interface ShootProjectOption {
+  id: string;
+  slug: string;
+  revision: number;
+  title: string;
+  summary: string;
+}
+interface Props {
+  projectApplication?: boolean;
+  projectOptions?: ShootProjectOption[];
+}
+const { projectApplication = false, projectOptions = [] } = Astro.props;
+
 const shootStyles = [
   { id: 'office-lady', title: 'OL 制服' },
   { id: 'couple', title: '情侶寫真' },
@@ -25,16 +38,36 @@ const showThemeImages = false;
       <h2 id="contact-title">一鍵申請，下一步開始拍攝</h2>
     </header>
 
-    <form class="contact-form" data-inquiry-form>
+    <form class="contact-form" data-inquiry-form data-project-application-page={projectApplication ? 'true' : undefined}>
       <label class="hidden-field" aria-hidden="true">
         <span>網站</span>
         <input name="website" type="text" autocomplete="off" tabindex="-1" />
       </label>
 
+      {projectApplication && <section class="project-application" data-project-application aria-labelledby="project-application-title">
+        <h3 id="project-application-title">選擇拍攝企劃</h3>
+        {projectOptions.length > 0 ? <>
+          <label for="shoot-project-select">這次想申請的企劃</label>
+          <select id="shoot-project-select" data-shoot-project-select>
+            <option value="">一般合作申請</option>
+            {projectOptions.map((project) => <option value={project.slug} data-project-id={project.id} data-project-revision={project.revision} data-project-title={project.title} data-project-summary={project.summary}>{project.title}</option>)}
+          </select>
+          <div class="project-application__summary" data-shoot-project-summary hidden>
+            <p data-shoot-project-summary-text></p>
+            <a data-shoot-project-detail-link href="/projects/">閱讀企劃內容</a>
+          </div>
+          <p class="field-help">送出後會再確認合作與日期，不會自動錄取或預約。</p>
+        </> : <p class="project-application__empty">目前沒有開放中的企劃。你可以先看<a href="/projects/">企劃列表</a>，或使用下方一般合作申請。</p>}
+        <p class="project-application__notice" role="status" aria-live="polite" data-shoot-project-notice></p>
+        <input type="hidden" name="shoot_project_id" data-shoot-project-id />
+        <input type="hidden" name="shoot_project_revision" data-shoot-project-revision />
+      </section>}
+      {projectApplication && <noscript><p class="project-application__no-script">企劃選擇與送出需要啟用 JavaScript；你仍可閱讀企劃內容，或透過 Instagram／Email 聯繫。</p></noscript>}
+
       <div class="contact-editor" data-contact-editor>
         <section class="contact-form-section" aria-labelledby="contact-step-1-title">
-          <h3 id="contact-step-1-title">1. 挑選想拍攝的風格</h3>
-          <fieldset class="contact-style-select">
+          <h3 id="contact-step-1-title" data-contact-step-title>1. 挑選想拍攝的風格</h3>
+          <fieldset class="contact-style-select" data-general-style-picker>
             <legend>a.本期推薦主題 <span>可複選</span></legend>
             <div class:list={['contact-style-grid', !showThemeImages && 'contact-style-grid--text-only']}>
               {shootStyles.map((style) => (
@@ -63,7 +96,7 @@ const showThemeImages = false;
               <div class="form-field">
                 <label for="description">拍攝想法 <span>選填</span></label>
                 <textarea id="description" name="description" rows="5" aria-describedby="description-help description-count" placeholder="例如：想拍攝的氛圍、地點或其他想法"></textarea>
-                <p class="field-help" id="description-help">可填自由文字，或選擇上方風格；兩者合計最多 2,000 字。</p>
+                <p class="field-help" id="description-help" data-description-help>可填自由文字，或選擇上方風格；兩者合計最多 2,000 字。</p>
                 <p class="field-help" data-description-count aria-live="polite">0 / 2,000 字</p>
                 <label for="reference-links">參考連結 <span>選填</span></label>
                 <textarea id="reference-links" name="reference_links" rows="3" maxlength="6146" aria-describedby="reference-links-help" placeholder="每行一個 http:// 或 https:// 網址"></textarea>
@@ -83,7 +116,7 @@ const showThemeImages = false;
             </div>
           </div>
           <div class="form-grid contact-details-grid">
-            <div class="form-field">
+            <div class="form-field" data-collaboration-type-field>
               <label for="collaboration_type">合作類型</label>
               <select id="collaboration_type" name="collaboration_type" required>
                 <option value="">請選擇</option>
@@ -132,6 +165,7 @@ const showThemeImages = false;
           <p>內容還沒送出，可以返回修改。</p>
         </div>
         <dl class="contact-review__details">
+          <div data-review-project hidden><dt>申請企劃</dt><dd data-review-project-title></dd></div>
           <div><dt>姓名／暱稱</dt><dd data-review-name></dd></div>
           <div><dt>聯絡方式</dt><dd data-review-contact></dd></div>
           <div><dt>合作類型</dt><dd data-review-type></dd></div>
@@ -172,6 +206,20 @@ const showThemeImages = false;
   </div>
 </section>
 
+<style>
+  .project-application { margin-bottom: 24px; padding: clamp(20px, 3vw, 30px); border: 1px solid #dcebf1; border-radius: 24px; background: #f5fbfe; }
+  .project-application h3 { margin: 0 0 14px; font: 700 1.1rem/1.5 var(--font-heading); }
+  .project-application > label { display: block; margin-bottom: 8px; font-weight: 700; }
+  .project-application select { width: 100%; min-height: 48px; padding: 10px 14px; border: 1px solid #cadfe8; border-radius: 12px; background: #fff; color: inherit; font: inherit; }
+  .project-application__summary { margin-top: 14px; padding: 14px 16px; border-radius: 16px; background: #fff; }
+  .project-application__summary[hidden] { display: none; }
+  .project-application__summary p, .project-application__empty, .project-application__no-script { margin: 0; color: var(--color-muted); line-height: 1.8; }
+  .project-application__summary a, .project-application__empty a { color: var(--color-primary-dark); font-weight: 700; }
+  .project-application__notice { min-height: 0; margin: 8px 0 0; color: #815b1e; line-height: 1.7; }
+  .project-application__notice:empty { display: none; }
+  .project-application__no-script { padding: 12px 18px; border-radius: 14px; background: #fff6df; }
+</style>
+
 <script>
   import { buildInquiryPayload, normalizeInquiryDraft, validateInquiryDraft } from '../lib/inquiry-form.js';
   import { submissionIdentityFor } from '../lib/inquiry-workflow';
@@ -201,6 +249,18 @@ const showThemeImages = false;
     const description = inquiryForm.querySelector('#description');
     const confirmButton = inquiryForm.querySelector('[data-confirm-inquiry]');
     const descriptionCount = inquiryForm.querySelector('[data-description-count]');
+    const projectSelect = inquiryForm.querySelector<HTMLSelectElement>('[data-shoot-project-select]');
+    const projectIdInput = inquiryForm.querySelector<HTMLInputElement>('[data-shoot-project-id]');
+    const projectRevisionInput = inquiryForm.querySelector<HTMLInputElement>('[data-shoot-project-revision]');
+    const projectSummary = inquiryForm.querySelector<HTMLElement>('[data-shoot-project-summary]');
+    const projectSummaryText = inquiryForm.querySelector<HTMLElement>('[data-shoot-project-summary-text]');
+    const projectDetailLink = inquiryForm.querySelector<HTMLAnchorElement>('[data-shoot-project-detail-link]');
+    const projectNotice = inquiryForm.querySelector<HTMLElement>('[data-shoot-project-notice]');
+    const stylePicker = inquiryForm.querySelector<HTMLElement>('[data-general-style-picker]');
+    const collaborationTypeField = inquiryForm.querySelector<HTMLElement>('[data-collaboration-type-field]');
+    const collaborationTypeInput = inquiryForm.querySelector<HTMLSelectElement>('#collaboration_type');
+    const stepTitle = inquiryForm.querySelector<HTMLElement>('[data-contact-step-title]');
+    const descriptionHelp = inquiryForm.querySelector<HTMLElement>('[data-description-help]');
     let referenceFiles = [];
     let pending = false;
     const retryIdentities = new Map();
@@ -210,7 +270,60 @@ const showThemeImages = false;
       .map((button) => button.getAttribute('data-style-title'))
       .filter(Boolean);
 
+    const selectedProjectOption = () => projectSelect?.selectedOptions[0]?.value
+      ? projectSelect.selectedOptions[0]
+      : null;
     const readDraft = () => normalizeInquiryDraft(new FormData(inquiryForm), selectedStyles());
+
+    const updateProjectSelection = (slug, updateAddress = false) => {
+      if (!projectSelect) return;
+      const option = Array.from(projectSelect.options).find((item) => item.value === slug && item.value);
+      const validOption = option && /^[a-z0-9][a-z0-9-]{1,63}$/.test(option.dataset.projectId || '')
+        && /^\d{1,7}$/.test(option.dataset.projectRevision || '');
+      projectSelect.value = validOption ? option.value : '';
+      const active = Boolean(validOption);
+      if (projectIdInput) projectIdInput.value = active ? option.dataset.projectId || '' : '';
+      if (projectRevisionInput) projectRevisionInput.value = active ? option.dataset.projectRevision || '' : '';
+      if (collaborationTypeInput) collaborationTypeInput.value = active ? '主題合作' : '';
+      if (collaborationTypeField) collaborationTypeField.hidden = active;
+      if (stylePicker) stylePicker.hidden = active;
+      if (stepTitle) stepTitle.textContent = active ? '1. 企劃參考與補充資料' : '1. 挑選想拍攝的風格';
+      if (descriptionHelp) descriptionHelp.textContent = active
+        ? '企劃已說明拍攝方向，補充想法可選填；此欄最多 2,000 字。'
+        : '可填自由文字，或選擇上方風格；兩者合計最多 2,000 字。';
+      if (projectSummary) projectSummary.hidden = !active;
+      if (projectSummaryText) projectSummaryText.textContent = active ? option.dataset.projectSummary || '' : '';
+      if (projectDetailLink) projectDetailLink.href = active ? `/projects/${encodeURIComponent(option.value)}/` : '/projects/';
+      if (projectNotice && active) projectNotice.textContent = '';
+      if (updateAddress) {
+        const url = new URL(window.location.href);
+        if (active) url.searchParams.set('project', option.value);
+        else url.searchParams.delete('project');
+        window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+      }
+    };
+
+    if (projectSelect) {
+      const requestedProjects = new URLSearchParams(window.location.search).getAll('project');
+      if (requestedProjects.length) {
+        const requestedSlug = requestedProjects.length === 1 ? requestedProjects[0] : '';
+        const matchingOption = Array.from(projectSelect.options).some((option) => option.value === requestedSlug && option.value);
+        if (matchingOption) updateProjectSelection(requestedSlug);
+        else if (projectNotice) projectNotice.textContent = '這個企劃目前不存在或未開放申請。表單內容不會自動改成其他企劃；你可以自行選擇一般合作。';
+      }
+      projectSelect.addEventListener('change', () => updateProjectSelection(projectSelect.value, true));
+    } else if (new URLSearchParams(window.location.search).has('project') && projectNotice) {
+      projectNotice.textContent = '這個企劃目前沒有開放申請。你可以查看企劃列表，或自行選擇一般合作。';
+    }
+
+    const getProjectSelectionError = (draft) => {
+      if (!draft.shootProjectId && draft.shootProjectRevision === null) return null;
+      const option = selectedProjectOption();
+      if (!option || option.dataset.projectId !== draft.shootProjectId || Number(option.dataset.projectRevision) !== draft.shootProjectRevision) {
+        return { field: 'shoot_project_id', message: '企劃選擇已失效，請重新選擇或改用一般合作。' };
+      }
+      return null;
+    };
     const fieldSelectors = {
       name: '#name',
       contact_method: '#contact_method',
@@ -220,6 +333,7 @@ const showThemeImages = false;
       description: '#description',
       reference_links: '#reference-links',
       consent: '[name="consent"]',
+      shoot_project_id: '[data-shoot-project-select]',
     };
     const reportValidationError = (error) => {
       if (status) status.textContent = error.message;
@@ -244,11 +358,15 @@ const showThemeImages = false;
     };
 
     const fillReview = (draft) => {
+      const selectedProject = selectedProjectOption();
+      const reviewProject = inquiryForm.querySelector<HTMLElement>('[data-review-project]');
+      if (reviewProject) reviewProject.hidden = !draft.shootProjectId;
+      setReviewText('[data-review-project-title]', selectedProject?.dataset.projectTitle || '企劃內容待確認');
       setReviewText('[data-review-name]', draft.name);
       setReviewText('[data-review-contact]', `${draft.contactMethod}｜${draft.contactAccount}`);
       setReviewText('[data-review-type]', draft.collaborationType);
       setReviewText('[data-review-date]', draft.preferredDate);
-      setReviewText('[data-review-description]', draft.description);
+      setReviewText('[data-review-description]', draft.description || (draft.shootProjectId ? '依企劃內容討論。' : ''));
 
       const styles = selectedStyles();
       const stylesPanel = inquiryForm.querySelector('[data-review-styles]');
@@ -326,7 +444,7 @@ const showThemeImages = false;
       event.preventDefault();
       if (pending) return;
       const draft = readDraft();
-      const validationError = validateInquiryDraft(draft);
+      const validationError = getProjectSelectionError(draft) || validateInquiryDraft(draft);
       if (validationError) {
         reportValidationError(validationError);
         return;
@@ -340,7 +458,7 @@ const showThemeImages = false;
     confirmButton?.addEventListener('click', async () => {
       if (pending) return;
       const draft = readDraft();
-      const validationError = validateInquiryDraft(draft);
+      const validationError = getProjectSelectionError(draft) || validateInquiryDraft(draft);
       if (validationError) {
         showEditor();
         reportValidationError(validationError);
@@ -357,6 +475,7 @@ const showThemeImages = false;
         return;
       }
 
+      const isProjectInquiry = Boolean(draft.shootProjectId);
       pending = true;
       if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = true;
       if (status) status.textContent = '送出中…';
@@ -373,6 +492,7 @@ const showThemeImages = false;
         if (!response.ok) throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
 
         inquiryForm.reset();
+        updateProjectSelection('', true);
         retryIdentities.clear();
         styleButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
         clearPreviews();
@@ -382,13 +502,13 @@ const showThemeImages = false;
         if (status) {
           const receiptUrl = result?.receipt?.url;
           if (typeof receiptUrl === 'string' && /^\/cooperation-status\/#token=[a-f0-9]{64}$/i.test(receiptUrl)) {
-            status.replaceChildren(document.createTextNode('已收到合作意向。'));
+            status.replaceChildren(document.createTextNode(isProjectInquiry ? '企劃申請已收到。' : '已收到合作意向。'));
             const link = document.createElement('a');
             link.href = receiptUrl;
             link.textContent = '查看這次合作進度';
             status.append(' ', link);
           } else {
-            status.textContent = '已收到合作意向，我會再回覆確認檔期。';
+            status.textContent = isProjectInquiry ? '企劃申請已收到，我會再確認合作與日期。' : '已收到合作意向，我會再回覆確認檔期。';
           }
         }
       } catch (error) {

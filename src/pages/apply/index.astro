@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import Contact from '../../components/Contact.astro';
+import { getOpenShootProjects } from '../../../shared/shoot-projects.js';
+import { siteConfig } from '../../data/site';
+import '../../styles/inner-pages.css';
+
+const projectOptions = getOpenShootProjects().map(({ id, slug, revision, title, summary }) => ({ id, slug, revision, title, summary }));
+---
+
+<BaseLayout
+  title="拍攝企劃申請｜Phox999 photography"
+  description="選定已公開的拍攝企劃後填寫站內申請。送出後會再確認合作與日期。"
+  noindex={true}
+>
+  <Header />
+  <main id="main-content" class="inner-page project-apply-page" tabindex="-1">
+    <section class="container inner-heading" aria-labelledby="project-apply-title">
+      <p class="inner-kicker">PROJECT APPLICATION</p>
+      <h1 id="project-apply-title">把企劃方向帶進申請。</h1>
+      <p class="inner-intro">確認企劃後再填寫聯絡方式。申請送出後會再討論合作與日期，不會自動錄取或占用檔期。</p>
+      <nav class="inner-tabs" aria-label="申請方式"><a href="/projects/">返回企劃列表</a><a href="/cooperation/">一般合作方式</a><a href={siteConfig.inquiryUrl} target="_blank" rel="noopener noreferrer" data-analytics-event="inquiry_click" data-analytics-placement="project-application-general">原有一般合作表單</a></nav>
+    </section>
+    <Contact projectApplication projectOptions={projectOptions} />
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .project-apply-page { padding-bottom: 64px; }
+  .project-apply-page .contact-section { padding-top: 0; }
+  .project-apply-page .contact-copy { display: none; }
+  .project-apply-page .contact-layout { grid-template-columns: minmax(0, 1fr); }
+  .project-apply-page .contact-form { width: 100%; max-width: 100%; }
+</style>

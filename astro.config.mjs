@@ -19,6 +19,8 @@ for (const fileName of readdirSync(journalDirectory)) {
 const isPublicSitemapPage = (page) => {
   const pathname = new URL(page).pathname;
   return !/^\/(?:admin|client|cooperation-status)(?:\/|$)/.test(pathname)
+    && !/^\/apply(?:\/|$)/.test(pathname)
+    && !/^\/projects\/preview(?:\/|$)/.test(pathname)
     && !/^\/404(?:\.html)?\/?$/.test(pathname);
 };
 

@@ -1,0 +1,62 @@
+---
+import { getOpenShootProjects } from '../../shared/shoot-projects.js';
+
+const projects = getOpenShootProjects().slice(0, 2);
+const statusLabel = '開放申請';
+---
+
+<section class="shoot-projects section container" aria-labelledby="shoot-projects-title">
+  <div class="shoot-projects__heading">
+    <div>
+      <p class="eyebrow">SHOOT PROJECTS</p>
+      <h2 id="shoot-projects-title">有明確方向的拍攝企劃</h2>
+      <p>企劃申請會先確認內容與檔期；送出不代表已錄取或完成預約。</p>
+    </div>
+    <a class="text-link" href="/projects/">瀏覽所有企劃</a>
+  </div>
+
+  {projects.length ? (
+    <div class="shoot-projects__grid">
+      {projects.map((project) => (
+        <article class="shoot-project-card">
+          <a class="shoot-project-card__link" href={`/projects/${project.slug}/`}>
+            <div class="shoot-project-card__copy">
+              <span class="shoot-project-card__status">{statusLabel}</span>
+              <h3>{project.title}</h3>
+              <p>{project.summary}</p>
+              <span class="shoot-project-card__more">看看這個企劃 →</span>
+            </div>
+          </a>
+        </article>
+      ))}
+    </div>
+  ) : (
+    <div class="shoot-projects__empty">
+      <p>目前沒有開放中的企劃。你仍可先透過一般合作入口聊聊想法。</p>
+      <a class="button button--secondary" href="/cooperation/">了解一般合作</a>
+    </div>
+  )}
+</section>
+
+<style>
+  .shoot-projects { padding-block: clamp(52px, 6vw, 88px); }
+  .shoot-projects__heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+  .shoot-projects__heading h2 { margin: 0 0 10px; font: 600 clamp(30px, 3.5vw, 48px)/1.35 var(--font-heading); }
+  .shoot-projects__heading p:not(.eyebrow) { max-width: 38em; margin: 0; color: var(--color-muted); line-height: 1.8; }
+  .shoot-projects__heading > a { flex: 0 0 auto; min-height: 44px; display: inline-flex; align-items: center; font-weight: 700; }
+  .shoot-projects__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .shoot-project-card { min-width: 0; border-radius: 28px; background: linear-gradient(135deg, #f1f9fc, #fff); box-shadow: var(--shadow-card); }
+  .shoot-project-card__link { display: block; height: 100%; padding: clamp(24px, 3vw, 36px); color: inherit; text-decoration: none; border-radius: inherit; }
+  .shoot-project-card__link:focus-visible { outline: 3px solid var(--color-primary-dark); outline-offset: 4px; }
+  .shoot-project-card__status { display: inline-flex; min-height: 30px; align-items: center; padding: 4px 12px; border-radius: 999px; background: #dff3fb; color: #246b88; font-size: .86rem; font-weight: 700; }
+  .shoot-project-card h3 { margin: 18px 0 8px; font: 600 clamp(22px, 2.4vw, 30px)/1.45 var(--font-heading); }
+  .shoot-project-card p { margin: 0; color: var(--color-muted); line-height: 1.8; }
+  .shoot-project-card__more { display: inline-block; margin-top: 20px; color: var(--color-primary-dark); font-weight: 700; }
+  .shoot-projects__empty { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 26px 30px; border-radius: 24px; background: var(--color-surface, #fff); box-shadow: var(--shadow-soft); }
+  .shoot-projects__empty p { margin: 0; color: var(--color-muted); line-height: 1.8; }
+  @media (max-width: 760px) {
+    .shoot-projects__heading { align-items: start; flex-direction: column; gap: 10px; }
+    .shoot-projects__grid { grid-template-columns: minmax(0, 1fr); }
+    .shoot-projects__empty { align-items: stretch; flex-direction: column; }
+  }
+</style>

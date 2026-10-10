@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import { SHOOT_PROJECTS, getShootProjectBySlug, projectContentIssues } from '../../../../shared/shoot-projects.js';
+import '../../../styles/inner-pages.css';
+
+export function getStaticPaths() {
+  // Astro development mode can render these local-only previews. Production
+  // builds return no preview paths, so draft details are not emitted as assets.
+  return import.meta.env.DEV ? SHOOT_PROJECTS.map((project) => ({ params: { slug: project.slug } })) : [];
+}
+
+const project = getShootProjectBySlug(Astro.params.slug);
+if (!project) throw new Error('找不到企劃草稿。');
+const issues = projectContentIssues(project);
+const display = (value) => typeof value === 'string' && value.trim() ? value : '待補資料';
+---
+
+<BaseLayout title={`草稿預覽：${project.title}｜Phox999`} description="本機企劃草稿預覽。" noindex referrer="no-referrer">
+  <Header />
+  <main class="inner-page project-preview" id="main-content" tabindex="-1">
+    <div class="container">
+      <section class="inner-panel project-preview__panel">
+        <p class="inner-kicker">LOCAL DRAFT PREVIEW</p>
+        <h1>{project.title}</h1>
+        <p class="project-preview__warning">此頁僅供本機開發預覽。草稿不會輸出到正式網站，也不會開放申請。</p>
+        {issues.length > 0 && <section aria-labelledby="preview-missing"><h2 id="preview-missing">尚缺內容</h2><ul>{issues.map((issue) => <li>{issue}</li>)}</ul></section>}
+        <dl>
+          <div><dt>企劃方向</dt><dd>{display(project.concept)}</dd></div>
+          <div><dt>封面</dt><dd>{project.cover ? <img src={project.cover} alt={project.coverAlt || '企劃封面待補替代文字'} /> : '待選照片'}</dd></div>
+          <div><dt>適合對象</dt><dd>{display(project.suitableFor)}</dd></div>
+          <div><dt>服裝與準備</dt><dd>{display(project.wardrobe)}<br />{display(project.preparation)}</dd></div>
+          <div><dt>區域與時間</dt><dd>{display(project.area)} · {display(project.dateNote)}</dd></div>
+          <div><dt>費用分攤</dt><dd>{display(project.costNote)}</dd></div>
+          <div><dt>照片交付</dt><dd>{display(project.deliveryNote)}</dd></div>
+          <div><dt>公開與標註</dt><dd>{display(project.publicationNote)}</dd></div>
+          <div><dt>參考作品</dt><dd>{project.referenceImages.length ? project.referenceImages.map((image) => image.src).join('、') : '待確認可使用的參考照片'}</dd></div>
+        </dl>
+        <a class="button button--secondary" href="/projects/">返回公開企劃</a>
+      </section>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .project-preview__panel { max-width: 900px; margin-inline: auto; }
+  .project-preview h1 { margin: 8px 0 16px; font: 600 clamp(30px, 4vw, 46px)/1.35 var(--font-heading); }
+  .project-preview__warning { padding: 14px 18px; border-radius: 16px; background: #fff6df; color: #715b20; line-height: 1.75; }
+  .project-preview dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 28px; margin: 28px 0; }
+  .project-preview dt { margin-bottom: 8px; color: var(--color-muted); }
+  .project-preview dd { margin: 0; line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; }
+  .project-preview dd img { display: block; max-width: 100%; border-radius: 16px; }
+  @media (max-width: 760px) { .project-preview dl { grid-template-columns: minmax(0, 1fr); } }
+</style>

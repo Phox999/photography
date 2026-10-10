@@ -162,7 +162,7 @@ async function removeObjects(config, paths) {
   }
 }
 
-export async function persistInquiry(config, payload, images, workflow) {
+export async function persistInquiry(config, payload, images, workflow, options = {}) {
   if (workflow) {
     const existing = await existingReceipt(config, workflow);
     if (existing) return existing;
@@ -185,6 +185,7 @@ export async function persistInquiry(config, payload, images, workflow) {
   let result;
   try {
     const row = { ...payload, ...(metadata.length ? { reference_images: metadata } : {}) };
+    if (typeof options.beforeCommit === 'function') await options.beforeCommit();
     if (workflow) {
       result = (await supabaseRequest(config, '/rest/v1/rpc/submit_workflow_inquiry', {
         method: 'POST', body: { p_submission_id: workflow.submissionId, p_token_hash: workflow.tokenHash,

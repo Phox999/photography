@@ -1,0 +1,88 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { getPublicShootProjects, getOpenShootProjects } from '../../../shared/shoot-projects.js';
+import { siteConfig } from '../../data/site';
+import '../../styles/inner-pages.css';
+
+const allProjects = getPublicShootProjects();
+const openProjects = getOpenShootProjects();
+const openIds = new Set(openProjects.map((project) => project.id));
+const pastProjects = allProjects.filter((project) => !openIds.has(project.id));
+const statusLabel = (project) => project.status === 'completed' ? '已完成'
+  : project.status === 'closed' || project.deadlineAt && Date.parse(project.deadlineAt) <= Date.now() ? '已截止' : '開放申請';
+const groups = [
+  { label: '目前開放', projects: openProjects },
+  { label: '先前企劃', projects: pastProjects },
+];
+---
+
+<BaseLayout
+  title="拍攝企劃｜Phox999 photography"
+  description="查看 Phox999 已確認內容的拍攝企劃、合作方向與申請方式。每份申請會再確認合作與日期，不會自動占用檔期。"
+>
+  <Header />
+  <main class="inner-page shoot-project-page" id="main-content" tabindex="-1">
+    <section class="container inner-heading" aria-labelledby="projects-title">
+      <p class="inner-kicker">SHOOT PROJECTS</p>
+      <h1 id="projects-title">先看企劃，再決定要不要申請。</h1>
+      <p class="inner-intro">每個企劃會說明拍攝方向、準備事項與合作條件。送出申請後，我會再確認合作與日期；申請不等於錄取或預約。</p>
+      <nav class="inner-tabs" aria-label="拍攝企劃導覽"><a href="/cooperation/">一般合作方式</a><a href={siteConfig.inquiryUrl} target="_blank" rel="noopener noreferrer" data-analytics-event="inquiry_click" data-analytics-placement="projects-general">一般合作表單</a></nav>
+    </section>
+
+    <div class="container shoot-project-groups">
+      {allProjects.length ? groups.filter((group) => group.projects.length).map((group) => (
+        <section class="shoot-project-group" aria-labelledby={`group-${group.label}`}>
+          <h2 id={`group-${group.label}`}>{group.label}</h2>
+          <div class="shoot-project-list">
+            {group.projects.map((project) => (
+              <article class="shoot-project-list-card">
+                <a class="shoot-project-list-card__link" href={`/projects/${project.slug}/`}>
+                  <img src={project.cover} alt={project.coverAlt} loading="lazy" decoding="async" />
+                  <div class="shoot-project-list-card__body">
+                    <span class={`shoot-project-badge shoot-project-badge--${openIds.has(project.id) ? 'open' : project.status}`}>{statusLabel(project)}</span>
+                    <h3>{project.title}</h3>
+                    <p>{project.summary}</p>
+                    <span class="shoot-project-list-card__meta">{project.area} · {project.dateNote}</span>
+                    <span class="shoot-project-list-card__more">看看這個企劃 →</span>
+                  </div>
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+      )) : (
+        <section class="inner-panel shoot-project-empty" aria-labelledby="project-empty-title">
+          <p class="eyebrow">MORE TO COME</p>
+          <h2 id="project-empty-title">目前沒有公開中的拍攝企劃。</h2>
+          <p>企劃內容確認後才會刊登。現在也可以從一般合作方式開始，聊聊你的拍攝想法。</p>
+          <div class="inner-actions"><a class="button button--primary" href="/cooperation/">了解一般合作</a><a class="button button--secondary" href={siteConfig.inquiryUrl} data-analytics-event="inquiry_click" data-analytics-placement="projects-empty">填寫一般合作意向</a></div>
+        </section>
+      )}
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .shoot-project-page { padding-bottom: 88px; }
+  .shoot-project-groups { display: grid; gap: 56px; }
+  .shoot-project-group h2 { margin: 0 0 20px; font: 600 clamp(25px, 3vw, 36px)/1.4 var(--font-heading); }
+  .shoot-project-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .shoot-project-list-card { min-width: 0; overflow: hidden; border-radius: 28px; background: #fff; box-shadow: var(--shadow-card); }
+  .shoot-project-list-card__link { display: grid; grid-template-columns: minmax(0, 1fr); color: inherit; text-decoration: none; }
+  .shoot-project-list-card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: #edf6fa; }
+  .shoot-project-list-card__body { display: grid; gap: 10px; align-content: start; padding: 24px; }
+  .shoot-project-list-card__body h3 { margin: 0; font: 600 24px/1.45 var(--font-heading); }
+  .shoot-project-list-card__body p, .shoot-project-list-card__meta { margin: 0; color: var(--color-muted); line-height: 1.8; }
+  .shoot-project-list-card__meta { font-size: .92rem; }
+  .shoot-project-badge { width: fit-content; padding: 5px 12px; border-radius: 999px; background: #eaf4f8; color: #456c7d; font-size: .86rem; font-weight: 700; }
+  .shoot-project-badge--open { background: #dff3fb; color: #246b88; }
+  .shoot-project-list-card__more { color: var(--color-primary-dark); font-weight: 700; }
+  .shoot-project-list-card__link:focus-visible { outline: 3px solid var(--color-primary-dark); outline-offset: -3px; }
+  .shoot-project-empty { max-width: 860px; margin-inline: auto; }
+  .shoot-project-empty h2 { margin: 8px 0 12px; font: 600 clamp(28px, 4vw, 40px)/1.4 var(--font-heading); }
+  .shoot-project-empty > p:not(.eyebrow) { max-width: 42em; color: var(--color-muted); line-height: 1.8; }
+  @media (max-width: 760px) { .shoot-project-list { grid-template-columns: minmax(0, 1fr); } .shoot-project-list-card__body { padding: 20px; } }
+</style>

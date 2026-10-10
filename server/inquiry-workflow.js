@@ -34,6 +34,13 @@ export async function prepareSubmission(body, payload, images) {
     description: payload.description, consent: payload.consent, reference_links: payload.reference_links ?? [],
     reference_images: await Promise.all(images.map(async (image) => ({ name: image.name, type: image.type, size: image.size, hash: await sha256(image.bytes) }))),
   };
+  // Keep the legacy canonical object byte-for-byte compatible. Project
+  // identity is added only for project requests and never includes mutable
+  // publication status or the public-content snapshot.
+  if (body.shoot_project_id !== undefined || body.shoot_project_revision !== undefined) {
+    canonical.shoot_project_id = body.shoot_project_id;
+    canonical.shoot_project_revision = body.shoot_project_revision;
+  }
   return { ...credentials, tokenHash: await sha256(credentials.token), requestHash: await sha256(JSON.stringify(canonical)) };
 }
 
@@ -115,7 +122,17 @@ export function publicProgress(data) {
     || (summary.description !== null && (typeof summary.description !== 'string' || summary.description.length > 2000))
     || !Array.isArray(summary.referenceLinks) || summary.referenceLinks.length > 3
     || summary.referenceLinks.some(link => typeof link !== 'string' || link.length > 2048 || !/^https?:\/\//.test(link))) throw upstream();
+  let shootProject = null;
+  if (data.shootProject !== undefined && data.shootProject !== null) {
+    const project = data.shootProject;
+    if (!project || typeof project !== 'object' || !/^[a-z0-9][a-z0-9-]{1,63}$/.test(project.id || '')
+      || !Number.isInteger(project.revision) || project.revision < 1 || project.revision > 1_000_000
+      || ['title', 'summary', 'area', 'dateNote', 'costNote', 'deliveryNote', 'publicationNote'].some((key) => typeof project[key] !== 'string' || !project[key].trim() || project[key].length > (key === 'title' ? 120 : key === 'summary' ? 400 : key === 'area' ? 160 : 1000))) throw upstream();
+    shootProject = { id: project.id, revision: project.revision, title: project.title, summary: project.summary,
+      area: project.area, dateNote: project.dateNote, costNote: project.costNote,
+      deliveryNote: project.deliveryNote, publicationNote: project.publicationNote };
+  }
   return { reference: data.reference, createdAt: data.createdAt, status: data.status,
     summary: { name: summary.name, collaborationType: summary.collaborationType, preferredDate: summary.preferredDate ?? null,
-      description: summary.description ?? null, referenceLinks: summary.referenceLinks }, confirmation };
+      description: summary.description ?? null, referenceLinks: summary.referenceLinks }, shootProject, confirmation };
 }

@@ -42,6 +42,9 @@ export function normalizeInquiryDraft(formData, styles = []) {
   const consentValue = get('consent');
   const description = text(get('description'));
   const selectedStyles = styles.map(text).filter(Boolean);
+  const shootProjectId = text(get('shoot_project_id'));
+  const rawProjectRevision = text(get('shoot_project_revision'));
+  const shootProjectRevision = /^\d{1,7}$/.test(rawProjectRevision) ? Number(rawProjectRevision) : null;
 
   return {
     name: text(get('name')),
@@ -52,6 +55,8 @@ export function normalizeInquiryDraft(formData, styles = []) {
     description,
     styles: selectedStyles,
     combinedDescription: composeInquiryDescription(description, selectedStyles),
+    shootProjectId,
+    shootProjectRevision,
     referenceLinks: links.links,
     referenceLinkError: links.error,
     consent: consentValue === true || consentValue === 'on' || consentValue === 'true',
@@ -69,7 +74,12 @@ export function validateInquiryDraft(draft) {
   if (!draft.collaborationType) return { field: 'collaboration_type', message: '請選擇合作類型。' };
   if (!COLLABORATION_TYPES.has(draft.collaborationType)) return { field: 'collaboration_type', message: '請選擇有效的合作類型。' };
   if (draft.preferredDate.length > 200) return { field: 'preferred_date', message: '偏好日期不可超過 200 字。' };
-  if (!draft.description && !draft.styles.length) return { field: 'description', message: '請選擇拍攝風格或填寫拍攝想法。' };
+  const projectIdPresent = Boolean(draft.shootProjectId);
+  const projectRevisionPresent = draft.shootProjectRevision !== null;
+  if (projectIdPresent !== projectRevisionPresent || projectIdPresent && (!/^[a-z0-9][a-z0-9-]{1,63}$/.test(draft.shootProjectId) || draft.collaborationType !== '主題合作')) {
+    return { field: 'shoot_project_id', message: '企劃選擇已失效，請重新選擇或改用一般合作。' };
+  }
+  if (!draft.description && !draft.styles.length && !projectIdPresent) return { field: 'description', message: '請選擇拍攝風格或填寫拍攝想法。' };
   if (draft.combinedDescription.length > DESCRIPTION_LENGTH) return { field: 'description', message: '拍攝想法與已選風格合計不可超過 2,000 字。' };
   if (draft.referenceLinkError) return { field: 'reference_links', message: draft.referenceLinkError };
   if (!draft.consent) return { field: 'consent', message: '請先同意資料使用說明。' };
@@ -87,5 +97,8 @@ export function buildInquiryPayload(draft) {
     description: draft.combinedDescription,
     reference_links: draft.referenceLinks,
     consent: draft.consent,
+    ...(draft.shootProjectId && Number.isInteger(draft.shootProjectRevision)
+      ? { shoot_project_id: draft.shootProjectId, shoot_project_revision: draft.shootProjectRevision }
+      : {}),
   };
 }
