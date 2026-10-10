@@ -13,6 +13,11 @@ export type CooperationProgress = {
 };
 const tokenPattern = /^[a-f0-9]{64}$/;
 const referencePattern = /^PHOX-[A-F0-9]{20}$/;
+export function normalizeInquiryReference(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const normalized = value.trim().toUpperCase();
+  return referencePattern.test(normalized) ? normalized : '';
+}
 const record = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const text = (value: unknown, max = 4000): value is string => typeof value === 'string' && value.length <= max;
 export function validTimestamp(value: unknown): value is string {

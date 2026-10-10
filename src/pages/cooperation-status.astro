@@ -5,12 +5,27 @@ import Footer from '../components/Footer.astro';
 import { siteConfig } from '../data/site';
 import '../styles/inner-pages.css';
 ---
-<BaseLayout title="合作進度｜phox999 photography" description="使用私人收件連結，查看本次合作意向與拍攝確認單。" noindex={true} referrer="no-referrer">
+<BaseLayout title="合作進度｜phox999 photography" description="使用查詢代碼或私人收件連結，查看本次合作意向與拍攝確認單。" noindex={true} referrer="no-referrer">
   <Header />
   <main id="main-content" class="cooperation-page inner-page" tabindex="-1">
     <div class="container cooperation-container">
       <header class="inner-heading cooperation-heading"><p class="inner-kicker">這次的合作</p><h1>從想法，到一起拍。</h1><p class="inner-intro">在這裡查看收件進度，以及雙方確認的拍攝安排。</p></header>
-      <section class="cooperation-card cooperation-gate" data-progress-gate aria-labelledby="progress-gate-title"><h2 id="progress-gate-title" data-gate-title>請從私人收件連結進入</h2><p data-gate-message>開啟送出合作意向後保存的完整連結，即可查看本次進度。</p><div class="cooperation-actions"><a class="button button--primary" href={siteConfig.mailtoUrl}>聯繫攝影師</a><button class="button button--secondary" type="button" data-progress-retry hidden>重新載入</button></div></section>
+      <section class="cooperation-card cooperation-gate" data-progress-gate aria-labelledby="progress-gate-title">
+        <h2 id="progress-gate-title" data-gate-title>查詢合作進度</h2>
+        <p data-gate-message>輸入送出合作意向後取得的查詢代碼，或使用私人收件連結。</p>
+        <form class="cooperation-code-form" data-code-form>
+          <label for="cooperation-code">查詢代碼</label>
+          <div class="cooperation-code-row">
+            <input id="cooperation-code" data-code-input type="text" maxlength="25" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PHOX-XXXXXXXXXXXXXXXXXXXX" aria-describedby="cooperation-code-help" />
+            <button class="button button--primary" type="submit" data-code-submit>查詢進度</button>
+          </div>
+          <p class="cooperation-code-help" id="cooperation-code-help">送出合作意向後會顯示代碼；代碼可查看你提交的內容，請妥善保存。</p>
+        </form>
+        <div class="cooperation-actions">
+          <a class="button button--secondary" href={siteConfig.mailtoUrl}>聯繫攝影師</a>
+          <button class="button button--secondary" type="button" data-progress-retry hidden>重新載入</button>
+        </div>
+      </section>
       <p class="cooperation-message" data-progress-message role="status" aria-live="polite"></p>
       <div data-progress-content hidden>
         <section class="cooperation-card" aria-labelledby="progress-title">
@@ -21,7 +36,7 @@ import '../styles/inner-pages.css';
         </section>
         <section class="cooperation-card cooperation-summary" aria-labelledby="summary-title"><h2 id="summary-title">你送來的拍攝想法</h2><dl class="cooperation-details"><div><dt>姓名／暱稱</dt><dd data-summary-name></dd></div><div><dt>合作類型</dt><dd data-summary-type></dd></div><div><dt>偏好日期</dt><dd data-summary-date></dd></div></dl><p class="cooperation-copy" data-summary-description></p><div data-summary-links-wrap hidden><h3>參考連結</h3><ul class="cooperation-links" data-summary-links></ul></div></section>
         <section class="cooperation-card cooperation-confirmation" data-confirmation hidden aria-labelledby="confirmation-title"><div class="cooperation-card-heading"><div><p class="cooperation-eyebrow">拍攝確認單</p><h2 id="confirmation-title">把這一天，留給拍攝。</h2></div><span class="cooperation-pill">安排已確認</span></div><p class="cooperation-muted" data-confirmation-version></p><dl class="cooperation-details confirmation-details"><div><dt>收件編號</dt><dd data-confirmation-reference></dd></div><div><dt>拍攝時間</dt><dd data-confirmation-time></dd></div><div><dt>集合地點</dt><dd data-confirmation-location></dd></div><div data-confirmation-map-wrap hidden><dt>集合地圖</dt><dd><a data-confirmation-map target="_blank" rel="noopener noreferrer">查看地圖</a></dd></div><div><dt>服裝準備</dt><dd data-confirmation-wardrobe></dd></div><div><dt>攜帶物品</dt><dd data-confirmation-bring></dd></div><div><dt>雨備安排</dt><dd data-confirmation-rain></dd></div><div><dt>交件約定</dt><dd data-confirmation-delivery></dd></div><div><dt>公開方式</dt><dd data-confirmation-publication></dd></div></dl><p class="cooperation-muted">如需調整，請聯繫攝影師再次確認；行事曆檔案不會自動同步後續變更。</p><div class="cooperation-actions confirmation-actions"><button class="button button--secondary" type="button" data-confirmation-print>列印確認單</button><button class="button button--primary" type="button" data-confirmation-calendar>加入行事曆</button></div></section>
-        <p class="cooperation-private">私人連結僅供本次合作使用，請勿公開分享。</p>
+        <p class="cooperation-private">查詢代碼與私人連結都可查看本次合作內容，請勿公開分享。</p>
       </div>
       <noscript><p class="cooperation-card">請開啟 JavaScript 查看合作進度，或直接聯繫攝影師確認。</p></noscript>
     </div>
@@ -29,10 +44,11 @@ import '../styles/inner-pages.css';
   <Footer />
 </BaseLayout>
 <script>
-  import { tokenFromFragment, progressFromResponse, formatShootTime, confirmationCalendar, safeWebLink, type CooperationProgress } from '../lib/inquiry-workflow';
+  import { tokenFromFragment, normalizeInquiryReference, progressFromResponse, formatShootTime, confirmationCalendar, safeWebLink, type CooperationProgress } from '../lib/inquiry-workflow';
   const $ = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
   const hadFragment = Boolean(window.location.hash);
   let token = tokenFromFragment(window.location.hash);
+  let reference = '';
   // The credential is kept only in this page's memory; it is never sent in a URL.
   if (window.location.hash || new URLSearchParams(window.location.search).has('token')) window.history.replaceState(null, '', new URL(window.location.pathname, window.location.origin).href);
   let data: CooperationProgress | null = null;
@@ -42,9 +58,10 @@ import '../styles/inner-pages.css';
   const write = (selector: string, value: string) => { $(selector).textContent = value; };
   const statusNames = { new: '已收到', reviewing: '查看中', contacted: '已聯繫', closed: '本次結束' };
   const explanations = { new: '已收到你的想法，攝影師會依主題與檔期查看。', reviewing: '正在查看拍攝方向與檔期，請留意你留下的聯絡方式。', contacted: '已開始聯繫討論；確定的拍攝安排會列在下方確認單。', closed: '本次合作意向已結束。如有新的想法，歡迎再聯繫。' };
-  function gate(title: string, message: string, retry = false) {
+  function gate(title: string, message: string, retry = false, showCode = true) {
     $('[data-progress-gate]').hidden = false; $('[data-progress-content]').hidden = true;
     write('[data-gate-title]', title); write('[data-gate-message]', message); $('[data-progress-retry]').hidden = !retry;
+    $<HTMLFormElement>('[data-code-form]').hidden = !showCode;
   }
   function render(progress: CooperationProgress) {
     $('[data-progress-gate]').hidden = true; $('[data-progress-content]').hidden = false;
@@ -77,16 +94,35 @@ import '../styles/inner-pages.css';
     }
   }
   async function load() {
-    if (!token || busy) return;
+    if ((!token && !reference) || busy) return;
+    const usingToken = Boolean(token);
     busy = true; controller = new AbortController(); const activeController = controller;
     const timer = window.setTimeout(() => activeController.abort(), 20_000);
-    $<HTMLButtonElement>('[data-progress-refresh]').disabled = true; $<HTMLButtonElement>('[data-progress-retry]').disabled = true;
+    $<HTMLButtonElement>('[data-progress-refresh]').disabled = true;
+    $<HTMLButtonElement>('[data-progress-retry]').disabled = true;
+    $<HTMLButtonElement>('[data-code-submit]').disabled = true;
     write('[data-progress-message]', '正在讀取合作進度…');
     try {
-      const response = await fetch('/api/cooperation', { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }, credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: activeController.signal });
-      if ([401, 403, 404, 410].includes(response.status)) {
-        token = ''; data = null; document.body.dataset.shootConfirmed = 'false';
-        gate('這個私人連結已無法使用', '連結可能已失效或被撤銷，請聯繫攝影師確認本次進度。'); write('[data-progress-message]', ''); return;
+      const response = usingToken
+        ? await fetch('/api/cooperation', { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }, credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: activeController.signal })
+        : await fetch('/api/cooperation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-PHOX-Request': '1', Accept: 'application/json' },
+          body: JSON.stringify({ reference }),
+          credentials: 'omit',
+          cache: 'no-store',
+          referrerPolicy: 'no-referrer',
+          signal: activeController.signal,
+        });
+      if ([400, 401, 403, 404, 410].includes(response.status)) {
+        token = ''; reference = ''; data = null; document.body.dataset.shootConfirmed = 'false';
+        gate(
+          usingToken ? '這個私人連結已無法使用' : '找不到這組查詢代碼',
+          usingToken ? '連結可能已失效或被撤銷，你也可以改用送出時取得的查詢代碼。' : '請確認代碼是否完整，例如 PHOX-XXXXXXXXXXXXXXXXXXXX。',
+        );
+        write('[data-progress-message]', '');
+        if (!usingToken) $<HTMLInputElement>('[data-code-input]').focus();
+        return;
       }
       if (!response.ok) throw new Error('unavailable');
       const parsed = progressFromResponse(await response.json());
@@ -97,9 +133,23 @@ import '../styles/inner-pages.css';
       else { gate('暫時無法讀取進度', '請稍後重新載入；若仍無法開啟，請聯繫攝影師。', true); write('[data-progress-message]', ''); }
     } finally {
       window.clearTimeout(timer); busy = false; controller = null;
-      $<HTMLButtonElement>('[data-progress-refresh]').disabled = false; $<HTMLButtonElement>('[data-progress-retry]').disabled = false;
+      $<HTMLButtonElement>('[data-progress-refresh]').disabled = false;
+      $<HTMLButtonElement>('[data-progress-retry]').disabled = false;
+      $<HTMLButtonElement>('[data-code-submit]').disabled = false;
     }
   }
+  $<HTMLFormElement>('[data-code-form]').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const input = $<HTMLInputElement>('[data-code-input]');
+    const normalized = normalizeInquiryReference(input.value);
+    if (!normalized) {
+      write('[data-progress-message]', '請輸入完整的 PHOX 查詢代碼。');
+      input.focus();
+      return;
+    }
+    token = ''; reference = normalized; data = null; input.value = normalized;
+    void load();
+  });
   $('[data-progress-refresh]').addEventListener('click', () => void load());
   $('[data-progress-retry]').addEventListener('click', () => void load());
   $('[data-confirmation-print]').addEventListener('click', () => { if (data?.confirmation && confirmationCalendar(data)) window.print(); });
@@ -111,8 +161,9 @@ import '../styles/inner-pages.css';
     write('[data-progress-message]', '已下載拍攝行事曆檔。請開啟檔案加入自己的行事曆；後續變更需重新下載。');
   });
   window.addEventListener('pagehide', () => { controller?.abort(); if (downloadURL) URL.revokeObjectURL(downloadURL); downloadURL = ''; });
-  if (token) { gate('正在讀取合作進度', '請稍候。'); void load(); }
-  else if (hadFragment) gate('私人連結不完整', '請重新開啟收件時保存的完整私人連結，或聯繫攝影師。');
+  if (token) { gate('正在讀取合作進度', '請稍候。', false, false); void load(); }
+  else if (hadFragment) gate('私人連結不完整', '你可以改用送出合作意向後取得的查詢代碼。');
+  else gate('查詢合作進度', '輸入送出合作意向後取得的查詢代碼，或使用私人收件連結。');
 </script>
 <style>
   .cooperation-page { padding-bottom: 80px; }
@@ -128,6 +179,12 @@ import '../styles/inner-pages.css';
   .cooperation-pill { display: inline-flex; padding: 8px 16px; background: #e7f5fb; color: #246b88; border-radius: 999px; font-weight: 700; white-space: nowrap; }
   .cooperation-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
   .cooperation-gate > p { margin-top: 14px; color: var(--color-muted); }
+  .cooperation-code-form { display: grid; gap: 10px; margin-top: 24px; max-width: 760px; }
+  .cooperation-code-form label { font-weight: 800; }
+  .cooperation-code-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: stretch; }
+  .cooperation-code-row input { width: 100%; min-height: 52px; border: 1px solid rgba(83, 126, 145, .28); border-radius: 16px; padding: 12px 16px; background: #fff; color: var(--color-text); font: inherit; text-transform: uppercase; letter-spacing: .035em; }
+  .cooperation-code-row input:focus { outline: 3px solid rgba(99, 186, 223, .22); border-color: #63badf; }
+  .cooperation-code-help { margin: 0 !important; color: var(--color-muted); font-size: .9rem; line-height: 1.7 !important; }
   .cooperation-message { margin: 18px 0; min-height: 24px; color: var(--color-muted); }
   .cooperation-timeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 26px 0; }
   .cooperation-timeline li { display: grid; gap: 12px; color: #647883; border-top: 3px solid #e8f0f4; padding-top: 14px; font-size: .9375rem; }
@@ -143,7 +200,7 @@ import '../styles/inner-pages.css';
   .cooperation-links :global(a), .cooperation-details a { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; border-radius: 999px; background: #edf7fc; color: var(--color-primary-dark); text-decoration: none; overflow-wrap: anywhere; }
   .cooperation-private { text-align: center; line-height: 1.8; }
   .cooperation-page [hidden] { display: none !important; }
-  @media (max-width: 600px) { .cooperation-details { grid-template-columns: 1fr; } .cooperation-timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; } .cooperation-actions .button { width: 100%; } }
+  @media (max-width: 600px) { .cooperation-details { grid-template-columns: 1fr; } .cooperation-timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; } .cooperation-code-row { grid-template-columns: 1fr; } .cooperation-code-row .button, .cooperation-actions .button { width: 100%; } }
   @media print {
     :global(body) { background: #fff !important; }
     :global(body > *:not(.cooperation-page)), .cooperation-heading, .cooperation-gate, .cooperation-message, .cooperation-card:not(.cooperation-confirmation), .cooperation-private, .confirmation-actions { display: none !important; }

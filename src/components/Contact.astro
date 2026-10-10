@@ -381,12 +381,17 @@ const showThemeImages = false;
         if (review) review.hidden = true;
         if (status) {
           const receiptUrl = result?.receipt?.url;
-          if (typeof receiptUrl === 'string' && /^\/cooperation-status\/#token=[a-f0-9]{64}$/i.test(receiptUrl)) {
-            status.replaceChildren(document.createTextNode('已收到合作意向。'));
+          const reference = result?.receipt?.reference;
+          const validUrl = typeof receiptUrl === 'string' && /^\/cooperation-status\/#token=[a-f0-9]{64}$/i.test(receiptUrl);
+          const validReference = typeof reference === 'string' && /^PHOX-[A-F0-9]{20}$/.test(reference);
+          if (validReference) {
+            status.replaceChildren(document.createTextNode('已收到合作意向。查詢代碼：'));
+            const code = document.createElement('code');
+            code.textContent = reference;
             const link = document.createElement('a');
-            link.href = receiptUrl;
-            link.textContent = '查看這次合作進度';
-            status.append(' ', link);
+            link.href = validUrl ? receiptUrl : '/cooperation-status/';
+            link.textContent = '查看申請狀況';
+            status.append(code, document.createTextNode('。請保存這組代碼。 '), link);
           } else {
             status.textContent = '已收到合作意向，我會再回覆確認檔期。';
           }
