@@ -12,6 +12,8 @@ Push `6d4429967443c17ba7979cccd808a12f00a8913b` 後的刷新（2026-10-10 10:17�
 
 這次更新後仍有未完成項目：apex HTTP 依舊 200 且沒有 `Location`；`www` 仍無 DNS；首頁沒有 GA4 Measurement ID／Analytics script。只讀 `wrangler whoami` 顯示 `zone:read`，未提供 DNS／Redirect Rule 寫入權限；未透過不足權限嘗試修改正式設定。Search Console／Bing 的驗證、提交與索引仍無帳戶證據。作品頁已補入攝影師提供的三組第一手案例；`src/components/BehindScenes.astro` 的現場側拍素材仍待整理。合作方／場地外部連結未新增，待取得對方同意。網站側 About／Person 結構資料已有「小蔡」、人像攝影師職稱及 Instagram `sameAs`；Instagram 公開頁本次回傳 cache miss，無法核對當前自介，跨平台文案一致性未驗。
 
+本輪案例文案建置驗證後，提交在本機 `8483bbbc010400b2ab26043d952247b2152b9e37`。使用者於 2026-10-10 再次明確授權推送；目前正推送至 `origin/main`，三組新增案例待正式頁面確認。先前正式站回查只涵蓋上段確認過的學院風／Journal 描述與分類修正。
+
 ## 1. Cloudflare 網域統一
 
 先在 Cloudflare Zone 核對 apex 記錄及現有規則，再修復或新增 proxied `www` DNS 記錄；本次檢查 `www` 無法解析。Single Redirect 需要請求主機經 Cloudflare proxy。[Cloudflare 操作文件](https://developers.cloudflare.com/rules/url-forwarding/single-redirects/create-dashboard/)說明建立方式；目前[官方方案配額表](https://developers.cloudflare.com/rules/url-forwarding/)列出 Free 可用 Single Redirects（每個 Zone 最多 10 條）。先確認既有規則數量，兩條規則可用現有方案完成，**不要升級方案**。
