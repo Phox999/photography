@@ -12,7 +12,9 @@ Push `6d4429967443c17ba7979cccd808a12f00a8913b` 後的刷新（2026-10-10 10:17�
 
 這次更新後仍有未完成項目：apex HTTP 依舊 200 且沒有 `Location`；`www` 仍無 DNS；首頁沒有 GA4 Measurement ID／Analytics script。只讀 `wrangler whoami` 顯示 `zone:read`，未提供 DNS／Redirect Rule 寫入權限；未透過不足權限嘗試修改正式設定。Search Console／Bing 的驗證、提交與索引仍無帳戶證據。作品頁已補入攝影師提供的三組第一手案例；`src/components/BehindScenes.astro` 的現場側拍素材仍待整理。合作方／場地外部連結未新增，待取得對方同意。網站側 About／Person 結構資料已有「小蔡」、人像攝影師職稱及 Instagram `sameAs`；Instagram 公開頁本次回傳 cache miss，無法核對當前自介，跨平台文案一致性未驗。
 
-本輪案例文案建置驗證後，提交在本機 `8483bbbc010400b2ab26043d952247b2152b9e37`。使用者於 2026-10-10 再次明確授權推送；目前正推送至 `origin/main`，三組新增案例待正式頁面確認。先前正式站回查只涵蓋上段確認過的學院風／Journal 描述與分類修正。
+2026-10-10 推送 `a0e3f83baa7308b8f44b3c2ee93100ad09fbfee7` 後，唯讀 GitHub 查詢確認 `origin/main` 同一 SHA。Wrangler serving version 為 `1ea0661f-d0bc-4deb-b515-c7954fb05baf`、100% traffic（建立於 10:52:43 UTC；無 Git SHA 對照）。河畔花期、巷弄拾光、羽翼之間三個正式作品頁均回 HTTP 200，且分別含有新增的第一手企劃／場景描述。初次檢查河畔頁仍命中舊快取；後續重查三頁都已命中新內容。沒有執行手動 deploy；此結果只證明本次檢查位置的公開回應。
+
+同次刷新首頁 HTTPS 回 200，HTML 未找到正式 `G-...` Measurement ID，也未找到載入 Google Analytics／Tag Manager 的 script src。`http://phox999.com/` 仍回 200、沒有 `Location`；`www.phox999.com` 仍無法解析。Search Console／Bing 驗證、sitemap 提交與索引證據仍未取得。
 
 ## 1. Cloudflare 網域統一
 

@@ -38,7 +38,7 @@
 
 ## P1：有第一手資料的代表作品案例
 
-攝影師在 2026-10-10 提供三組確認可公開的拍攝經驗：河畔花期、巷弄拾光、羽翼之間。已更新其靜態詳情頁的 description／SEO description 與作品解讀段落，補入企劃方向、實際場景、造型與構圖方式；隔離建置輸出的三頁已核對含有對應細節。沿用現有 slug、封面、作品排序和照片；寶藏巖既有場地申請提醒保留。三組案例來源與欄位對照記在 `docs/SEO-CONTENT-SOURCES.md`。程式與內容修改已提交本機 `8483bbb`；使用者於 2026-10-10 再次明確授權 push，現正推送並待正式頁面驗證。
+攝影師在 2026-10-10 提供三組確認可公開的拍攝經驗：河畔花期、巷弄拾光、羽翼之間。已更新其靜態詳情頁的 description／SEO description 與作品解讀段落，補入企劃方向、實際場景、造型與構圖方式；隔離建置輸出的三頁已核對含有對應細節。沿用現有 slug、封面、作品排序和照片；寶藏巖既有場地申請提醒保留。三組案例來源與欄位對照記在 `docs/SEO-CONTENT-SOURCES.md`。程式與內容修改已推送至 `origin/main`，commit `a0e3f83`；推送後正式 Worker 有新 serving version，三個作品頁也都在唯讀 GET 回 HTTP 200 並含有新增案例文字。第一次檢查仍取得舊快取，稍後重查通過；此證據只代表本次檢查位置，不代表所有 CDN edge 都同步完成。
 
 網站側 About 頁已將「小蔡」、Phox999 photography 和 Instagram `sameAs` 關聯；Instagram 個人檔案本次無法讀取其當前自介，跨平台逐字一致性未驗。沒有對外聯繫模特或場地方，也沒有新增第三方連結；取得對方同意前此項仍待辦。
 
@@ -84,6 +84,8 @@ dev server 可啟動並提供頁面；本機 Astro dev 對 Worker-only `/api/sit
 - Push 後唯讀 Wrangler 仍報 serving version `18297947-c7fa-44ba-a67a-77c267c68aa4`、100% traffic，建立於 2026-10-10 09:19:34 UTC；結果沒有對應 Git SHA，不能歸因本次補修。API 現行三筆分類仍是預期的棚拍／外拍／外拍，但正式學院風頁與 `what-is-tfp` HTML 仍回舊描述，故本次修正已 push 到 `origin/main`、尚無正式站已更新的證據。沒有手動 deploy。
 - 再刷新時 `origin/main` 已是 `100850b3e7d98dddfeccf928f0d931b06ba4e8a2`，Worker `c612015b-7983-4818-bea9-925461aea8ac` 服務 100%（建立於 2026-10-10 10:21:58 UTC）。正式學院風與 Journal 封面已顯示修正描述，三個作品詳情頁已顯示棚拍／外拍／外拍對應標題與標籤；這確認本次程式修正已上線。Wrangler 沒有提供 Git SHA 對照。
 - 仍待處理的 P0 是 apex HTTP→HTTPS 與 www DNS／轉址、GA4 正式 Measurement ID 和事件收件，以及 Search Console／Bing 的帳戶驗證、sitemap 提交和索引證據。只讀 Wrangler 權限目前僅顯示 `zone:read`，不足以寫入 DNS／Redirect Rule。
+- 2026-10-10 推送 `a0e3f83baa7308b8f44b3c2ee93100ad09fbfee7` 後，唯讀 `git ls-remote` 確認 `origin/main` 同一 SHA。Wrangler serving version 為 `1ea0661f-d0bc-4deb-b515-c7954fb05baf`、100% traffic、建立於 2026-10-10 10:52:43 UTC；Wrangler 不提供 Git SHA 對照，沒有手動 deploy。河畔花期、巷弄拾光、羽翼之間正式頁均回 HTTP 200，且各自的新企劃／場景文字均命中。推送後首次河畔頁讀到舊快取，後續讀取已命中新內容；此為本次檢查位置的觀察，不代表全球快取均已刷新。
+- 同次唯讀刷新：HTTPS apex 首頁 HTTP 200，未找到正式 GA4 Measurement ID 或 Analytics script src；`http://phox999.com/` 仍回 200、未轉址；`www.phox999.com` 仍無法解析。Search Console／Bing 驗證、sitemap 提交與索引仍無帳戶證據。
 - P1 原創案例已先使用攝影師提供的三組第一手紀錄；Behind Scenes 現場側拍素材仍待整理。網站 About 已連結「小蔡」、Phox999 photography 與 Instagram，但 Instagram 自介未讀取、跨平台文案一致性未驗；合作方／場地連結待取得對方同意。
 
 待辦是：Cloudflare proxied `www` DNS 與 HTTP→HTTPS／www→apex redirects；既有 GA4 ID 的環境接線與 DebugView 單筆事件驗收；Search Console／Bing 的既有帳戶驗證、提交 sitemap 和索引抽查；取得 Chrome DevTools MCP 後完成效能 trace；由有權限的人檢視 API 中敦煌／小桃兩段分類詞句。未建立帳號、升級付費方案、修改正式資料庫或送出合作表單。
