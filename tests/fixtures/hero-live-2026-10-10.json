@@ -1,0 +1,47 @@
+{
+  "snapshot": {
+    "source": "https://phox999.com/api/site-content",
+    "capturedAtUtc": "2026-10-10T08:03:43Z",
+    "capturedAtTaipei": "2026-10-10 16:03:43 +08:00",
+    "httpStatus": 200,
+    "sampleCount": 10
+  },
+  "announcement": "",
+  "faqs": [
+    {
+      "question": "我不會擺姿勢怎麼辦？",
+      "answer": "拍攝過程會協助引導姿勢、表情與動作，不需要事先有模特兒經驗。"
+    },
+    {
+      "question": "拍攝需要付費嗎？",
+      "answer": "互惠合作本身不收取拍攝費；若有棚租、場地或道具等額外支出，會在拍攝前討論如何分攤。"
+    },
+    {
+      "question": "多久可以拿到照片？",
+      "answer": "一般會在拍攝後 2–3 週交付，實際時間會依當月拍攝量調整。"
+    },
+    {
+      "question": "如果臨時有事要改期？",
+      "answer": "請盡早告知，我們會再確認彼此可配合的日期；多次臨時取消可能影響後續合作安排。"
+    },
+    {
+      "question": "如何申請合作？",
+      "answer": "點擊「填寫合作意向」留下拍攝想法與聯絡方式。我會依主題、檔期與合作方式回覆；送出意向不代表預約成立，時間以雙方確認為準。"
+    }
+  ],
+  "hero_title": "第一次互惠拍攝，\n也能安心開始。",
+  "hero_copy": "不論你是第一次拍照，還是想累積作品，\n都歡迎來一起討論創作。",
+  "hero_image_urls": [
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/b0c1ca7e-aebd-4410-8533-d0688ba55cef.webp",
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/af0451f8-f206-4d2f-905a-27278e877b96.webp",
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/66463a14-bb51-44d0-90c4-be169155ad9e.webp",
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/84b4ee3a-850a-4b6c-bc19-ed427617731a.webp",
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/a197a777-252f-4768-8676-5b309771d378.webp",
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/675b19b9-5afb-4966-8519-d4b1fb318f18.webp",
+    "/assets/portfolio/興華天橋/13.webp",
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/717cf049-12ae-42ab-b655-0d969a34c092.webp",
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/fd6b51b5-3864-43fc-8eb5-502acd974d52.webp",
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/c66dbfa6-7779-4fa5-9ef1-c638df4d6fc8.webp"
+  ],
+  "version": 8
+}

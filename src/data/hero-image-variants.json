@@ -1,0 +1,238 @@
+{
+  "snapshot": {
+    "source": "https://phox999.com/api/site-content",
+    "capturedAtUtc": "2026-10-10T08:03:43Z",
+    "capturedAtTaipei": "2026-10-10 16:03:43 +08:00",
+    "httpStatus": 200,
+    "sampleCount": 10
+  },
+  "defaultSource": "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/b0c1ca7e-aebd-4410-8533-d0688ba55cef.webp",
+  "variants": {
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/b0c1ca7e-aebd-4410-8533-d0688ba55cef.webp": {
+      "width": 5472,
+      "height": 3648,
+      "sourceBytes": 1061654,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/ce98b64365955713f161-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 26192
+        },
+        {
+          "src": "/assets/hero-api/ce98b64365955713f161-1600.webp",
+          "width": 1600,
+          "height": 1067,
+          "bytes": 75384
+        },
+        {
+          "src": "/assets/hero-api/ce98b64365955713f161-2560.webp",
+          "width": 2560,
+          "height": 1707,
+          "bytes": 214308
+        }
+      ]
+    },
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/af0451f8-f206-4d2f-905a-27278e877b96.webp": {
+      "width": 5472,
+      "height": 3648,
+      "sourceBytes": 387952,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/123c10851cdee3e1eea7-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 45960
+        },
+        {
+          "src": "/assets/hero-api/123c10851cdee3e1eea7-1600.webp",
+          "width": 1600,
+          "height": 1067,
+          "bytes": 83768
+        },
+        {
+          "src": "/assets/hero-api/123c10851cdee3e1eea7-2560.webp",
+          "width": 2560,
+          "height": 1707,
+          "bytes": 148822
+        }
+      ]
+    },
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/66463a14-bb51-44d0-90c4-be169155ad9e.webp": {
+      "width": 5472,
+      "height": 3648,
+      "sourceBytes": 321796,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/41a4224ba6bcb09509cd-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 24322
+        },
+        {
+          "src": "/assets/hero-api/41a4224ba6bcb09509cd-1600.webp",
+          "width": 1600,
+          "height": 1067,
+          "bytes": 52184
+        },
+        {
+          "src": "/assets/hero-api/41a4224ba6bcb09509cd-2560.webp",
+          "width": 2560,
+          "height": 1707,
+          "bytes": 103174
+        }
+      ]
+    },
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/84b4ee3a-850a-4b6c-bc19-ed427617731a.webp": {
+      "width": 5472,
+      "height": 3648,
+      "sourceBytes": 423778,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/b10e5f131613d5c701b8-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 35216
+        },
+        {
+          "src": "/assets/hero-api/b10e5f131613d5c701b8-1600.webp",
+          "width": 1600,
+          "height": 1067,
+          "bytes": 71558
+        },
+        {
+          "src": "/assets/hero-api/b10e5f131613d5c701b8-2560.webp",
+          "width": 2560,
+          "height": 1707,
+          "bytes": 133404
+        }
+      ]
+    },
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/a197a777-252f-4768-8676-5b309771d378.webp": {
+      "width": 5472,
+      "height": 3648,
+      "sourceBytes": 610218,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/104e8b79e102c33e067c-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 50502
+        },
+        {
+          "src": "/assets/hero-api/104e8b79e102c33e067c-1600.webp",
+          "width": 1600,
+          "height": 1067,
+          "bytes": 105404
+        },
+        {
+          "src": "/assets/hero-api/104e8b79e102c33e067c-2560.webp",
+          "width": 2560,
+          "height": 1707,
+          "bytes": 197972
+        }
+      ]
+    },
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/675b19b9-5afb-4966-8519-d4b1fb318f18.webp": {
+      "width": 4443,
+      "height": 2962,
+      "sourceBytes": 480854,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/62a3969859e9999d6ce8-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 46852
+        },
+        {
+          "src": "/assets/hero-api/62a3969859e9999d6ce8-1600.webp",
+          "width": 1600,
+          "height": 1067,
+          "bytes": 99302
+        },
+        {
+          "src": "/assets/hero-api/62a3969859e9999d6ce8-2560.webp",
+          "width": 2560,
+          "height": 1707,
+          "bytes": 197858
+        }
+      ]
+    },
+    "/assets/portfolio/興華天橋/13.webp": {
+      "width": 2400,
+      "height": 1600,
+      "sourceBytes": 344634,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/7a93ed2a1ea8132d0cb8-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 88568
+        },
+        {
+          "src": "/assets/hero-api/7a93ed2a1ea8132d0cb8-1600.webp",
+          "width": 1600,
+          "height": 1067,
+          "bytes": 176662
+        }
+      ]
+    },
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/717cf049-12ae-42ab-b655-0d969a34c092.webp": {
+      "width": 1870,
+      "height": 1246,
+      "sourceBytes": 66494,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/b1fe1ce43c23e742b2c6-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 25398
+        },
+        {
+          "src": "/assets/hero-api/b1fe1ce43c23e742b2c6-1600.webp",
+          "width": 1600,
+          "height": 1066,
+          "bytes": 46956
+        }
+      ]
+    },
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/fd6b51b5-3864-43fc-8eb5-502acd974d52.webp": {
+      "width": 1567,
+      "height": 1045,
+      "sourceBytes": 76688,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/5a895944501ab2a1d585-960.webp",
+          "width": 960,
+          "height": 640,
+          "bytes": 35548
+        }
+      ]
+    },
+    "https://pzfvgfodqkleanndsjzy.supabase.co/storage/v1/object/public/site-hero/c66dbfa6-7779-4fa5-9ef1-c638df4d6fc8.webp": {
+      "width": 3264,
+      "height": 1947,
+      "sourceBytes": 383616,
+      "candidates": [
+        {
+          "src": "/assets/hero-api/07e6d8242b6e2c3545ce-960.webp",
+          "width": 960,
+          "height": 573,
+          "bytes": 53698
+        },
+        {
+          "src": "/assets/hero-api/07e6d8242b6e2c3545ce-1600.webp",
+          "width": 1600,
+          "height": 954,
+          "bytes": 115456
+        },
+        {
+          "src": "/assets/hero-api/07e6d8242b6e2c3545ce-2560.webp",
+          "width": 2560,
+          "height": 1527,
+          "bytes": 217440
+        }
+      ]
+    }
+  }
+}

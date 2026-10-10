@@ -1,296 +1,534 @@
 {
+  "/assets/portfolio/%E4%B8%AD%E8%8F%AF%E5%A8%98/_I7A1739.webp": {
+    "width": 5472,
+    "height": 3648,
+    "variant640": "/assets/portfolio/%E4%B8%AD%E8%8F%AF%E5%A8%98/_I7A1739.seo-640.webp",
+    "variant": "/assets/portfolio/%E4%B8%AD%E8%8F%AF%E5%A8%98/_I7A1739.seo-1280.webp"
+  },
   "/assets/portfolio/%E4%B8%AD%E8%8F%AF%E5%A8%98/_I7A1740.webp": {
     "width": 5382,
     "height": 3588,
+    "variant640": "/assets/portfolio/%E4%B8%AD%E8%8F%AF%E5%A8%98/_I7A1740.seo-640.webp",
     "variant": "/assets/portfolio/%E4%B8%AD%E8%8F%AF%E5%A8%98/_I7A1740.seo-1280.webp"
   },
   "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/01.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/01.seo-640.webp",
     "variant": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/01.seo-1280.webp"
+  },
+  "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/03.webp": {
+    "width": 2400,
+    "height": 1600,
+    "variant640": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/03.seo-640.webp",
+    "variant": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/03.seo-1280.webp"
+  },
+  "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/05.webp": {
+    "width": 1600,
+    "height": 2400,
+    "variant640": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/05.seo-640.webp",
+    "variant": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/05.seo-1280.webp"
   },
   "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/14.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/14.seo-640.webp",
     "variant": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/14.seo-1280.webp"
   },
   "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/26.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/26.seo-640.webp",
     "variant": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/26.seo-1280.webp"
   },
   "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/39.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/39.seo-640.webp",
     "variant": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/39.seo-1280.webp"
   },
   "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/cover.seo-1280.webp"
   },
   "/assets/portfolio/%E5%85%89%E5%8A%8DJK/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%85%89%E5%8A%8DJK/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E5%85%89%E5%8A%8DJK/cover.seo-1280.webp"
   },
   "/assets/portfolio/%E5%8D%88%E5%BE%8C%E8%BB%8A%E7%AB%99/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%8D%88%E5%BE%8C%E8%BB%8A%E7%AB%99/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E5%8D%88%E5%BE%8C%E8%BB%8A%E7%AB%99/cover.seo-1280.webp"
   },
   "/assets/portfolio/%E5%9C%B0%E9%9B%B7%E7%B3%BB/LINE_ALBUM_202687_260921_2.webp": {
     "width": 1045,
-    "height": 1567
+    "height": 1567,
+    "variant640": "/assets/portfolio/%E5%9C%B0%E9%9B%B7%E7%B3%BB/LINE_ALBUM_202687_260921_2.seo-640.webp"
+  },
+  "/assets/portfolio/%E5%9C%B0%E9%9B%B7%E7%B3%BB/LINE_ALBUM_202687_260922_7.webp": {
+    "width": 1045,
+    "height": 1567,
+    "variant640": "/assets/portfolio/%E5%9C%B0%E9%9B%B7%E7%B3%BB/LINE_ALBUM_202687_260922_7.seo-640.webp"
   },
   "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/01.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/01.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/01.seo-1280.webp"
+  },
+  "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/04.webp": {
+    "width": 1600,
+    "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/04.seo-640.webp",
+    "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/04.seo-1280.webp"
+  },
+  "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/08.webp": {
+    "width": 1600,
+    "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/08.seo-640.webp",
+    "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/08.seo-1280.webp"
+  },
+  "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/10.webp": {
+    "width": 1600,
+    "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/10.seo-640.webp",
+    "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/10.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/25.webp": {
     "width": 2400,
     "height": 1600,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/25.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/25.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/49.webp": {
     "width": 2400,
     "height": 1600,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/49.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/49.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/74.webp": {
     "width": 2400,
     "height": 1600,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/74.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/74.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/cover.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/01.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/01.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/01.seo-1280.webp"
+  },
+  "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/03.webp": {
+    "width": 1600,
+    "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/03.seo-640.webp",
+    "variant": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/03.seo-1280.webp"
+  },
+  "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/05.webp": {
+    "width": 2400,
+    "height": 1600,
+    "variant640": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/05.seo-640.webp",
+    "variant": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/05.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/16.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/16.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/16.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/32.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/32.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/32.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/47.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/47.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/47.seo-1280.webp"
   },
   "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/cover.seo-1280.webp"
   },
   "/assets/portfolio/%E5%B0%8F%E6%A1%83%E7%85%A7%E7%89%87/MEITU_20260726_150554922.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/%E5%B0%8F%E6%A1%83%E7%85%A7%E7%89%87/MEITU_20260726_150554922.seo-640.webp",
     "variant": "/assets/portfolio/%E5%B0%8F%E6%A1%83%E7%85%A7%E7%89%87/MEITU_20260726_150554922.seo-1280.webp"
   },
   "/assets/portfolio/%E5%BB%A2%E5%9C%9F%E4%B8%96%E7%95%8C/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%BB%A2%E5%9C%9F%E4%B8%96%E7%95%8C/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E5%BB%A2%E5%9C%9F%E4%B8%96%E7%95%8C/cover.seo-1280.webp"
+  },
+  "/assets/portfolio/%E7%85%A7%E7%89%87%E5%88%86%E4%BA%AB/IMG_6090.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/%E7%85%A7%E7%89%87%E5%88%86%E4%BA%AB/IMG_6090.seo-640.webp",
+    "variant": "/assets/portfolio/%E7%85%A7%E7%89%87%E5%88%86%E4%BA%AB/IMG_6090.seo-1280.webp"
   },
   "/assets/portfolio/%E7%85%A7%E7%89%87%E5%88%86%E4%BA%AB/IMG_6121.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/%E7%85%A7%E7%89%87%E5%88%86%E4%BA%AB/IMG_6121.seo-640.webp",
     "variant": "/assets/portfolio/%E7%85%A7%E7%89%87%E5%88%86%E4%BA%AB/IMG_6121.seo-1280.webp"
   },
   "/assets/portfolio/%E8%88%88%E8%8F%AF%E5%A4%A9%E6%A9%8B/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E8%88%88%E8%8F%AF%E5%A4%A9%E6%A9%8B/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E8%88%88%E8%8F%AF%E5%A4%A9%E6%A9%8B/cover.seo-1280.webp"
   },
   "/assets/portfolio/%E8%97%8D%E8%89%B2%E8%A5%AF%E8%A1%AB/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E8%97%8D%E8%89%B2%E8%A5%AF%E8%A1%AB/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E8%97%8D%E8%89%B2%E8%A5%AF%E8%A1%AB/cover.seo-1280.webp"
   },
   "/assets/portfolio/%F0%9F%8C%99/IMG_0259.webp": {
     "width": 3599,
     "height": 5472,
+    "variant640": "/assets/portfolio/%F0%9F%8C%99/IMG_0259.seo-640.webp",
     "variant": "/assets/portfolio/%F0%9F%8C%99/IMG_0259.seo-1280.webp"
+  },
+  "/assets/portfolio/250817_Yune%20FF%20COS%20RE/_I7A7310.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/250817_Yune%20FF%20COS%20RE/_I7A7310.seo-640.webp",
+    "variant": "/assets/portfolio/250817_Yune%20FF%20COS%20RE/_I7A7310.seo-1280.webp"
   },
   "/assets/portfolio/250817_Yune%20FF%20COS%20RE/_I7A7596.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/250817_Yune%20FF%20COS%20RE/_I7A7596.seo-640.webp",
     "variant": "/assets/portfolio/250817_Yune%20FF%20COS%20RE/_I7A7596.seo-1280.webp"
+  },
+  "/assets/portfolio/260126_%E5%85%94%E5%AD%90%E5%A4%A9%E6%A9%8B%20RE/_I7A8993.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260126_%E5%85%94%E5%AD%90%E5%A4%A9%E6%A9%8B%20RE/_I7A8993.seo-640.webp",
+    "variant": "/assets/portfolio/260126_%E5%85%94%E5%AD%90%E5%A4%A9%E6%A9%8B%20RE/_I7A8993.seo-1280.webp"
   },
   "/assets/portfolio/260126_%E5%85%94%E5%AD%90%E5%A4%A9%E6%A9%8B%20RE/_I7A9003.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260126_%E5%85%94%E5%AD%90%E5%A4%A9%E6%A9%8B%20RE/_I7A9003.seo-640.webp",
     "variant": "/assets/portfolio/260126_%E5%85%94%E5%AD%90%E5%A4%A9%E6%A9%8B%20RE/_I7A9003.seo-1280.webp"
+  },
+  "/assets/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/_I7A0873.webp": {
+    "width": 5472,
+    "height": 3648,
+    "variant640": "/assets/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/_I7A0873.seo-640.webp",
+    "variant": "/assets/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/_I7A0873.seo-1280.webp"
   },
   "/assets/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/_I7A0894.webp": {
     "width": 5472,
     "height": 3648,
+    "variant640": "/assets/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/_I7A0894.seo-640.webp",
     "variant": "/assets/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/_I7A0894.seo-1280.webp"
   },
   "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3755.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3755.seo-640.webp",
     "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3755.seo-1280.webp"
+  },
+  "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3923.webp": {
+    "width": 5472,
+    "height": 3648,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3923.seo-640.webp",
+    "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3923.seo-1280.webp"
+  },
+  "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3999.webp": {
+    "width": 5472,
+    "height": 3648,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3999.seo-640.webp",
+    "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3999.seo-1280.webp"
   },
   "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4186.webp": {
     "width": 5472,
     "height": 3648,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4186.seo-640.webp",
     "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4186.seo-1280.webp"
+  },
+  "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4407.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4407.seo-640.webp",
+    "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4407.seo-1280.webp"
   },
   "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4408.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4408.seo-640.webp",
     "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4408.seo-1280.webp"
   },
   "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4511.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4511.seo-640.webp",
     "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4511.seo-1280.webp"
   },
   "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4577.webp": {
     "width": 5472,
     "height": 3648,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4577.seo-640.webp",
     "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A4577.seo-1280.webp"
   },
   "/assets/portfolio/260207_古亭河濱公園 RE/_I7A3755.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3755.seo-640.webp",
     "variant": "/assets/portfolio/260207_%E5%8F%A4%E4%BA%AD%E6%B2%B3%E6%BF%B1%E5%85%AC%E5%9C%92%20RE/_I7A3755.seo-1280.webp"
+  },
+  "/assets/portfolio/260222_%E8%8C%A8%E5%8E%B0%E8%A1%97%20RE/_I7A6191.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260222_%E8%8C%A8%E5%8E%B0%E8%A1%97%20RE/_I7A6191.seo-640.webp",
+    "variant": "/assets/portfolio/260222_%E8%8C%A8%E5%8E%B0%E8%A1%97%20RE/_I7A6191.seo-1280.webp"
   },
   "/assets/portfolio/260222_%E8%8C%A8%E5%8E%B0%E8%A1%97%20RE/_I7A6242.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260222_%E8%8C%A8%E5%8E%B0%E8%A1%97%20RE/_I7A6242.seo-640.webp",
     "variant": "/assets/portfolio/260222_%E8%8C%A8%E5%8E%B0%E8%A1%97%20RE/_I7A6242.seo-1280.webp"
+  },
+  "/assets/portfolio/260225_%E7%8D%A8%E7%AB%8B%E5%BB%A3%E5%A0%B4%20RE/_I7A8457.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260225_%E7%8D%A8%E7%AB%8B%E5%BB%A3%E5%A0%B4%20RE/_I7A8457.seo-640.webp",
+    "variant": "/assets/portfolio/260225_%E7%8D%A8%E7%AB%8B%E5%BB%A3%E5%A0%B4%20RE/_I7A8457.seo-1280.webp"
   },
   "/assets/portfolio/260225_%E7%8D%A8%E7%AB%8B%E5%BB%A3%E5%A0%B4%20RE/_I7A8459.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260225_%E7%8D%A8%E7%AB%8B%E5%BB%A3%E5%A0%B4%20RE/_I7A8459.seo-640.webp",
     "variant": "/assets/portfolio/260225_%E7%8D%A8%E7%AB%8B%E5%BB%A3%E5%A0%B4%20RE/_I7A8459.seo-1280.webp"
+  },
+  "/assets/portfolio/260228_KTM%20Malaysia+Lalaport%20RE/_I7A0548.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260228_KTM%20Malaysia+Lalaport%20RE/_I7A0548.seo-640.webp",
+    "variant": "/assets/portfolio/260228_KTM%20Malaysia+Lalaport%20RE/_I7A0548.seo-1280.webp"
   },
   "/assets/portfolio/260228_KTM%20Malaysia+Lalaport%20RE/_I7A0554.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260228_KTM%20Malaysia+Lalaport%20RE/_I7A0554.seo-640.webp",
     "variant": "/assets/portfolio/260228_KTM%20Malaysia+Lalaport%20RE/_I7A0554.seo-1280.webp"
   },
   "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4839.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4839.seo-640.webp",
     "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4839.seo-1280.webp"
+  },
+  "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4869.webp": {
+    "width": 4930,
+    "height": 3287,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4869.seo-640.webp",
+    "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4869.seo-1280.webp"
+  },
+  "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4927.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4927.seo-640.webp",
+    "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4927.seo-1280.webp"
   },
   "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5231.webp": {
     "width": 4345,
     "height": 2897,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5231.seo-640.webp",
     "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5231.seo-1280.webp"
   },
   "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5464.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5464.seo-640.webp",
     "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5464.seo-1280.webp"
+  },
+  "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5545.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5545.seo-640.webp",
+    "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5545.seo-1280.webp"
   },
   "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5558.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5558.seo-640.webp",
     "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5558.seo-1280.webp"
   },
   "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5659.webp": {
     "width": 3229,
     "height": 4844,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5659.seo-640.webp",
     "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A5659.seo-1280.webp"
   },
   "/assets/portfolio/260407_師大JK RE/_I7A4839.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4839.seo-640.webp",
     "variant": "/assets/portfolio/260407_%E5%B8%AB%E5%A4%A7JK%20RE/_I7A4839.seo-1280.webp"
+  },
+  "/assets/portfolio/260517_%E4%B8%AD%E4%BF%A1OL%20RE/_I7A5461.webp": {
+    "width": 5472,
+    "height": 3648,
+    "variant640": "/assets/portfolio/260517_%E4%B8%AD%E4%BF%A1OL%20RE/_I7A5461.seo-640.webp",
+    "variant": "/assets/portfolio/260517_%E4%B8%AD%E4%BF%A1OL%20RE/_I7A5461.seo-1280.webp"
   },
   "/assets/portfolio/260517_%E4%B8%AD%E4%BF%A1OL%20RE/_I7A5462.webp": {
     "width": 5472,
     "height": 3648,
+    "variant640": "/assets/portfolio/260517_%E4%B8%AD%E4%BF%A1OL%20RE/_I7A5462.seo-640.webp",
     "variant": "/assets/portfolio/260517_%E4%B8%AD%E4%BF%A1OL%20RE/_I7A5462.seo-1280.webp"
+  },
+  "/assets/portfolio/260530_%E5%8F%B0%E5%8D%9A%E5%A5%B3%E5%83%95%20RE/_I7A8600.webp": {
+    "width": 5472,
+    "height": 3648,
+    "variant640": "/assets/portfolio/260530_%E5%8F%B0%E5%8D%9A%E5%A5%B3%E5%83%95%20RE/_I7A8600.seo-640.webp",
+    "variant": "/assets/portfolio/260530_%E5%8F%B0%E5%8D%9A%E5%A5%B3%E5%83%95%20RE/_I7A8600.seo-1280.webp"
   },
   "/assets/portfolio/260530_%E5%8F%B0%E5%8D%9A%E5%A5%B3%E5%83%95%20RE/_I7A8781.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260530_%E5%8F%B0%E5%8D%9A%E5%A5%B3%E5%83%95%20RE/_I7A8781.seo-640.webp",
     "variant": "/assets/portfolio/260530_%E5%8F%B0%E5%8D%9A%E5%A5%B3%E5%83%95%20RE/_I7A8781.seo-1280.webp"
   },
   "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0001.webp": {
     "width": 5472,
     "height": 3648,
+    "variant640": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0001.seo-640.webp",
     "variant": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0001.seo-1280.webp"
+  },
+  "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0021.webp": {
+    "width": 5472,
+    "height": 3648,
+    "variant640": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0021.seo-640.webp",
+    "variant": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0021.seo-1280.webp"
+  },
+  "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0038.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0038.seo-640.webp",
+    "variant": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0038.seo-1280.webp"
   },
   "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0098.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0098.seo-640.webp",
     "variant": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0098.seo-1280.webp"
   },
   "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0200.webp": {
     "width": 3413,
     "height": 5120,
+    "variant640": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0200.seo-640.webp",
     "variant": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0200.seo-1280.webp"
+  },
+  "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0273.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0273.seo-640.webp",
+    "variant": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0273.seo-1280.webp"
   },
   "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0275.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0275.seo-640.webp",
     "variant": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0275.seo-1280.webp"
   },
   "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0306.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0306.seo-640.webp",
     "variant": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0306.seo-1280.webp"
+  },
+  "/assets/portfolio/260621_Y2K%20RE/_I7A8760.webp": {
+    "width": 3482,
+    "height": 5223,
+    "variant640": "/assets/portfolio/260621_Y2K%20RE/_I7A8760.seo-640.webp",
+    "variant": "/assets/portfolio/260621_Y2K%20RE/_I7A8760.seo-1280.webp"
   },
   "/assets/portfolio/260621_Y2K%20RE/_I7A8988.webp": {
     "width": 3543,
     "height": 5314,
+    "variant640": "/assets/portfolio/260621_Y2K%20RE/_I7A8988.seo-640.webp",
     "variant": "/assets/portfolio/260621_Y2K%20RE/_I7A8988.seo-1280.webp"
+  },
+  "/assets/portfolio/260712_%E9%81%8B%E5%8B%95%E9%A2%A8%20RE/_I7A3895.webp": {
+    "width": 3648,
+    "height": 5472,
+    "variant640": "/assets/portfolio/260712_%E9%81%8B%E5%8B%95%E9%A2%A8%20RE/_I7A3895.seo-640.webp",
+    "variant": "/assets/portfolio/260712_%E9%81%8B%E5%8B%95%E9%A2%A8%20RE/_I7A3895.seo-1280.webp"
   },
   "/assets/portfolio/260712_%E9%81%8B%E5%8B%95%E9%A2%A8%20RE/_I7A3916.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260712_%E9%81%8B%E5%8B%95%E9%A2%A8%20RE/_I7A3916.seo-640.webp",
     "variant": "/assets/portfolio/260712_%E9%81%8B%E5%8B%95%E9%A2%A8%20RE/_I7A3916.seo-1280.webp"
+  },
+  "/assets/portfolio/260827_%E6%95%A6%E7%85%8C%20RE/_I7A7401.webp": {
+    "width": 3378,
+    "height": 5067,
+    "variant640": "/assets/portfolio/260827_%E6%95%A6%E7%85%8C%20RE/_I7A7401.seo-640.webp",
+    "variant": "/assets/portfolio/260827_%E6%95%A6%E7%85%8C%20RE/_I7A7401.seo-1280.webp"
   },
   "/assets/portfolio/260827_%E6%95%A6%E7%85%8C%20RE/_I7A7616.webp": {
     "width": 3648,
     "height": 5472,
+    "variant640": "/assets/portfolio/260827_%E6%95%A6%E7%85%8C%20RE/_I7A7616.seo-640.webp",
     "variant": "/assets/portfolio/260827_%E6%95%A6%E7%85%8C%20RE/_I7A7616.seo-1280.webp"
   },
   "/assets/portfolio/6-20%E6%B5%B7%E9%82%8Ajk_/IMG_9498.webp": {
     "width": 5472,
     "height": 3648,
+    "variant640": "/assets/portfolio/6-20%E6%B5%B7%E9%82%8Ajk_/IMG_9498.seo-640.webp",
     "variant": "/assets/portfolio/6-20%E6%B5%B7%E9%82%8Ajk_/IMG_9498.seo-1280.webp"
   },
   "/assets/portfolio/maid/cover.webp": {
     "width": 2400,
     "height": 1600,
+    "variant640": "/assets/portfolio/maid/cover.seo-640.webp",
     "variant": "/assets/portfolio/maid/cover.seo-1280.webp"
   },
   "/assets/portfolio/信義聖誕節/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E4%BF%A1%E7%BE%A9%E8%81%96%E8%AA%95%E7%AF%80/cover.seo-1280.webp"
   },
   "/assets/portfolio/學院風棚拍/01.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/01.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/01.seo-1280.webp"
   },
   "/assets/portfolio/學院風棚拍/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AD%B8%E9%99%A2%E9%A2%A8%E6%A3%9A%E6%8B%8D/cover.seo-1280.webp"
   },
   "/assets/portfolio/寶藏嚴/cover.webp": {
     "width": 1600,
     "height": 2400,
+    "variant640": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/cover.seo-640.webp",
     "variant": "/assets/portfolio/%E5%AF%B6%E8%97%8F%E5%9A%B4/cover.seo-1280.webp"
   }
 }

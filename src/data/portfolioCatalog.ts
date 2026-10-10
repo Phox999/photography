@@ -83,7 +83,9 @@ const buildCatalog = (limit: number): PortfolioCollection[] => sources.flatMap((
   if (!existsSync(directory)) return [];
 
   const files = readdirSync(directory)
-    .filter((file) => file.toLowerCase().endsWith('.webp') && file.toLowerCase() !== 'cover.webp' && !file.toLowerCase().endsWith('.seo-1280.webp'))
+    .filter((file) => file.toLowerCase().endsWith('.webp')
+      && file.toLowerCase() !== 'cover.webp'
+      && !/\.seo-\d+\.webp$/i.test(file))
     .sort(naturalSort);
 
   if (!files.length) return [];

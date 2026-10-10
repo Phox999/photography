@@ -8,7 +8,7 @@ import { portfolioEditorial } from '../src/data/portfolioEditorial.ts';
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const publicRoot = path.join(projectRoot, 'public');
 const manifestPath = path.join(projectRoot, 'src', 'data', 'image-variants.json');
-const widthLimit = 1280;
+const widthLimits = [640, 1280];
 const quality = 82;
 const sourceUrls = new Set(portfolioCatalog.map(({ cover }) => cover));
 let apiFixturePath;
@@ -34,21 +34,14 @@ if (apiFixturePath) {
   }
 }
 
-let manifest = {};
-try {
-  const existingManifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-  if (!existingManifest || typeof existingManifest !== 'object' || Array.isArray(existingManifest)) {
-    throw new Error('The existing image variant manifest must be a JSON object.');
-  }
-  manifest = existingManifest;
-} catch (error) {
-  if (error?.code !== 'ENOENT') throw error;
-}
+const manifest = {};
 
 for (const [slug, editorial] of Object.entries(portfolioEditorial)) {
   for (const fileName of Object.keys(editorial.photos)) {
     sourceUrls.add(encodeURI(`/assets/portfolio/${slug}/${fileName}`));
   }
+  const collection = portfolioCatalog.find((item) => item.slug === slug);
+  for (const image of collection?.images.slice(0, 3) ?? []) sourceUrls.add(image);
 }
 
 for (const fileName of await readdir(path.join(projectRoot, 'src', 'content', 'journal'))) {
@@ -76,7 +69,8 @@ for (const sourceUrl of [...sourceUrls].sort()) {
   const original = await sharp(sourcePath, { failOn: 'error' }).metadata();
   if (!original.width || !original.height) throw new Error(`Could not read image dimensions: ${sourceUrl}`);
   const entry = { width: original.width, height: original.height };
-  if (original.width > widthLimit) {
+  for (const widthLimit of widthLimits) {
+    if (original.width <= widthLimit) continue;
     const extension = path.extname(sourcePath);
     const variantPath = sourcePath.slice(0, -extension.length) + `.seo-${widthLimit}.webp`;
     let variantInfo;
@@ -95,10 +89,10 @@ for (const sourceUrl of [...sourceUrls].sort()) {
 
     bytesSaved += Math.max(0, sourceInfo.size - variantInfo.size);
     const variantRelative = `/${path.relative(publicRoot, variantPath).replaceAll(path.sep, '/')}`;
-    entry.variant = encodeURI(variantRelative);
-  } else {
-    skippedSmall += 1;
+    if (widthLimit === 640) entry.variant640 = encodeURI(variantRelative);
+    else entry.variant = encodeURI(variantRelative);
   }
+  if (!entry.variant640 && !entry.variant) skippedSmall += 1;
   manifest[sourceUrl] = entry;
 }
 
@@ -110,7 +104,7 @@ console.log(JSON.stringify({
   skippedSmall,
   estimatedBytesSavedPerLargestSourceCandidate: bytesSaved,
   manifest: path.relative(projectRoot, manifestPath),
-  maximumWidth: widthLimit,
+  maximumWidths: widthLimits,
   quality,
   apiFixture: apiFixturePath ? path.relative(projectRoot, apiFixturePath) : undefined,
 }, null, 2));

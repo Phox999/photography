@@ -1,27 +1,29 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import fixture from './fixtures/portfolio-success.json' with { type: 'json' };
+import liveFixture from './fixtures/portfolio-live-2026-10-10.json' with { type: 'json' };
+import reorderedFixture from './fixtures/portfolio-reordered-2026-10-10.json' with { type: 'json' };
+import remoteCoverFixture from './fixtures/portfolio-remote-cover-synthetic-2026-10-10.json' with { type: 'json' };
+import heroFixture from './fixtures/hero-live-2026-10-10.json' with { type: 'json' };
 import { portfolioCatalog } from '../src/data/portfolioCatalog.ts';
 import { loadPublishedPortfolio } from '../src/lib/portfolio-content.ts';
 import { getImageDimensions, getImageSrcset, getPortfolioImageSources, setPortfolioImageSource } from '../src/lib/image-variants.ts';
 import { parsePortfolioRouteMap, serializePortfolioRouteMap } from '../src/lib/portfolio-routes.ts';
-import { replaceHeroImagesWhenLoaded } from '../src/lib/hero-images.ts';
+import { canReuseStaticHeroImage, heroImageSources, replaceHeroImagesWhenLoaded } from '../src/lib/hero-images.ts';
 
-test('successful portfolio API hydration preserves selected covers and uses all built static routes', async () => {
+test('captured public API covers hydrate by identity and map to every built static route', async () => {
   const routeMap = parsePortfolioRouteMap(serializePortfolioRouteMap(portfolioCatalog));
   assert.equal(routeMap.size, portfolioCatalog.length);
   assert.equal(routeMap.size, 29);
+  assert.equal(liveFixture.snapshot.httpStatus, 200);
+  assert.equal(liveFixture.snapshot.sampleCount, 29);
+  assert.ok(liveFixture.collections.some((item) => item.cover !== portfolioCatalog.find(({ slug }) => slug === item.slug)?.cover));
 
   const outsideFeatured = portfolioCatalog.slice(12, 15);
   assert.ok(outsideFeatured.every(({ slug }) => !portfolioCatalog.slice(0, 12).some((item) => item.slug === slug)));
-  const selectedSlugs = new Set(outsideFeatured.map(({ slug }) => slug));
-  const reorderedCollections = [
-    ...outsideFeatured,
-    ...portfolioCatalog.filter(({ slug }) => !selectedSlugs.has(slug)),
-  ].map(({ slug, title, category, description, cover, images, totalImages }) => ({
-    slug, title, category, description, cover, images, totalImages,
-  }));
-  const successResponse = { ...fixture, collections: reorderedCollections };
+  assert.equal(reorderedFixture.snapshot.synthetic, true);
+  assert.deepEqual(reorderedFixture.snapshot.movedSlugs, outsideFeatured.map(({ slug }) => slug));
+  assert.deepEqual(reorderedFixture.collections.slice(0, 3).map(({ slug }) => slug), outsideFeatured.map(({ slug }) => slug));
+  const successResponse = { collections: reorderedFixture.collections };
   const originalFetch = globalThis.fetch;
   const originalWindow = globalThis.window;
   globalThis.window = { location: { origin: 'https://phox999.com' } };
@@ -37,7 +39,14 @@ test('successful portfolio API hydration preserves selected covers and uses all 
       assert.equal(item.href, routeMap.get(item.slug));
       const dimensions = getImageDimensions(item.cover);
       assert.ok(dimensions, `${item.slug} must have known natural dimensions`);
-      if (dimensions.width > 1280) assert.ok(getImageSrcset(item.cover), `${item.slug} must have a responsive size candidate`);
+      if (dimensions.width > 640) {
+        const srcset = getImageSrcset(item.cover);
+        assert.ok(srcset, `${item.slug} must have a responsive size candidate`);
+        for (const candidate of srcset.split(', ')) {
+          const candidatePath = decodeURIComponent(candidate.split(' ')[0]).replace(/^\//, 'public/');
+          assert.ok((await import('node:fs')).existsSync(candidatePath), `missing responsive candidate ${candidatePath}`);
+        }
+      }
     }
     const firstCover = published[0].cover;
     const image = { dataset: {}, addEventListener() {}, removeAttribute() {}, currentSrc: '', _src: '',
@@ -46,6 +55,7 @@ test('successful portfolio API hydration preserves selected covers and uses all 
     assert.equal(image.src, firstCover, 'local API cover remains the selected source');
     assert.equal(image.width, getImageDimensions(firstCover).width);
     assert.equal(image.height, getImageDimensions(firstCover).height);
+    assert.ok(image.srcset.includes('640w'));
     assert.ok(image.srcset.includes('1280w'));
     assert.equal(image.sizes, '30vw');
 
@@ -59,18 +69,63 @@ test('successful portfolio API hydration preserves selected covers and uses all 
   }
 });
 
-test('uploaded Supabase covers get responsive candidates and retain the selected original as fallback', () => {
+test('uploaded Supabase covers use the selected original without known-failing transforms', () => {
   const selectedCover = 'https://project.supabase.co/storage/v1/object/public/site-portfolio/00000000-0000-4000-8000-000000000001.webp';
   const sources = getPortfolioImageSources(selectedCover);
+  assert.equal(sources.src, selectedCover);
   assert.equal(sources.fallbackSrc, selectedCover);
-  assert.match(sources.src, /\/storage\/v1\/render\/image\/public\/site-portfolio\//);
-  assert.match(sources.srcset ?? '', /width=640/);
-  assert.match(sources.srcset ?? '', /width=960/);
-  assert.match(sources.srcset ?? '', /width=1280/);
+  assert.equal(sources.srcset, undefined);
 });
 
-test('a failed public-cover transformation falls back to the exact API-selected cover', () => {
-  const selectedCover = 'https://project.supabase.co/storage/v1/object/public/site-portfolio/00000000-0000-4000-8000-000000000001.webp';
+test('synthetic public Supabase cover keeps the selected URL and skips unavailable local candidates', async () => {
+  assert.equal(remoteCoverFixture.snapshot.synthetic, true);
+  const selected = remoteCoverFixture.collections[0];
+  const originalFetch = globalThis.fetch;
+  const originalWindow = globalThis.window;
+  globalThis.window = { location: { origin: 'https://phox999.com' } };
+  globalThis.fetch = async () => new Response(JSON.stringify({ collections: [selected] }), { status: 200 });
+  try {
+    const routeMap = parsePortfolioRouteMap(serializePortfolioRouteMap(portfolioCatalog));
+    const [published] = await loadPublishedPortfolio(routeMap);
+    assert.equal(published?.cover, selected.cover);
+    assert.equal(published?.href, routeMap.get(selected.slug));
+
+    const sources = getPortfolioImageSources(published.cover);
+    assert.equal(sources.src, selected.cover);
+    assert.equal(sources.fallbackSrc, selected.cover);
+    assert.equal(sources.srcset, undefined);
+
+    const listeners = new Map();
+    const image = { dataset: {}, addEventListener(name, listener) { listeners.set(name, listener); },
+      set src(value) { this._src = value; }, get src() { return this._src; },
+      get naturalWidth() { return 1920; }, get naturalHeight() { return 1280; } };
+    setPortfolioImageSource(image, published.cover, '30vw');
+    listeners.get('load')();
+    assert.equal(image.src, selected.cover);
+    assert.equal(image.width, 1920);
+    assert.equal(image.height, 1280);
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.window = originalWindow;
+  }
+});
+
+test('a failed portfolio API request leaves the server-rendered content available', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalWindow = globalThis.window;
+  globalThis.window = { location: { origin: 'https://phox999.com' } };
+  globalThis.fetch = async () => new Response('{}', { status: 503 });
+  try {
+    assert.equal(await loadPublishedPortfolio(), null);
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.window = originalWindow;
+  }
+});
+
+test('a failed local API-cover candidate falls back to the exact API-selected photo', () => {
+  const selectedCover = liveFixture.collections.find(({ cover }) => cover.startsWith('/assets/portfolio/'))?.cover;
+  assert.ok(selectedCover);
   const listeners = new Map();
   const image = {
     dataset: {},
@@ -86,7 +141,10 @@ test('a failed public-cover transformation falls back to the exact API-selected 
   };
 
   setPortfolioImageSource(image, selectedCover, '28vw');
-  assert.notEqual(image.src, selectedCover);
+  assert.match(image.attributes.get('srcset'), /\.seo-640\.webp 640w/);
+  assert.match(image.attributes.get('srcset'), /\.seo-1280\.webp 1280w/);
+  assert.equal(image.src, selectedCover);
+  image.currentSrc = '/assets/portfolio/cover.seo-640.webp';
   listeners.get('error')();
   assert.equal(image.src, selectedCover);
   assert.equal(image.attributes.has('srcset'), false);
@@ -98,8 +156,32 @@ test('malformed static route maps do not turn unknown API slugs into guessed pag
   assert.equal(parsePortfolioRouteMap(JSON.stringify([['unknown', '/portfolio/']])).size, 0);
 });
 
+test('current public Hero API sources use exact local variants with the remote originals as fallback', () => {
+  assert.equal(heroFixture.snapshot.httpStatus, 200);
+  assert.ok(Array.isArray(heroFixture.faqs), 'captured fixture keeps the public response shape used by Hero hydration');
+  assert.equal(heroFixture.hero_image_urls.length, 10);
+  assert.equal(heroImageSources(heroFixture.hero_image_urls[0]).matchesStaticFallback, true);
+  for (const source of heroFixture.hero_image_urls) {
+    const candidates = heroImageSources(source);
+    assert.equal(candidates.fallbackSrc, source);
+    assert.ok(candidates.srcset?.includes('/assets/hero-api/'));
+    assert.ok(candidates.width && candidates.height);
+    assert.doesNotMatch(candidates.srcset, /\/render\/image\/public\//);
+  }
+  const futureUpload = 'https://project.supabase.co/storage/v1/object/public/site-hero/00000000-0000-4000-8000-000000000001.webp';
+  assert.deepEqual(heroImageSources(futureUpload), { src: futureUpload, fallbackSrc: futureUpload });
+});
+
+test('the preloaded static Hero is reused only for its matching decoded API source', async () => {
+  const source = heroFixture.hero_image_urls[0];
+  const image = { dataset: { originalSrc: source }, naturalWidth: 1600, async decode() {} };
+  assert.equal(await canReuseStaticHeroImage(image, source), true);
+  assert.equal(await canReuseStaticHeroImage(image, heroFixture.hero_image_urls[1]), false);
+  assert.equal(await canReuseStaticHeroImage({ ...image, dataset: { originalSrc: '' } }, source), false);
+});
+
 function heroImage(fallbackSucceeds) {
-  const original = 'https://project.supabase.co/storage/v1/object/public/site-hero/00000000-0000-4000-8000-000000000001.webp';
+  const original = heroFixture.hero_image_urls.find((url) => url.startsWith('https://'));
   const attributes = new Set();
   let src = '';
   return {
@@ -111,7 +193,7 @@ function heroImage(fallbackSucceeds) {
     set src(value) { src = value; },
     get currentSrc() { return src; },
     async decode() {
-      if (src.includes('/render/image/public/')) throw new Error('transformed candidate failed');
+      if (src.startsWith('/assets/hero-api/')) throw new Error('local derivative failed');
       if (src === original && fallbackSucceeds) {
         this.naturalWidth = 2400;
         return;

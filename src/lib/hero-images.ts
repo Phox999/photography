@@ -1,20 +1,19 @@
+import heroVariantManifest from '../data/hero-image-variants.json' with { type: 'json' };
+
 export interface HeroImageSources {
   src: string;
   srcset?: string;
   fallbackSrc: string;
   sizes?: string;
+  width?: number;
+  height?: number;
+  matchesStaticFallback?: boolean;
 }
 
 const HERO_SIZES = '(orientation: portrait) 150svh, 100vw';
-const SUPABASE_HERO_PATH = /^\/storage\/v1\/object\/public\/site-hero\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|webp)$/i;
-
-function transformedHeroUrl(source: string, width: number) {
-  const url = new URL(source);
-  url.pathname = url.pathname.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
-  url.searchParams.set('width', String(width));
-  url.searchParams.set('quality', '82');
-  return url.href;
-}
+type HeroVariantManifestEntry = { width: number; height: number; candidates: Array<{ src: string; width: number }> };
+const heroManifest = heroVariantManifest as { defaultSource?: string; variants: Record<string, HeroVariantManifestEntry> };
+const heroVariants = heroManifest.variants;
 
 export function heroImageSources(source: string): HeroImageSources {
   if (source === '/assets/hero.webp') {
@@ -26,19 +25,31 @@ export function heroImageSources(source: string): HeroImageSources {
     };
   }
 
-  try {
-    const url = new URL(source);
-    if (url.protocol === 'https:' && url.hostname.endsWith('.supabase.co') && SUPABASE_HERO_PATH.test(url.pathname)) {
-      return {
-        src: transformedHeroUrl(source, 1600),
-        srcset: [960, 1600, 2500].map((width) => `${transformedHeroUrl(source, width)} ${width}w`).join(', '),
-        fallbackSrc: source,
-        sizes: HERO_SIZES,
-      };
-    }
-  } catch { /* Keep the original source for unsupported or malformed URLs. */ }
+  const entry = heroVariants[source];
+  if (entry?.candidates.length) {
+    const candidates = [...entry.candidates].sort((a, b) => a.width - b.width);
+    return {
+      src: candidates.at(-1)!.src,
+      srcset: candidates.map(({ src, width }) => `${src} ${width}w`).join(', '),
+      fallbackSrc: source,
+      sizes: HERO_SIZES,
+      width: entry.width,
+      height: entry.height,
+      ...(source === heroManifest.defaultSource ? { matchesStaticFallback: true } : {}),
+    };
+  }
 
   return { src: source, fallbackSrc: source };
+}
+
+export async function canReuseStaticHeroImage(image: HTMLImageElement, source: string): Promise<boolean> {
+  if (!heroImageSources(source).matchesStaticFallback || image.dataset.originalSrc !== source) return false;
+  try {
+    await image.decode();
+    return image.naturalWidth > 0;
+  } catch {
+    return false;
+  }
 }
 
 export async function loadHeroImageWithFallback(image: HTMLImageElement): Promise<boolean> {

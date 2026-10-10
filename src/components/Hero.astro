@@ -1,23 +1,28 @@
 ---
 import { defaultHeroContent, siteConfig } from '../data/site';
 import { getPublicImageDimensions } from '../lib/image-dimensions';
+import heroManifest from '../data/hero-image-variants.json' with { type: 'json' };
+import { heroImageSources } from '../lib/hero-images';
 
-const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.webp');
+const initialHeroSource = heroManifest.defaultSource;
+const initialHeroSources = initialHeroSource ? heroImageSources(initialHeroSource) : undefined;
+const heroImageDimensions = await getPublicImageDimensions('/assets/hero.webp');
 ---
 
 <section class="hero" id="hero" aria-labelledby="hero-title" data-hero-carousel>
   <div class="hero__media" aria-hidden="true">
     <img
       class="hero__image is-active"
-      src="/assets/hero-2560.webp"
-      srcset="/assets/hero-960.webp 960w, /assets/hero-1440.webp 1440w, /assets/hero-2560.webp 2560w"
-      sizes="(orientation: portrait) 150svh, 100vw"
+      src={initialHeroSources?.srcset ? '/assets/hero.webp' : '/assets/hero-2560.webp'}
+      srcset={initialHeroSources?.srcset ?? '/assets/hero-960.webp 960w, /assets/hero-1440.webp 1440w, /assets/hero-2560.webp 2560w'}
+      sizes={initialHeroSources?.sizes ?? '(orientation: portrait) 150svh, 100vw'}
       alt=""
-      width={heroImageDimensions?.width}
-      height={heroImageDimensions?.height}
+      width={initialHeroSources?.width ?? heroImageDimensions?.width}
+      height={initialHeroSources?.height ?? heroImageDimensions?.height}
       loading="eager"
       fetchpriority="high"
       decoding="async"
+      data-original-src={initialHeroSource}
       data-hero-image
     />
   </div>
@@ -44,7 +49,7 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.we
 
 <script>
   import { loadPublicSiteContent } from '../lib/site-content';
-  import { loadHeroImageWithFallback, replaceHeroImagesWhenLoaded } from '../lib/hero-images';
+  import { canReuseStaticHeroImage, heroImageSources, loadHeroImageWithFallback, replaceHeroImagesWhenLoaded } from '../lib/hero-images';
 
   const heroCarousel = document.querySelector('[data-hero-carousel]');
 
@@ -58,7 +63,9 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.we
     const goToHeroImage = async (index: number) => {
       if (!images.length) return;
       const nextIndex = (index + images.length) % images.length;
-      if (!await loadHeroImageWithFallback(images[nextIndex])) return;
+      const nextImage = images[nextIndex];
+      const existingStaticImage = nextImage.dataset.staticHeroEquivalent === 'true' && nextImage.naturalWidth > 0;
+      if (!existingStaticImage && !await loadHeroImageWithFallback(nextImage)) return;
       images[currentIndex].classList.remove('is-active');
       currentIndex = nextIndex;
       images[currentIndex].classList.add('is-active');
@@ -69,19 +76,33 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.we
       if (copy) copy.textContent = content.hero_copy;
 
       if (media && content.hero_image_urls.length) {
+        const firstUrl = content.hero_image_urls[0];
+        const existingImage = images[currentIndex];
+        const reuseExistingImage = await canReuseStaticHeroImage(existingImage, firstUrl);
+        if (reuseExistingImage) existingImage.dataset.staticHeroEquivalent = 'true';
+
         const apiImages = content.hero_image_urls.map((url, index) => {
+          if (index === 0 && reuseExistingImage) return existingImage;
+          const sources = heroImageSources(url);
           const image = document.createElement('img');
           image.className = `hero__image ${index === 0 ? 'is-active' : ''}`;
           image.dataset.originalSrc = url;
           image.alt = '';
-          image.loading = 'eager';
+          if (sources.width && sources.height) {
+            image.width = sources.width;
+            image.height = sources.height;
+          }
+          image.loading = index === 0 ? 'eager' : 'lazy';
           image.decoding = 'async';
           if (index === 0) image.fetchPriority = 'high';
           image.dataset.heroImage = '';
           return image;
         });
 
-        if (await replaceHeroImagesWhenLoaded(media, apiImages)) {
+        const replaced = reuseExistingImage
+          ? (media.replaceChildren(...apiImages), true)
+          : await replaceHeroImagesWhenLoaded(media, apiImages);
+        if (replaced) {
           currentIndex = 0;
           images = apiImages;
         }

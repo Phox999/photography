@@ -27,9 +27,9 @@ export const portfolioEditorial: Record<string, PortfolioEditorial> = {
     ],
     photos: {
       '_I7A3755.webp': { alt: '模特兒蹲在河岸花草旁，身體向鏡頭側傾，穿著深藍與白色服裝', caption: '人物蹲在花草旁向鏡頭側傾，深藍與白色造型帶出清爽色彩。' },
-      '_I7A4186.webp': { alt: '模特兒手持花束坐在草地旁，背景留有河岸綠意', caption: '手持花束的坐姿近景，背景仍看得到周邊綠意。' },
+      '_I7A4186.webp': { alt: '模特兒坐在黃色花田前，雙手放在膝前，背景可見樹木與河岸欄杆', caption: '坐姿近景與黃色花田同框，人物和花草保留前後層次。' },
       '_I7A4408.webp': { alt: '模特兒坐在木構平台上並手持花束，身後可見木樑與花草', caption: '人物坐在木構平台上手持花束，木樑與周邊花草留在背景。' },
-      '_I7A4577.webp': { alt: '模特兒站在河岸花圃旁，雙手舉到頭頂附近，穿著粉色上衣', caption: '人物站在花圃旁舉起雙手，粉色上衣與花叢同框。' },
+      '_I7A4577.webp': { alt: '模特兒站在花田步道中，穿著深藍上衣與白色長裙，手持花束抬起一手', caption: '人物沿著花田步道站立，深藍上衣、白色長裙和手中花束一起入鏡。' },
     },
     relatedArticles: [
       { href: '/journal/guting-riverside-portrait-guide/', label: '古亭河濱拍攝準備指南' },
@@ -47,7 +47,7 @@ export const portfolioEditorial: Record<string, PortfolioEditorial> = {
       '01.webp': { alt: '模特兒沿著寶藏巖巷道站立，石牆與植物形成前後層次', caption: '巷道與植物形成不同深度，人物站姿融入聚落環境。' },
       '16.webp': { alt: '模特兒穿著淺色服裝靠在欄杆旁，背景有樹木與遠處建築', caption: '人物靠著欄杆停留，樹木與遠處建築延伸至背景。' },
       '32.webp': { alt: '模特兒坐在木椅上，身後是牆面與門口', caption: '木椅、牆面和門口構成簡潔的巷弄場景。' },
-      '47.webp': { alt: '模特兒坐在牆邊的紅木椅上，旁邊可見窗框與牆面', caption: '坐在紅木椅上的人物與窗框、牆面同框。' },
+      '47.webp': { alt: '模特兒坐在牆邊的木椅上，旁邊可見窗框與牆面', caption: '坐在木椅上的人物與窗框、牆面同框。' },
     },
     relatedArticles: [
       { href: '/journal/treasure-hill-portrait-guide/', label: '寶藏巖拍攝準備指南' },
@@ -100,7 +100,7 @@ export const portfolioEditorial: Record<string, PortfolioEditorial> = {
     photos: {
       '01.webp': { alt: '模特兒穿深藍與白色學院風服裝全身站立，雙手抬到額前', caption: '全身站姿與抬起的手勢在淺色背景前清楚呈現。' },
       '25.webp': { alt: '模特兒坐在淺色地面上，雙臂向左右伸展', caption: '坐在地面的姿勢和向兩側伸展的手臂形成開展的畫面。' },
-      '49.webp': { alt: '模特兒穿學院風服裝側坐在地面，以手臂支撐身體', caption: '人物側坐在地面用手臂支撐身體，這張照片沒有氣球道具。' },
+      '49.webp': { alt: '模特兒穿學院風服裝側坐在地面，以手臂支撐身體', caption: '側坐姿勢與向前支撐的手臂，讓人物線條延伸在淺色棚景中。' },
       '74.webp': { alt: '模特兒穿白色服裝坐在低桌旁，周圍有氣球與小型道具', caption: '白色造型、低桌與氣球道具一起構成這張棚拍畫面。' },
     },
     relatedArticles: [

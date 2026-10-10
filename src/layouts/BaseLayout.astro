@@ -89,6 +89,12 @@ const structuredDataJson = structuredData
 </style>
 
 <script>
+  import { initInquiryAnalytics } from '../lib/inquiry-analytics';
+
+  initInquiryAnalytics(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
+</script>
+
+<script>
   import { loadPublicSiteContent } from '../lib/site-content';
   const notice = document.querySelector<HTMLElement>('[data-public-announcement]');
   if (notice) {

@@ -3,7 +3,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 <AdminLayout title="回饋表單" current="feedback">
   <header class="admin-page-heading"><div><span class="admin-eyebrow">合作回饋</span><h1>回饋表單</h1></div><button type="button" class="admin-button admin-button--quiet" data-feedback-reload>重新載入</button></header>
-  <section class="admin-card feedback-controls" aria-label="篩選合作回饋"><label for="feedback-filter">處理狀態</label><select id="feedback-filter"><option value="pending">待確認</option><option value="approved">已公開</option><option value="declined">不公開</option><option value="all">全部</option></select><a class="admin-text-link" href="/feedback/" target="_blank" rel="noopener noreferrer">查看前台</a></section>
+  <section class="admin-card feedback-controls" aria-label="篩選合作回饋"><label for="feedback-filter">處理狀態</label><select id="feedback-filter"><option value="pending">待確認</option><option value="approved">已公開</option><option value="declined">不公開</option><option value="all">全部</option></select><a class="admin-text-link" href="/#feedback" target="_blank" rel="noopener noreferrer">查看前台</a></section>
   <p class="admin-status" role="status" aria-live="polite" data-feedback-admin-status>正在載入回饋…</p>
   <div class="feedback-admin-list" data-feedback-admin-list></div>
   <nav class="feedback-pagination" aria-label="回饋分頁"><button class="admin-button admin-button--quiet" type="button" data-feedback-prev disabled>上一頁</button><span data-feedback-page>第 1 頁</span><button class="admin-button admin-button--quiet" type="button" data-feedback-next disabled>下一頁</button></nav>
