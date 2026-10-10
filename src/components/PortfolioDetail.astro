@@ -5,6 +5,8 @@ import Footer from './Footer.astro';
 import { getRelatedPortfolioCollections, type PortfolioCollection } from '../data/portfolioCatalog';
 import { siteConfig } from '../data/site';
 import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
+import { getImageSrcset } from '../lib/image-variants';
+import { portfolioEditorial } from '../data/portfolioEditorial';
 
 interface Props {
   collection: PortfolioCollection;
@@ -12,6 +14,7 @@ interface Props {
 
 const { collection } = Astro.props;
 const { title, description, images, cover, href, category, location, styles, seoTitle, seoDescription } = collection;
+const editorial = portfolioEditorial[collection.slug];
 const relatedCollections = getRelatedPortfolioCollections(collection.slug);
 const imageSources = [...new Set([cover, ...images, ...relatedCollections.map((item) => item.cover)])];
 const imageDimensions = new Map<string, ImageDimensions>();
@@ -37,7 +40,10 @@ const structuredData = [
     contentUrl: new URL(cover, 'https://phox999.com').href,
     url: new URL(cover, 'https://phox999.com').href,
     name: `${title} 人像攝影作品封面`,
-    caption: description,
+    caption: editorial?.coverAlt ?? description,
+    creator: { '@type': 'Person', '@id': 'https://phox999.com/#photographer', name: '小蔡' },
+    width: imageDimensions.get(cover)?.width,
+    height: imageDimensions.get(cover)?.height,
     inLanguage: 'zh-Hant-TW',
   },
 ];
@@ -78,18 +84,24 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
       data-justified-gallery
     >
       {
-        images.map((image, index) => (
+        images.map((image, index) => {
+          const fileName = decodeURIComponent(new URL(image, 'https://phox999.com').pathname.split('/').at(-1) ?? '');
+          const photo = editorial?.photos[fileName];
+          return (
           <figure class="portfolio-justified__item">
             <button
               class="portfolio-justified__button"
               type="button"
               data-lightbox-open
               data-lightbox-index={index}
+              data-full-src={image}
               aria-label={`開啟 ${title} 照片 ${index + 1}`}
             >
               <img
                 src={image}
-                alt={`${title}｜${styles[0] ?? category}人像攝影作品 ${String(index + 1).padStart(2, '0')}`}
+                srcset={getImageSrcset(image)}
+                sizes="(max-width: 760px) 92vw, (max-width: 1200px) 45vw, 36vw"
+                alt={photo?.alt ?? `${title}｜${styles[0] ?? category}人像攝影作品 ${String(index + 1).padStart(2, '0')}`}
                 width={imageDimensions.get(image)?.width}
                 height={imageDimensions.get(image)?.height}
                 loading={index < 3 ? 'eager' : 'lazy'}
@@ -97,10 +109,32 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
                 fetchpriority={index === 0 ? 'high' : undefined}
               />
             </button>
+            {photo && <figcaption>{photo.caption}</figcaption>}
           </figure>
-        ))
+          );
+        })
       }
     </section>
+
+    {editorial && (
+      <section class="portfolio-editorial container" aria-labelledby="portfolio-editorial-title">
+        <p class="eyebrow">ABOUT THIS SERIES</p>
+        <h2 id="portfolio-editorial-title">{title}｜作品解讀</h2>
+        <p class="portfolio-editorial__intro">{editorial.introduction}</p>
+        <div class="portfolio-editorial__grid">
+          {editorial.sections.map((section) => (
+            <article>
+              <h3>{section.heading}</h3>
+              <p>{section.body}</p>
+            </article>
+          ))}
+        </div>
+        <nav class="portfolio-editorial__links" aria-label="相關拍攝指南">
+          <h3>相關拍攝指南</h3>
+          <ul>{editorial.relatedArticles.map((article) => <li><a href={article.href}>{article.label}</a></li>)}</ul>
+        </nav>
+      </section>
+    )}
 
     {relatedCollections.length > 0 && (
       <section class="portfolio-related container" aria-labelledby="portfolio-related-title">
@@ -112,7 +146,7 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
           {relatedCollections.map((item) => (
             <article class="portfolio-related__card">
               <a href={item.href} aria-label={`瀏覽${item.title}系列作品`}>
-                <img src={item.cover} alt={`${item.title}人像攝影作品封面`} width={imageDimensions.get(item.cover)?.width} height={imageDimensions.get(item.cover)?.height} loading="lazy" decoding="async" />
+                <img src={item.cover} srcset={getImageSrcset(item.cover)} sizes="(max-width: 720px) 46vw, 28vw" alt={`${item.title}人像攝影作品封面`} width={imageDimensions.get(item.cover)?.width} height={imageDimensions.get(item.cover)?.height} loading="lazy" decoding="async" />
                 <span>{item.category}</span>
                 <h3>{item.title}</h3>
               </a>
@@ -128,7 +162,7 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
         <h2 id="portfolio-cta-title">喜歡這種拍攝方向？</h2>
         <p>有類似的主題或畫面想法，也可以一起討論。</p>
       </div>
-      <a class="button button--primary" href={siteConfig.inquiryUrl}>開始討論拍攝</a>
+      <a class="button button--primary" href={siteConfig.inquiryUrl} data-analytics-event="inquiry_click" data-analytics-placement="portfolio-footer">開始討論拍攝</a>
     </section>
   </main>
 
@@ -163,7 +197,8 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
         if (!images.length) return;
         currentIndex = (index + images.length) % images.length;
         const currentImage = images[currentIndex];
-        lightboxImage.src = currentImage.currentSrc || currentImage.src;
+        const trigger = gallery.querySelector(`[data-lightbox-index="${currentIndex}"]`);
+        lightboxImage.src = trigger?.dataset.fullSrc || currentImage.currentSrc || currentImage.src;
         lightboxImage.alt = currentImage.alt || '';
         if (count) count.textContent = `${currentIndex + 1} / ${images.length}`;
       };
@@ -214,6 +249,18 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
   .portfolio-detail__meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
   .portfolio-detail__meta li { padding: 5px 11px; border-radius: var(--radius-pill); background: var(--color-surface-soft); color: var(--color-muted); font-size: .84rem; }
   .portfolio-detail__description { max-width: 48rem; }
+  .portfolio-justified__item { position: relative; }
+  .portfolio-justified__item figcaption { position: absolute; z-index: 1; right: 0; bottom: 0; left: 0; padding: 9px 12px; background: linear-gradient(transparent, rgb(0 0 0 / .72)); color: #fff; font-size: .76rem; line-height: 1.45; pointer-events: none; }
+  .portfolio-editorial { padding-block: 8px 64px; }
+  .portfolio-editorial h2 { margin: 0 0 12px; font-family: var(--font-heading); }
+  .portfolio-editorial__intro { max-width: 52rem; color: var(--color-muted); }
+  .portfolio-editorial__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 28px; }
+  .portfolio-editorial__grid article { padding: clamp(18px, 3vw, 28px); border: 1px solid var(--color-border, rgb(35 40 45 / .12)); border-radius: var(--radius-lg); background: var(--color-surface); }
+  .portfolio-editorial__grid h3, .portfolio-editorial__links h3 { margin: 0 0 8px; font-family: var(--font-heading); font-size: 1.05rem; }
+  .portfolio-editorial__grid p { margin: 0; color: var(--color-muted); line-height: 1.8; }
+  .portfolio-editorial__links { margin-top: 24px; }
+  .portfolio-editorial__links ul { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0; padding-left: 1.2rem; }
+  .portfolio-editorial__links a { color: var(--color-primary-dark); }
   .portfolio-related { padding-block: 24px 64px; }
   .portfolio-related .section-heading { margin-bottom: 22px; }
   .portfolio-related__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
@@ -230,5 +277,7 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
     .portfolio-related__card span { padding: 12px 12px 0; }
     .portfolio-related__card h3 { margin: 5px 12px 14px; font-size: 1rem; }
     .portfolio-detail__cta { align-items: flex-start; flex-direction: column; margin-bottom: 48px; }
+    .portfolio-editorial__grid { grid-template-columns: 1fr; gap: 12px; }
+    .portfolio-justified__item figcaption { padding: 7px 9px; font-size: .7rem; }
   }
 </style>

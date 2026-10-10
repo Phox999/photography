@@ -14,7 +14,7 @@ npm run build:worker
 npx wrangler dev --local
 ```
 
-`verify:seo` 需要先有 `dist/`。它檢查輸出頁面的 title、description、canonical、H1、圖片 alt、站內連結及錨點、圖片來源、JSON-LD、FAQ 初始內容與 schema 是否一致、robots.txt 和 sitemap。圖片可從 build 輸出或來源 `public/` 查找。也可用 `node scripts/verify-seo.mjs --dist <建置目錄> --public <public目錄>` 檢查隔離建置。
+`verify:seo` 需要先有 `dist/`。它檢查輸出頁面的 title、description、canonical、H1、圖片 alt、站內連結及錨點、圖片來源、JSON-LD、FAQ 初始內容與 schema 是否一致、robots.txt 和 sitemap。圖片可從 build 輸出或來源 `public/` 查找。也可用 `node scripts/verify-seo.mjs --dist <建置目錄> --public <public目錄>` 檢查隔離建置。`verify:worker` 則只從完整 `worker-dist/` 驗證，確認發佈套件包含所有本機圖片。
 
 `npm run build:worker` 會重建 `dist/` 和 `worker-dist/`。在包含使用者未提交產物的工作目錄執行前，先確認這兩個輸出目錄可安全重建。Worker 本機預覽可驗證靜態路由與 404；若要驗證 API，需提供隔離的本機測試設定。不要把正式資料庫寫入當成預覽測試。
 
@@ -30,6 +30,9 @@ npx wrangler dev --local
 - 互惠攝影指南補上目前公開的一般互惠規格：拍攝時長、服裝套數、交件數量與時間，並連回合作方式頁；文章更新日期同步標記為 2026-10-09。
 - Google Fonts 樣式表從 `global.css` 的 `@import` 移至 HTML `<head>` 的 stylesheet link，讓瀏覽器讀取頁面時就能發現字體請求。
 - Hero 加入 `srcset`／`sizes`，為 960、1440、2560px 螢幕提供對應 WebP；資料庫輪播指向原始 `/assets/hero.webp` 時也會改用響應式副本。原始照片和 OG 圖片路徑保留不動。
+- Portfolio API 更新卡片時沿用靜態頁的作品路由；舊的 `?collection=` 連結在找到對應靜態頁後會轉到該作品頁，避免站內連結與分享落在同一張作品總覽。
+- 首頁 API Hero 依 Supabase Storage 的圖片轉檔網址產生 960、1600、2500px 的候選圖片，先載入首張，輪播切換時再逐張載入；轉檔服務不可用時會退回原始圖片。
+- SEO 驗證器增加 Open Graph、Twitter 大圖、指定頁型 JSON-LD、sitemap 頁面覆蓋和 `srcset` 本機檔案檢查。`--strict-dist` 可避免從來源目錄補到發佈套件裡缺少的圖片。
 
 ## 驗證結果
 
@@ -45,7 +48,7 @@ npx wrangler dev --local
 | 合作 CTA | 所有「填寫合作意向／開始討論拍攝」連結都指向指定的 Google 表單 |
 | FAQ | 本機瀏覽器點開第一題後，答案正常顯示 |
 | 首頁與 Hero | 本機瀏覽器預覽首屏填滿視窗；Hero 圖有 `fetchpriority="high"`，CTA 使用合作意向表單網址 |
-| 手機／平板／桌機 | 390×844、768×1024、1440×900 視窗皆無文件水平溢位；Hero 高度分別為 844、1024、900px。390px DPR 1 載入 960px 圖，DPR 3 載入 1440px 圖；1440px 桌機載入 1440px 圖 |
+| 手機／平板／桌機 | 390×844、768×1024、1440×900 視窗皆無文件水平溢位；Hero 高度分別為 844、1024、900px。Hero 使用 960／1440／2560px 候選，直向螢幕依 `150svh` 選圖、橫向依 `100vw` 選圖，以符合 `object-fit: cover` 的裁切尺寸 |
 | Hero 圖片大小 | 原始 `hero.webp` 為 1,061,654 bytes；新增 960px／1440px／2560px 副本分別為 22,818／49,448／211,838 bytes。原始檔保留 |
 | `npm run dev` | 隔離預覽已 ready；首頁與 `/assets/hero-960.webp` 都回傳 HTTP 200。Vite 同時印出 `aria-query`／`axobject-query` 模組解析錯誤；此項目未影響 production build，但本機 dev 診斷仍有環境限制 |
 | 變更過的 TypeScript 資料模組 | 以已安裝的 `tsc --noEmit` 檢查通過 |
@@ -53,6 +56,21 @@ npx wrangler dev --local
 前一輪檢查發現 1,206 個圖片標記沒有 `width`／`height`；本階段已在 1,217 個靜態圖片參照中補齊，SEO 檢查器現在會把尺寸缺漏列為失敗。作品總覽的互動圖庫在瀏覽器端才建立圖片節點，不計入靜態 HTML 數量；其格線使用固定列高。無頭瀏覽器的 Google Fonts 外部請求被此執行環境拒絕，因此這次只能確認 stylesheet link 已輸出，不能確認 Google 字型實際下載；未執行 Lighthouse，也沒有正式流量的 CrUX 資料，所以沒有可報告的 CWV 效能分數。檔期選取值會留在本頁供使用者參照；因為目前沒有 Google Form 預填欄位 ID，CTA 不能自動帶入日期，頁面已提示使用者在表單中註明。本機 Worker 已抽查靜態路由與 404，API 行為未在 Worker runtime 驗證。
 
 Astro 的 `dev` 和 `build` 不執行 TypeScript 型別檢查。目前專案未直接安裝 `@astrojs/check`；因此 build 成功不代表型別檢查通過。性能分數也必須附上實際 Lighthouse 報告，不能由靜態 HTML 檢查推定。
+
+## 2026-10-09 後續修正與驗證
+
+- Portfolio 首頁與總覽在讀取 `/api/portfolio` 後沿用 SSR 作品專頁路由；舊的 `?collection=` 連結找到既有作品時轉到該作品的專頁。
+- 首頁 Hero 的 Supabase Storage 圖片使用 960、1600、2500px responsive 候選，第一張先載入，其他圖片輪播時再載入。若 Supabase Image Transform 無法回應，會回退到原圖。
+- 新增 `npm run verify:worker`，直接檢查完整 Worker 套件，避免只在來源目錄找到圖片而漏掉 Worker 發佈檔案。一般 `npm run verify:seo` 保留來源目錄 fallback，方便檢查隔離建置。
+
+| 檢查 | 結果 |
+| --- | --- |
+| `npm run build:worker` | 在隔離副本成功；52 個 HTML 頁面，完整產生 `worker-dist/` |
+| `npm run verify:seo` | 通過：52 頁、41 個 sitemap URL、1,317 個站內連結、1,217 張圖片、38 個 JSON-LD 區塊，圖片尺寸缺漏 0 項 |
+| `npm run verify:worker` | 通過相同檢查；`strictDist: true`，1,217 張本機圖片都在 Worker 輸出中 |
+| Astro 本機預覽 | `npm run dev -- --host 127.0.0.1 --port 4326` 啟動成功；瀏覽器可讀取首頁、導覽、作品連結、合作 CTA 與 FAQ 控制項 |
+
+本機 Astro dev 不包含 Cloudflare Worker 的 `/api/*` 執行環境，因此檔期等 API 呼叫在 dev 預覽回傳 404；這不代表 Worker API 已完成驗證。Worker API 與正式站結果仍須在提供本機 `.dev.vars` 的 Wrangler 預覽或部署後確認。此輪沒有 push 或部署。遠端 Hero 圖片是否能轉檔取決於 Supabase 專案的 Image Transform 功能設定；未啟用時仍會使用原圖。
 
 ## 發布後檢查
 

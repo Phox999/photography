@@ -16,7 +16,7 @@ const currentPath = Astro.url.pathname;
     {navItems.map((item) => <a href={item.href} aria-current={item.href === currentPath ? 'page' : undefined}>{item.label}</a>)}
   </nav>
 
-  <a class="button button--header" href={siteConfig.inquiryUrl}>
+  <a class="button button--header" href={siteConfig.inquiryUrl} data-analytics-event="inquiry_click" data-analytics-placement="header-desktop">
     填寫合作意向
   </a>
 
@@ -24,7 +24,7 @@ const currentPath = Astro.url.pathname;
     <summary aria-label="開啟導覽選單">選單</summary>
     <div class="mobile-nav__panel">
       {navItems.map((item) => <a href={item.href} aria-current={item.href === currentPath ? 'page' : undefined}>{item.label}</a>)}
-      <a href={siteConfig.inquiryUrl}>填寫合作意向</a>
+      <a href={siteConfig.inquiryUrl} data-analytics-event="inquiry_click" data-analytics-placement="header-mobile">填寫合作意向</a>
     </div>
   </details>
 </header>

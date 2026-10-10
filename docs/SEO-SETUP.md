@@ -52,4 +52,13 @@ npm run build
 npm run verify:seo
 ```
 
-`verify:seo` 檢查 build HTML、站內連結、圖片參照、JSON-LD、FAQ 初始 schema、robots.txt 和 sitemap。它不取代 Worker 預覽、正式部署驗證、TypeScript 型別檢查或 Lighthouse 效能量測。
+完整 Worker 資產包可接著執行：
+
+```powershell
+npm run build:worker
+npm run verify:worker
+```
+
+`verify:seo` 檢查 build HTML、站內連結、圖片參照、JSON-LD、FAQ 初始 schema、robots.txt 和 sitemap；`verify:worker` 會嚴格確認完整 `worker-dist/` 內的本機圖片，不會用來源 `public/` 掩蓋漏包。首頁輪播的 Supabase Storage 圖片會嘗試使用轉檔尺寸；若專案未啟用 Supabase Image Transform，瀏覽器會改載原圖，請依 [Supabase Image Transform 文件](https://supabase.com/docs/guides/storage/serving/image-transformations)確認該專案可使用此功能，才能完整取得遠端 Hero 的節省流量效益。這項圖片轉檔不需資料庫遷移。
+
+以上檢查不取代 Worker 預覽、正式部署驗證、TypeScript 型別檢查或 Lighthouse 效能量測。

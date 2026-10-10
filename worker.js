@@ -26,6 +26,7 @@ import { onRequest as clientDraft } from './functions/api/client/draft.js';
 import { onRequest as clientDownload } from './functions/api/client/download.js';
 import { onRequest as clientArchive } from './functions/api/client/archive.js';
 import { json } from './server/auth.js';
+import { redirectKnownLegacyPortfolioUrl } from './server/portfolio-legacy-redirect.js';
 
 async function publicAvailability(context) {
   if (context.request.method !== 'GET') {
@@ -103,6 +104,8 @@ export default {
       return jsonNotFound();
     }
 
+    const portfolioRedirect = await redirectKnownLegacyPortfolioUrl(request, env.ASSETS);
+    if (portfolioRedirect) return portfolioRedirect;
     return env.ASSETS.fetch(request);
   },
 };

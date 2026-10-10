@@ -186,6 +186,36 @@
   margin-top: .45em;
 }
 
+.journal-article__body table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.4em 0 1.8em;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: .91em;
+  line-height: 1.65;
+}
+
+.journal-article__body th,
+.journal-article__body td {
+  min-width: 128px;
+  padding: 11px 13px;
+  border: 1px solid var(--color-border, rgb(31 54 68 / 14%));
+  text-align: left;
+  vertical-align: top;
+}
+
+.journal-article__body th {
+  background: var(--color-surface-soft);
+  font-weight: 700;
+}
+
+.journal-article__body small {
+  color: var(--color-muted);
+  font-size: .82em;
+}
+
 .journal-article__body a,
 .journal-related a {
   color: var(--color-primary-dark);

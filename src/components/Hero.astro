@@ -11,7 +11,7 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.we
       class="hero__image is-active"
       src="/assets/hero-2560.webp"
       srcset="/assets/hero-960.webp 960w, /assets/hero-1440.webp 1440w, /assets/hero-2560.webp 2560w"
-      sizes="100vw"
+      sizes="(orientation: portrait) 150svh, 100vw"
       alt=""
       width={heroImageDimensions?.width}
       height={heroImageDimensions?.height}
@@ -34,6 +34,8 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.we
     <a
       class="button button--primary"
       href={siteConfig.inquiryUrl}
+      data-analytics-event="inquiry_click"
+      data-analytics-placement="hero"
     >
       填寫合作意向
     </a>
@@ -42,6 +44,7 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.we
 
 <script>
   import { loadPublicSiteContent } from '../lib/site-content';
+  import { loadHeroImageWithFallback, replaceHeroImagesWhenLoaded } from '../lib/hero-images';
 
   const heroCarousel = document.querySelector('[data-hero-carousel]');
 
@@ -52,11 +55,12 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.we
     const copy = heroCarousel.querySelector('[data-hero-copy]');
     let currentIndex = 0;
 
-    const goToHeroImage = (index) => {
+    const goToHeroImage = async (index: number) => {
       if (!images.length) return;
-
+      const nextIndex = (index + images.length) % images.length;
+      if (!await loadHeroImageWithFallback(images[nextIndex])) return;
       images[currentIndex].classList.remove('is-active');
-      currentIndex = (index + images.length) % images.length;
+      currentIndex = nextIndex;
       images[currentIndex].classList.add('is-active');
     };
 
@@ -68,35 +72,23 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero-2560.we
         const apiImages = content.hero_image_urls.map((url, index) => {
           const image = document.createElement('img');
           image.className = `hero__image ${index === 0 ? 'is-active' : ''}`;
-          const isOptimizedHero = url === '/assets/hero.webp';
-          image.src = isOptimizedHero ? '/assets/hero-2560.webp' : url;
-          if (isOptimizedHero) {
-            image.srcset = '/assets/hero-960.webp 960w, /assets/hero-1440.webp 1440w, /assets/hero-2560.webp 2560w';
-            image.sizes = '100vw';
-            image.width = 2560;
-            image.height = 1707;
-          }
+          image.dataset.originalSrc = url;
           image.alt = '';
-          image.loading = index === 0 ? 'eager' : 'lazy';
+          image.loading = 'eager';
           image.decoding = 'async';
+          if (index === 0) image.fetchPriority = 'high';
           image.dataset.heroImage = '';
           return image;
         });
 
-        try {
-          await apiImages[0].decode();
-          if (apiImages[0].naturalWidth > 0) {
-            currentIndex = 0;
-            images = apiImages;
-            media.replaceChildren(...images);
-          }
-        } catch {
-          // Keep the local fallback visible if the first API image cannot load.
+        if (await replaceHeroImagesWhenLoaded(media, apiImages)) {
+          currentIndex = 0;
+          images = apiImages;
         }
       }
 
       if (images.length > 1) {
-        window.setInterval(() => goToHeroImage(currentIndex + 1), 4600);
+        window.setInterval(() => void goToHeroImage(currentIndex + 1), 4600);
       }
     });
   }

@@ -5,6 +5,8 @@ import Footer from '../../components/Footer.astro';
 import { portfolioCatalog, portfolioCategories } from '../../data/portfolioCatalog';
 import { siteConfig } from '../../data/site';
 import { getPublicImageDimensions, type ImageDimensions } from '../../lib/image-dimensions';
+import { getImageDimensions, getImageSrcset } from '../../lib/image-variants';
+import { serializePortfolioRouteMap } from '../../lib/portfolio-routes';
 
 const coverDimensions = new Map<string, ImageDimensions>();
 await Promise.all(portfolioCatalog.map(async (collection) => {
@@ -26,7 +28,7 @@ const getShootDate = (slug: string) => {
 >
   <Header />
 
-  <main class="portfolio-index-page inner-page" id="main-content" tabindex="-1" data-portfolio-archive>
+  <main class="portfolio-index-page inner-page" id="main-content" tabindex="-1" data-portfolio-archive data-static-route-map={serializePortfolioRouteMap(portfolioCatalog)}>
     <section class="portfolio-index-hero container inner-heading" aria-labelledby="portfolio-title">
       <p class="eyebrow">PORTFOLIO</p>
       <h1 id="portfolio-title">全部作品</h1>
@@ -90,11 +92,14 @@ const getShootDate = (slug: string) => {
                 data-description={collection.description}
                 data-date={getShootDate(collection.slug)}
                 data-original-index={index}
+                data-slug={collection.slug}
               >
                 <a href={collection.href} aria-label={`瀏覽${collection.title}系列作品`}>
                   <div class="portfolio-index-card__media">
                     <img
                       src={collection.cover}
+                      srcset={getImageSrcset(collection.cover)}
+                      sizes="(max-width: 620px) 84vw, (max-width: 900px) 42vw, 30vw"
                       alt={`${collection.title}作品封面`}
                       width={coverDimensions.get(collection.cover)?.width}
                       height={coverDimensions.get(collection.cover)?.height}
@@ -151,7 +156,7 @@ const getShootDate = (slug: string) => {
       </div>
       <div class="inner-actions">
         <a class="button button--primary" href="/cooperation/">了解合作方式</a>
-        <a class="button button--secondary" href={siteConfig.inquiryUrl}>填寫合作意向</a>
+        <a class="button button--secondary" href={siteConfig.inquiryUrl} data-analytics-event="inquiry_click" data-analytics-placement="portfolio-index">填寫合作意向</a>
       </div>
     </section>
   </main>
@@ -472,6 +477,8 @@ const getShootDate = (slug: string) => {
 
 <script>
   import { loadPublishedPortfolio } from '../../lib/portfolio-content';
+  import { setPortfolioImageSource } from '../../lib/image-variants';
+  import { parsePortfolioRouteMap } from '../../lib/portfolio-routes';
 
   const getShootDate = (slug: string) => {
     const date = slug.match(/^(\d{2})(\d{2})(\d{2})/);
@@ -587,7 +594,7 @@ const getShootDate = (slug: string) => {
           button.dataset.lightboxIndex = String(index);
           button.setAttribute('aria-label', '開啟 ' + collection.title + ' 照片 ' + (index + 1));
           const image = document.createElement('img');
-          image.src = src;
+          setPortfolioImageSource(image, src, '(max-width: 760px) 92vw, (max-width: 1200px) 45vw, 36vw');
           image.alt = `${collection.title}作品照片 ${index + 1}`;
           image.loading = index < 3 ? 'eager' : 'lazy';
           image.decoding = 'async';
@@ -678,8 +685,16 @@ const getShootDate = (slug: string) => {
     apply();
 
     const hydratePublishedPortfolio = async () => {
-      publishedCollections = await loadPublishedPortfolio();
+      const staticRoutes = parsePortfolioRouteMap(archive.dataset.staticRouteMap);
+      publishedCollections = await loadPublishedPortfolio(staticRoutes);
       if (!publishedCollections || !grid) return;
+      const requestedSlug = new URL(window.location.href).searchParams.get('collection');
+      const requestedCollection = publishedCollections.find((item) => item.slug === requestedSlug);
+      if (requestedCollection && requestedCollection.href !== `${window.location.pathname}${window.location.search}`
+        && /^\/portfolio\/[^/]+\/$/.test(requestedCollection.href)) {
+        window.location.replace(requestedCollection.href);
+        return;
+      }
       grid.replaceChildren(...publishedCollections.map((collection, index) => {
         const article = document.createElement('article');
         article.className = 'portfolio-index-card';
@@ -689,13 +704,14 @@ const getShootDate = (slug: string) => {
         article.dataset.description = collection.description;
         article.dataset.date = getShootDate(collection.slug);
         article.dataset.originalIndex = String(index);
+        article.dataset.slug = collection.slug;
         const link = document.createElement('a');
         link.href = collection.href;
         link.setAttribute('aria-label', `瀏覽${collection.title}系列作品`);
         const media = document.createElement('div');
         media.className = 'portfolio-index-card__media';
         const image = document.createElement('img');
-        image.src = collection.cover;
+        setPortfolioImageSource(image, collection.cover, '(max-width: 620px) 84vw, (max-width: 900px) 42vw, 30vw');
         image.alt = `${collection.title}作品封面`;
         image.loading = index < 3 ? 'eager' : 'lazy';
         image.decoding = 'async';

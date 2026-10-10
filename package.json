@@ -7,8 +7,11 @@
     "dev": "astro dev",
     "build": "astro build",
     "build:worker": "npm run build && node scripts/prepare-worker-assets.mjs",
+    "verify:worker": "node scripts/verify-seo.mjs --dist worker-dist --strict-dist",
     "verify:seo": "node scripts/verify-seo.mjs",
     "images:webp": "node scripts/convert-webp.mjs",
+    "images:seo": "node scripts/generate-seo-image-variants.mjs",
+    "verify:routes": "node scripts/verify-portfolio-routes.mjs",
     "preview": "astro preview",
     "test": "node --test"
   },

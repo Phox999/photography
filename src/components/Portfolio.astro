@@ -1,6 +1,8 @@
 ---
 import { portfolioCatalog, portfolioCategories } from '../data/portfolioCatalog';
 import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
+import { getImageDimensions, getImageSrcset } from '../lib/image-variants';
+import { serializePortfolioRouteMap } from '../lib/portfolio-routes';
 
 const portfolioItems = portfolioCatalog.slice(0, 12);
 const imageDimensions = new Map<string, ImageDimensions>();
@@ -12,7 +14,7 @@ const countFor = (category: string) =>
   portfolioItems.filter((item) => category === '全部' || item.category === category).length;
 ---
 
-<section class="section portfolio-section container" id="portfolio" aria-labelledby="portfolio-title" data-portfolio-filter>
+<section class="section portfolio-section container" id="portfolio" aria-labelledby="portfolio-title" data-portfolio-filter data-static-route-map={serializePortfolioRouteMap(portfolioCatalog)}>
   <div class="section-heading section-heading--row">
     <div>
       <p class="eyebrow">PORTFOLIO</p>
@@ -46,10 +48,10 @@ const countFor = (category: string) =>
 
   <div class="portfolio-strip" id="featured-portfolio" aria-label="精選作品" data-portfolio-strip>
     {portfolioItems.map((item) => (
-      <article class="portfolio-card" data-portfolio-card data-tags={item.category}>
+      <article class="portfolio-card" data-portfolio-card data-tags={item.category} data-slug={item.slug}>
         <a class="portfolio-card__link" href={item.href} aria-label={`查看${item.title}作品`}>
           <div class="portfolio-card__media">
-            <img src={item.cover} alt={`${item.title}作品封面`} width={imageDimensions.get(item.cover)?.width} height={imageDimensions.get(item.cover)?.height} loading="lazy" decoding="async" />
+            <img src={item.cover} srcset={getImageSrcset(item.cover)} sizes="(max-width: 620px) 84vw, (max-width: 900px) 30vw, 22vw" alt={`${item.title}作品封面`} width={imageDimensions.get(item.cover)?.width ?? getImageDimensions(item.cover)?.width} height={imageDimensions.get(item.cover)?.height ?? getImageDimensions(item.cover)?.height} loading="lazy" decoding="async" />
           </div>
           <div class="portfolio-card__caption">
             <h3>{item.title}</h3>
@@ -125,6 +127,8 @@ const countFor = (category: string) =>
 
 <script>
   import { loadPublishedPortfolio } from '../lib/portfolio-content';
+  import { setPortfolioImageSource } from '../lib/image-variants';
+  import { parsePortfolioRouteMap } from '../lib/portfolio-routes';
 
   const portfolioSection = document.querySelector<HTMLElement>('[data-portfolio-filter]');
 
@@ -175,7 +179,8 @@ const countFor = (category: string) =>
     updateControls();
 
     const renderPublishedPortfolio = async () => {
-      const published = await loadPublishedPortfolio();
+      const staticRoutes = parsePortfolioRouteMap(portfolioSection.dataset.staticRouteMap);
+      const published = await loadPublishedPortfolio(staticRoutes);
       if (!published || !strip) return;
       const featured = published.slice(0, 12);
       strip.replaceChildren(...featured.map((item) => {
@@ -183,6 +188,7 @@ const countFor = (category: string) =>
         article.className = 'portfolio-card';
         article.dataset.portfolioCard = '';
         article.dataset.tags = item.category;
+        article.dataset.slug = item.slug;
         const link = document.createElement('a');
         link.className = 'portfolio-card__link';
         link.href = item.href;
@@ -190,7 +196,7 @@ const countFor = (category: string) =>
         const media = document.createElement('div');
         media.className = 'portfolio-card__media';
         const image = document.createElement('img');
-        image.src = item.cover;
+        setPortfolioImageSource(image, item.cover, '(max-width: 620px) 84vw, (max-width: 900px) 30vw, 22vw');
         image.alt = `${item.title}作品封面`;
         image.loading = 'lazy';
         image.decoding = 'async';

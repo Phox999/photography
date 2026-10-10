@@ -70,7 +70,7 @@ await Promise.all(plans.map(async (plan) => {
           {plan.bullets.map((bullet) => <li>{bullet}</li>)}
         </ul>
 
-        <a class="button button--primary" href={siteConfig.inquiryUrl}>
+        <a class="button button--primary" href={siteConfig.inquiryUrl} data-analytics-event="inquiry_click" data-analytics-placement="plans">
           填寫合作意向
         </a>
 

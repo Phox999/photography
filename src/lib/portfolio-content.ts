@@ -22,7 +22,9 @@ function validImageUrl(value: unknown): value is string {
   } catch { return false; }
 }
 
-export async function loadPublishedPortfolio(): Promise<PublishedPortfolioCollection[] | null> {
+export async function loadPublishedPortfolio(
+  staticRoutes: ReadonlyMap<string, string> = new Map(),
+): Promise<PublishedPortfolioCollection[] | null> {
   try {
     const response = await fetch('/api/portfolio', { credentials: 'omit', cache: 'no-store' });
     if (!response.ok) return null;
@@ -36,9 +38,16 @@ export async function loadPublishedPortfolio(): Promise<PublishedPortfolioCollec
       && validImageUrl(item.cover)
       && Array.isArray(item.images) && item.images.length > 0 && item.images.length <= 500 && item.images.every(validImageUrl)
       && Number.isInteger(item.totalImages) && item.totalImages! >= item.images.length)) return null;
-    return collections.map((item) => ({
-      slug: item.slug!, title: item.title!, category: item.category!, description: item.description!,
-      cover: item.cover!, images: item.images!, totalImages: item.totalImages!, href: `/portfolio/?collection=${encodeURIComponent(item.slug!)}`,
-    }));
+    return collections.map((item) => {
+      const slug = item.slug!;
+      const staticRoute = staticRoutes.get(slug);
+      return {
+        slug, title: item.title!, category: item.category!, description: item.description!,
+        cover: item.cover!, images: item.images!, totalImages: item.totalImages!,
+          href: staticRoute?.startsWith('/portfolio/') && /^\/portfolio\/[^/?#]+\/$/.test(staticRoute)
+          ? staticRoute
+          : `/portfolio/?collection=${encodeURIComponent(slug)}`,
+      };
+    });
   } catch { return null; }
 }

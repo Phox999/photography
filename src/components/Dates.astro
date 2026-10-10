@@ -30,7 +30,7 @@ const { id = 'dates' } = Astro.props;
           <input id="date-preference" type="date" readonly />
           <p class="availability-summary" data-date-summary aria-live="polite">尚未選擇日期，也可以在合作意向表單說明偏好時間。</p>
         </div>
-        <a class="button button--primary" href={siteConfig.inquiryUrl} data-date-continue>填寫合作意向</a>
+        <a class="button button--primary" href={siteConfig.inquiryUrl} data-date-continue data-analytics-event="inquiry_click" data-analytics-placement="availability">填寫合作意向</a>
 
       </div>
     </div>

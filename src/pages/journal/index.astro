@@ -5,6 +5,7 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { getPortfolioCollection } from '../../data/portfolioCatalog';
 import { getPublicImageDimensions, type ImageDimensions } from '../../lib/image-dimensions';
+import { getImageSrcset } from '../../lib/image-variants';
 import '../../styles/journal.css';
 
 const posts = (await getCollection('journal'))
@@ -46,7 +47,7 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat('zh-TW', {
             return (
               <article class="journal-card">
                 <a href={`/journal/${post.id}/`} class="journal-card__cover">
-                  <img src={cover} alt={`${post.data.title}文章封面`} width={dimensions?.width} height={dimensions?.height} loading="lazy" decoding="async" />
+                  <img src={cover} srcset={getImageSrcset(cover)} sizes="(max-width: 620px) 88vw, (max-width: 960px) 44vw, 29vw" alt={post.data.coverAlt ?? `${post.data.title}文章封面`} width={dimensions?.width} height={dimensions?.height} loading="lazy" decoding="async" />
                 </a>
                 <div class="journal-card__content">
                   <p class="journal-card__meta"><span>{post.data.category}</span><time datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate)}</time></p>

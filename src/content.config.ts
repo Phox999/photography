@@ -10,6 +10,7 @@ const journal = defineCollection({
     publishDate: z.date(),
     updatedDate: z.date().optional(),
     cover: z.string().optional(),
+    coverAlt: z.string().optional(),
     category: z.enum(['拍攝準備', '外拍地點', '攝影知識', '穿搭與造型', '合作指南']),
     tags: z.array(z.string()).default([]),
     location: z.string().optional(),

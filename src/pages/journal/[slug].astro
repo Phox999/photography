@@ -6,6 +6,7 @@ import Footer from '../../components/Footer.astro';
 import { getPortfolioCollection } from '../../data/portfolioCatalog';
 import { siteConfig } from '../../data/site';
 import { getPublicImageDimensions } from '../../lib/image-dimensions';
+import { getImageSrcset } from '../../lib/image-variants';
 import '../../styles/journal.css';
 
 export async function getStaticPaths() {
@@ -36,11 +37,16 @@ const structuredData = [
     '@id': `${canonical}#article`,
     headline: post.data.title,
     description: post.data.description,
-    image: new URL(cover, 'https://phox999.com').href,
+    image: {
+      '@type': 'ImageObject',
+      contentUrl: new URL(cover, 'https://phox999.com').href,
+      caption: post.data.coverAlt ?? `${post.data.title}文章封面`,
+      creator: { '@id': 'https://phox999.com/#photographer' },
+    },
     datePublished: post.data.publishDate.toISOString(),
     dateModified: updatedDate.toISOString(),
-    author: { '@type': 'Person', name: '小蔡', url: 'https://phox999.com/about/' },
-    publisher: { '@type': 'Organization', name: 'Phox999 photography', url: 'https://phox999.com/' },
+    author: { '@type': 'Person', '@id': 'https://phox999.com/#photographer', name: '小蔡', url: 'https://phox999.com/about/#photographer' },
+    publisher: { '@id': 'https://phox999.com/#photography-service' },
     mainEntityOfPage: canonical,
     articleSection: post.data.category,
     keywords: post.data.tags,
@@ -63,7 +69,7 @@ const structuredData = [
   description={post.data.description}
   canonical={canonical}
   ogImage={cover}
-  ogImageAlt={`${post.data.title}文章封面`}
+  ogImageAlt={post.data.coverAlt ?? `${post.data.title}文章封面`}
   ogType="article"
   structuredData={structuredData}
 >
@@ -82,7 +88,7 @@ const structuredData = [
         <h1>{post.data.title}</h1>
         <p class="journal-article__summary">{post.data.description}</p>
         <div class="journal-article__byline">
-          <span>小蔡 · Phox999 photography</span>
+          <span><a href="/about/#photographer">小蔡 · Phox999 photography</a></span>
           <span><time datetime={post.data.publishDate.toISOString()}>發布於 {formatDate(post.data.publishDate)}</time></span>
           {post.data.updatedDate && post.data.updatedDate.getTime() !== post.data.publishDate.getTime() && (
             <span><time datetime={post.data.updatedDate.toISOString()}>更新於 {formatDate(post.data.updatedDate)}</time></span>
@@ -91,7 +97,7 @@ const structuredData = [
       </header>
 
       <figure class="journal-article__cover">
-        <img src={cover} alt={`${post.data.title}文章封面`} width={coverDimensions?.width} height={coverDimensions?.height} fetchpriority="high" decoding="async" />
+        <img src={cover} srcset={post.data.cover && getImageSrcset(cover) ? getImageSrcset(cover) : undefined} sizes="(max-width: 760px) calc(100vw - 32px), 1120px" alt={post.data.coverAlt ?? `${post.data.title}文章封面`} width={coverDimensions?.width} height={coverDimensions?.height} fetchpriority="high" decoding="async" />
       </figure>
 
       <div class="journal-article__body">
@@ -128,7 +134,7 @@ const structuredData = [
           <h2>有想拍的主題嗎？</h2>
           <p>先分享你的想法和參考方向，我們再一起討論適合的安排。</p>
         </div>
-        <a class="button button--primary" href={siteConfig.inquiryUrl}>填寫合作意向</a>
+        <a class="button button--primary" href={siteConfig.inquiryUrl} data-analytics-event="inquiry_click" data-analytics-placement="journal-footer">填寫合作意向</a>
       </aside>
     </article>
   </main>
