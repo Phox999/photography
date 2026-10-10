@@ -17,7 +17,7 @@
 
 - 起始 HEAD：`01f552d2a085ce994e74ae996aa409a986f77dcf`（`main`）。核對時另區分本輪相關來源、使用者既有 `dist/`／`worker-dist/`／`.astro/` 與 hooks 變更，以及未追蹤原照和圖片素材。
 - `astro.config.mjs` 的 Journal sitemap lastmod 優先取 frontmatter `updatedDate`，否則用 `publishDate`；draft 不進公開 sitemap；值固定為文章日期的 UTC 午夜，沒有用建置當天時間更新全站。
-- HEAD 追蹤資產、候選引用 manifest、WebP 解碼和 Worker 打包一併核對。完成候選輸出有 3,096 個有效 WebP（約 1.73 GB），0 個 LFS pointer／解碼失敗；Worker 輸出亦為 3,096 個有效 WebP。Worker dry-run 讀取 3,289 個資產檔，0 個上傳。
+- HEAD 追蹤資產、候選引用 manifest、WebP 解碼和 Worker 打包一併核對。提交 worktree build 輸出有 3,096 個有效 WebP（約 1.73 GB），0 個 LFS pointer／解碼失敗；Worker 輸出亦為 3,096 個有效 WebP。Worker 包另保留原本已追蹤的 `assets/og-hero.jpg` 與 `assets/Profile-pic.jpg`；沒有納入未追蹤的使用者原照。
 - 本輪新增清單是 138 個被實際頁面引用的 WebP 衍生檔：112 個 SEO／作品圖片變體，加上 26 個 Hero API 尺寸候選；不把大量未追蹤 JPG／PNG 原照納入發布或 Git。候選全數保留原 API 封面照片身份。原照在工作目錄仍保留。
 - 候選 build 在 `.seo-round2-work-20261010/candidate-final-build-hydrated/` 隔離完成；提交來源重建在 `.seo-round2-work-20261010/commit-source/`。兩者不寫入主目錄 `dist/`、`worker-dist/`。根目錄原有差異未覆蓋。
 
@@ -46,7 +46,7 @@
 ## R05：建置、SEO strict 與 Worker
 
 - 隔離 Astro build：55 HTML pages。`verify-seo.mjs --strict-dist`：44 sitemap URLs、1,449 internal links、1,223 image references、41 schema blocks、9 published Journal、15 llms links；dimensions 缺漏 0、failures 0。Portfolio route check：29 routes／首頁與總覽映射全數一致。
-- Worker packaging 已在全新隔離輸出成功；同一 strict 結果、WebP 解碼 0 failure。Wrangler dry-run 讀取 3,289 files、script 129.27 KiB／gzip 29.74 KiB、exit 0，未上傳。Wrangler 曾印出寫入 AppData log 的 EPERM 訊息，但 dry-run 命令完成；此訊息不影響資產讀取結果。
+- Worker packaging 已在全新隔離輸出成功；同一 strict 結果、WebP 解碼 0 failure。提交版本 Wrangler dry-run 讀取 3,289 files、script 129.86 KiB／gzip 29.80 KiB、exit 0，未上傳，且成功列出 `ASSETS` binding。先前候選 dry-run 曾印出寫入 AppData log 的 EPERM 訊息但 exit 0；提交版未出現該錯誤。
 - 隔離 Astro dev 在 `127.0.0.1:4178` 啟動；首頁 GET 200，title、Hero、CTA 存在。Worker preview 已驗舊 query、未知 slug；Astro dev 本身沒有用來代替 Worker API 驗證。
 - 公開網域只做 GET：HTTP apex 200 無 Location；HTTPS apex 200；HTTP／HTTPS `www` 因 DNS 無記錄而無法解析。Cloudflare Free 目前官方 Single Redirect 配額為每 Zone 10 條，可用兩條 wildcard rule，不需升級；但沒有修改 DNS／規則，所以 canonical redirect **未完成**。具體 host 設定和驗證命令見 [SEO-EXTERNAL-SETUP.md](./SEO-EXTERNAL-SETUP.md)。
 - Search Console／Bing 驗證、sitemap 提交、索引／canonical 檢查與 GA4 DebugView 收件待帳戶權限；Worker 正式 deploy 未執行。沒有宣稱已上線、已索引、排名或 AI 引用改善。
@@ -78,4 +78,4 @@ Browser smoke 使用 public success fixture、重排 fixture及實際 Chrome cur
 
 ## Git 發布與正式環境狀態
 
-Git 只推送本文件列明的本輪檔案及 WebP 衍生資產到 `origin/main`；提交完成後以遠端 `main` 與本地 HEAD 相同作為推送確認。**Worker deploy 不在本輪執行範圍內**，不應把 GitHub push 說成正式網站發布。Cloudflare DNS／redirect、Search Console、Bing、GA4 正式收件和發布後成效均列外部／發布後待辦。
+程式、內容、測試及 138 個 manifest WebP 已由 `d1c9ae5d1ee2701e7077c9efa1be0fc111f6c4ad` 推送至 `origin/main`；push 回報 LFS 上傳 136 個唯一物件（10 MB），之後重新 fetch 確認本機 `HEAD` 與 `origin/main` 相同，`git lfs fsck` 通過。該提交沒有新增 JPG／PNG、原照、計劃文件或 build output。**Worker deploy 不在本輪執行範圍內**，GitHub push 不代表正式網站已發布。Cloudflare DNS／redirect、Search Console、Bing、GA4 正式收件和發布後成效均列外部／發布後待辦。
