@@ -71,7 +71,7 @@ fixture 由已提交的 portfolioCatalog 建立，資料形狀符合 API respons
 - CTA、公開內容和文件：src/components/Contact.astro、Dates.astro、Header.astro、Plans.astro、src/pages/behind-scenes.astro、cooperation.astro、index.astro、public/llms.txt、docs/SEO-AUDIT.md、docs/SEO-SETUP.md、docs/SEO-CONTENT-SOURCES.md、docs/SEO-EXTERNAL-SETUP.md、docs/SEO-AIEO-DELIVERY.md。
 - 圖片衍生資產：52 張 1280px SEO WebP variant（共約 6.59 MiB）；既有原圖未覆蓋或刪除。
 
-工作目錄中與本次 SEO 修正無關的 admin feedback 修改、原有 dist／.astro 變更、驗收／規格輸入文件，以及未追蹤原始照片均保留，不納入本次提交。照片庫共 2,290 個既存未追蹤檔案；本次沒有把它們批次加入 Git。需從 GitHub 獨立建置／部署的資產完整性須以正式資產來源或另行授權的資產同步範圍確認。
+工作目錄中與本次 SEO 修正無關的 admin feedback 修改、原有 dist／.astro 變更、驗收／規格輸入文件，以及未追蹤原始照片均保留，不納入本次提交。作品集目錄目前仍有 2,238 個未追蹤圖檔（2,174 JPEG、64 PNG），均未納入本次提交；另提交 52 個 SEO 衍生 WebP。需從 GitHub 獨立建置／部署的資產完整性須以正式資產來源或另行授權的資產同步範圍確認。
 
 ## 外部待辦與界線
 
