@@ -1002,7 +1002,7 @@
 .trust-wrap .trust-bar.trust-bar--stats {
   width: min(calc(100% - var(--home-content-gutter)), var(--home-content-max));
   max-width: var(--home-content-max);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
   align-items: stretch;
   padding: clamp(20px, 2.5vw, 30px) clamp(24px, 3.5vw, 48px);
@@ -1030,6 +1030,10 @@
 .trust-wrap .trust-bar.trust-bar--stats .trust-stat__content h2 {
   margin: 0;
   text-align: center;
+}
+
+.trust-wrap .trust-bar.trust-bar--stats .trust-stat--text .trust-stat__number span {
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
 }
 
 .reference-file-picker {

@@ -372,7 +372,7 @@ p {
 .trust-bar.trust-bar--stats {
   display: grid;
   width: min(calc(100% - 96px), 1480px);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
   align-items: center;
   justify-items: stretch;

@@ -1,19 +1,14 @@
 ---
 const items = [
-{
-  number: '80',
-  unit: '+',
-  title: '場合作經驗',
-},
   {
-    number: '8 ',
-    unit: '年',
-    title: '設計訓練',
+    number: '80',
+    unit: '+',
+    title: '場合作經驗',
   },
   {
-    number: '0',
+    number: '設計背景',
     unit: '',
-    title: '經驗OK',
+    title: '',
   },
 ];
 ---
@@ -22,15 +17,17 @@ const items = [
   <div class="trust-bar trust-bar--stats container">
     {
       items.map((item) => (
-        <article class="trust-stat trust-stat--vertical">
+        <article class:list={['trust-stat', 'trust-stat--vertical', !item.title && 'trust-stat--text']}>
           <div class="trust-stat__number">
             <span>{item.number}</span>
             {item.unit && <small>{item.unit}</small>}
           </div>
 
-          <div class="trust-stat__content">
-            <h2>{item.title}</h2>
-          </div>
+          {item.title && (
+            <div class="trust-stat__content">
+              <h2>{item.title}</h2>
+            </div>
+          )}
         </article>
       ))
     }
