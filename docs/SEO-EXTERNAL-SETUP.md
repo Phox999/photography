@@ -2,9 +2,9 @@
 
 查核日期：2026-10-10（Asia/Taipei）
 
-本輪完成程式與本機發布來源驗證；Git source push 與 Worker deploy 分開處理。**本次沒有部署 Worker，也沒有修改 Cloudflare DNS／Redirect Rules、Search Console、Bing Webmaster Tools、GA4 或社群帳戶**。目前執行環境沒有這些帳戶的可驗證登入狀態或資料收件證據，因此以下保留逐項待辦，不以本機測試代替正式結果，也不需要升級付費方案。
+本輪補修先在本機完成；未執行 Worker deploy，也沒有修改 Cloudflare DNS／Redirect Rules、Search Console、Bing Webmaster Tools、GA4 或社群帳戶。2026-10-10 17:56（Asia/Taipei）透過唯讀 Wrangler 部署狀態查詢，`photography` Worker 的 100% serving version 為 `18297947-c7fa-44ba-a67a-77c267c68aa4`，部署時間 2026-10-10 09:19:34 UTC；Wrangler 沒有在此結果中提供對應 Git commit，因此不把它歸因到本次未發布的本機補修。公開 API 與第二輪頁面目前確實可讀，不能籠統寫成「尚未部署」。Search Console／Bing／GA4 帳戶資料和正式事件收件仍未取得；以下分列公開端觀察和帳戶待辦，不以本機測試代替正式結果，也不需要升級付費方案。
 
-本次公開網域唯讀 GET 檢查（2026-10-10）：`http://phox999.com/` 回 HTTP 200 且沒有 `Location`（仍未導向 HTTPS）；`https://phox999.com/` 回 HTTP 200；`http://www.phox999.com/` 與 `https://www.phox999.com/` 都因 `www.phox999.com` 無法解析（`No such host is known`／`ENOTFOUND`）而失敗。這些結果只代表當天的公開 DNS／HTTP 觀察，不代表 Cloudflare 帳戶內的規則狀態。驗證 URL：[`http://phox999.com/`](http://phox999.com/)、[`https://phox999.com/`](https://phox999.com/)、[`http://www.phox999.com/`](http://www.phox999.com/)、[`https://www.phox999.com/`](https://www.phox999.com/)。
+本次公開網域唯讀檢查（2026-10-10 約 17:54 Asia/Taipei）：apex HTTP 首頁仍回 HTTP 200 且無 `Location`，未導向 HTTPS；HTTPS apex 首頁回 200。`www.phox999.com` DNS 查詢為 `DNS name does not exist`，HTTP／HTTPS www 請求皆無法連線；此結果不代表 Cloudflare 帳戶內規則不存在。HTTPS 首頁、`/journal/what-is-tfp/`、`/sitemap-index.xml`、`/robots.txt`、作品總覽和本次抽查的三個作品頁均回 200。公開 sitemap 可讀不代表已向搜尋引擎帳戶提交或完成索引。首頁 HTML 沒有 `G-...` Measurement ID，也沒有實際 GA／Google Tag `<script src>`；出現的 script URL 是客戶端程式中的字面樣板，不是已載入的 provider 或事件收件證據。`/api/portfolio` 回 200 和 29 組作品，證明正式站已有第二輪公開資料；三個分類修正尚未反映在當時公開靜態作品頁 title，Journal `what-is-tfp` 封面 alt 仍是「雙手抬到額前」。驗證 URL：[`http://phox999.com/`](http://phox999.com/)、[`https://phox999.com/`](https://phox999.com/)、[`http://www.phox999.com/`](http://www.phox999.com/)、[`https://www.phox999.com/`](https://www.phox999.com/)。
 
 ## 1. Cloudflare 網域統一
 
@@ -70,9 +70,9 @@ curl.exe -sS -D - -o NUL "https://phox999.com/portfolio/?collection=slug-that-do
 
 ## 4. 可重建發布來源與 Worker 設定
 
-本輪程式候選以 `main` 上 Git HEAD 為基底，必要來源另列為本輪明確提交檔案；`public/assets/portfolio/**/*.webp` 由 Git LFS 管理。發布前在乾淨 checkout 確認 LFS checkout 已完成，並檢查下列 Worker 變數／binding **名稱**與現有 Cloudflare Worker 設定一致，不複製 secret 值到文件或 Git：`ASSETS`（靜態資產 binding）、`SUPABASE_URL`、`SUPABASE_ANON_KEY` 或 `SUPABASE_PUBLISHABLE_KEY`；`AUTH_ALLOW_LOCALHOST` 只作 localhost 限制用途核對，不應開啟正式站。`wrangler.jsonc` 目前只宣告 `ASSETS`，其餘值可能由 Dashboard 設定。
+本輪程式候選以 `main` 上 Git HEAD 為基底，必要來源另列為本輪明確提交檔案；`public/assets/portfolio/**/*.webp` 由 Git LFS 管理。發布前在乾淨 checkout 確認 LFS checkout 已完成，並檢查下列 Worker 變數／binding **名稱**與現有 Cloudflare Worker 設定一致，不複製 secret 值到文件或 Git：`ASSETS`（靜態資產 binding）、`SUPABASE_URL`、`SUPABASE_ANON_KEY` 或 `SUPABASE_PUBLISHABLE_KEY`；`AUTH_ALLOW_LOCALHOST` 只作 localhost 限制用途核對，不應開啟正式站。`wrangler.jsonc` 目前只宣告 `ASSETS`，其餘值可能由 Dashboard 設定。唯讀 Wrangler 查詢已能識別當前 serving version（本次讀到的 ID 與時間列於本文件開頭），但無法由結果映射 Git SHA。
 
-這個工作目錄已有使用者保留的 `dist/` 與 `worker-dist/` 差異；**不要在此工作目錄執行會覆寫它們的 `npm run build:worker`**。本輪已用隔離目錄建置、準備 Worker 靜態資產、strict 驗證及 Wrangler dry-run。日後若授權正式發布，從乾淨 checkout／worktree checkout 指定 commit，確認 LFS，再執行 `npm ci`、`npm run build:worker`、`npm run verify:worker`、`npx wrangler deploy --dry-run`；核對 binding／secret 名稱後，再由具部署授權者執行 `npx wrangler deploy`。本輪未部署 Worker，正式站版本仍需以 Cloudflare 部署結果確認。
+這個工作目錄已有使用者保留的 `.astro/` 與 `dist/` 差異；**不要在此工作目錄執行會覆寫它們的 `npm run build:worker`**。本輪使用隔離目錄建置、準備 Worker 靜態資產及 strict 驗證。日後若授權正式發布，從乾淨 checkout／worktree checkout 指定 commit，確認 LFS，再執行 `npm ci`、`npm run build:worker`、`npm run verify:worker`、`npx wrangler deploy --dry-run`；核對 binding／secret 名稱後，再由具部署授權者執行 `npx wrangler deploy`。本輪未執行 deploy；本機補修是否進入正式站仍需在發布後對照 Git SHA／Worker version 並重抓公開頁面。
 
 ## 5. 社群與公開引用
 

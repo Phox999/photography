@@ -4,7 +4,7 @@ description: 互惠攝影通常是攝影師與拍攝者以時間和專業交換�
 publishDate: 2026-10-07
 updatedDate: 2026-10-10
 cover: "/assets/portfolio/學院風棚拍/01.webp"
-coverAlt: "模特兒穿深藍與白色學院風服裝全身站立，雙手抬到額前"
+coverAlt: "模特兒穿深藍與白色學院風服裝全身站立，雙手自然垂在身側"
 category: 合作指南
 tags: [互惠攝影, 互惠拍攝, 合作流程]
 location: 台北與雙北

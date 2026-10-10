@@ -48,9 +48,12 @@
 | `studio-or-outdoor` | `學院風棚拍/cover.webp` | 深藍與白色學院風服裝及俯視構圖。 |
 | `taipei-photo-locations` | `260207_古亭河濱公園 RE/_I7A3755.webp` | 河岸花草旁的側傾姿勢、深藍與白色服裝。 |
 | `treasure-hill-portrait-guide` | `寶藏嚴/cover.webp` | 淺色上衣、樹葉與欄杆。 |
-| `what-is-tfp` | `學院風棚拍/01.webp` | 全身站姿、學院風服裝與抬起的雙手。 |
+| `what-is-tfp` | `學院風棚拍/01.webp` | 全身站姿、學院風服裝與自然垂在身側的雙手。 |
 | `xinyi-night-portrait-guide` | `信義聖誕節/cover.webp` | 紅色服裝、泰迪熊與信義區節慶燈飾。 |
 - 公開 `/api/portfolio` snapshot（2026-10-10 08:03:43 UTC）含 29 組作品，其中 18 個 API 選定封面和靜態 catalog 封面不同，且這 29 個封面目前全為本站公開路徑。實際頁面驗證了 API 封面保持原照片身分並選用本機尺寸候選；另以明確標示的合成 Supabase URL fixture 測試遠端封面保留原 URL 與原圖 fallback，沒有聲稱該 placeholder object 存在或可存取。
+- 2026-10-10 09:54:54 UTC 重新唯讀取得公開 `/api/portfolio`：HTTP 200、29 組作品。對於目前已發布的 slug，API `category` 是分類權威來源；靜態 `portfolioCatalog.ts` 的同名分類只作直接作品頁與 API 失敗時的建置期鏡像，必須依 API 更新。分類不由照片推斷，也不以本地值覆蓋後台資料。API 選定封面、slug、作品標題、有效管理文案與照片順序仍由公開資料保留。
+- 此次核對三筆 API `category`：`260827_敦煌 RE`＝棚拍、`260614_天使與惡魔 RE`＝外拍、`小桃照片`＝外拍；靜態目錄的分類、`shootingType`、SEO 標題／描述／關鍵字已同步。API 原始描述對敦煌仍寫「戶外人像」，對小桃仍寫「室內人像」；因本輪明確不修改正式資料庫，這兩段後台文字保持原樣，後續需由有資料權限者檢視，不能把它們當作分類依據。
+- 本輪再次以精確檔名目視檢查六張作品封面、24 張代表照片與九張 Journal 封面；未發現其他可由原圖證實的描述錯誤。唯一修正是 `學院風棚拍/01.webp`：照片顯示人物全身站立，雙手自然垂在身側。`portfolioEditorial.ts` 的 alt／caption、`what-is-tfp.md` 的 `coverAlt` 和本表已一致更新。比對縮圖與檔名清單留在隔離目錄 `.seo-round2-work-20261010/repair-evidence/`，僅作本機稽核，不是網站素材。
 - Journal 九篇開頭、主題段落、作品引用和下一步連結已逐篇覆核；各篇直接回答標題問題，以準備清單、選擇表或現場確認項目承接，沒有增加虛構經歷或未記錄拍攝規格。寶藏巖的開放時間與申請規則以當日官方頁面重查；管理規則頁可見 2024-06-17（民國 113/06/17）修訂紀錄，但文章不依賴日期或固定費用作拍攝承諾。
 - 圖片 metadata 只連到本站既有作者 ID；未提供虛構 license URL。
 

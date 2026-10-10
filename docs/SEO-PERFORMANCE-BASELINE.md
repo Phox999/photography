@@ -2,6 +2,16 @@
 
 量測日期：2026-10-10（Asia/Taipei）。這份報告比較 Git HEAD 重建版與本輪隔離候選版。原照保留原位；效能候選使用新增的同照片 WebP 尺寸，不把不同照片換成較小封面。
 
+## 第二輪補修驗收狀態（2026-10-10）
+
+本次檢查可用工具時，工作階段沒有 Chrome DevTools MCP 的 `performance_start_trace`、network request waterfall／timing 或 HAR 擷取能力。依 `web-perf` 技能規則，未啟動 DevTools trace，也沒有用靜態圖片大小或一般頁面載入代替 LCP／CLS。首頁、作品列表、重點作品詳情及 Journal 各三次冷載入的前後比較：**未量測／待驗**；viewport／DPR 下 `currentSrc` 與請求鏈也未取得。沒有新增套件或付費服務。
+
+隔離候選內重新檢查八個舊圖片 bytes 範例檔（靜態 Hero 原圖及 API Hero 1600／2560 候選、敦煌原圖與 640 候選、寶藏巖原圖與 640／1280 候選）：檔案大小大於 LFS pointer、Sharp 可解碼為 WebP，尺寸符合檔名。這只證明這些特定素材完整；沒有將它們轉為四頁完整效能比較，也不代表遠端 API 原圖以外的所有歷史輸入都已驗證。
+
+本節之前的表格只保留為 2026-10-10 較早的「指定圖片檔案 bytes」紀錄，不是本次要求的四頁效能證據或 Core Web Vitals 基準。它們不包含每頁 LCP／CLS、LCP 元素、完整請求時序／總傳輸量、DPR 1／2 交叉檢查或使用者 INP；任何缺少來源素材的 HEAD 頁面比較均不採作有效前後結論。請勿將舊圖片 bytes 的百分比改寫成頁面速度／排名成效。
+
+可重現步驟：先取得本次同一 commit 的完整 Git LFS 資產，核對原圖與衍生 WebP 可完整解碼、不是 LFS pointer；以同一瀏覽器版本、網路條件和成功 API fixture 啟動隔離的基準／候選站；對 `/`、`/portfolio/`、一個重點 `/portfolio/<slug>/` 與 `/journal/<slug>/` 各執行至少三次清除快取後重載，記錄原始 trace 與每頁中位數、CSS viewport、DPR、LCP／CLS、LCP DOM 元素、圖片 `currentSrc` 和尺寸、request initiator／時間鏈、請求數及傳輸 bytes。若要稱作真實使用者 CWV，另須取 Search Console／field provider 的足量樣本；INP、排名與 AI 引用需分別由真實互動或帳戶資料驗證。
+
 ## 方法與限制
 
 - 瀏覽器：Chrome，Windows；CSS viewport 390 × 844、DPR 1.25。成功 API fixture 相同，無快取靜態 fixture server 對圖片回應 `Cache-Control: no-store`。
