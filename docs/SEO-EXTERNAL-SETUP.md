@@ -6,6 +6,8 @@
 
 本次公開網域唯讀檢查（2026-10-10 約 17:54 Asia/Taipei）：apex HTTP 首頁仍回 HTTP 200 且無 `Location`，未導向 HTTPS；HTTPS apex 首頁回 200。`www.phox999.com` DNS 查詢為 `DNS name does not exist`，HTTP／HTTPS www 請求皆無法連線；此結果不代表 Cloudflare 帳戶內規則不存在。HTTPS 首頁、`/journal/what-is-tfp/`、`/sitemap-index.xml`、`/robots.txt`、作品總覽和本次抽查的三個作品頁均回 200。公開 sitemap 可讀不代表已向搜尋引擎帳戶提交或完成索引。首頁 HTML 沒有 `G-...` Measurement ID，也沒有實際 GA／Google Tag `<script src>`；出現的 script URL 是客戶端程式中的字面樣板，不是已載入的 provider 或事件收件證據。`/api/portfolio` 回 200 和 29 組作品，證明正式站已有第二輪公開資料；三個分類修正尚未反映在當時公開靜態作品頁 title，Journal `what-is-tfp` 封面 alt 仍是「雙手抬到額前」。驗證 URL：[`http://phox999.com/`](http://phox999.com/)、[`https://phox999.com/`](https://phox999.com/)、[`http://www.phox999.com/`](http://www.phox999.com/)、[`https://www.phox999.com/`](https://www.phox999.com/)。
 
+Push `6d4429967443c17ba7979cccd808a12f00a8913b` 後的刷新（2026-10-10 10:17–10:18 UTC / 18:17–18:18 Asia/Taipei）仍見 apex HTTP 200、無 `Location`；HTTPS apex 200；www HTTP／HTTPS 仍因 DNS 不存在而失敗。首頁仍無 GA4 Measurement ID 或 Google Analytics script。公開 API 仍回 200，29 組資料的現行分類為敦煌 `棚拍`、天使與惡魔 `外拍`、小桃 `外拍`。唯讀 Wrangler 狀態仍是 `18297947-c7fa-44ba-a67a-77c267c68aa4` 100% serving，建立時間未變；公開學院風詳情及 `what-is-tfp` HTML 仍含舊「雙手抬到額前」描述。故本次程式修正已 push 到 `origin/main`，但這次刷新沒有證據顯示新修正已進入正式 Worker／靜態頁面；沒有執行手動 deploy。正式站已有部分第二輪內容這一點仍成立。
+
 ## 1. Cloudflare 網域統一
 
 先在 Cloudflare Zone 核對 apex 記錄及現有規則，再修復或新增 proxied `www` DNS 記錄；本次檢查 `www` 無法解析。Single Redirect 需要請求主機經 Cloudflare proxy。[Cloudflare 操作文件](https://developers.cloudflare.com/rules/url-forwarding/single-redirects/create-dashboard/)說明建立方式；目前[官方方案配額表](https://developers.cloudflare.com/rules/url-forwarding/)列出 Free 可用 Single Redirects（每個 Zone 最多 10 條）。先確認既有規則數量，兩條規則可用現有方案完成，**不要升級方案**。

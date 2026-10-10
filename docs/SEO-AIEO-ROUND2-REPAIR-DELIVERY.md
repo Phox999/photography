@@ -68,13 +68,13 @@ dev server 可啟動並提供頁面；本機 Astro dev 對 Worker-only `/api/sit
 
 ## 正式站與外部待辦
 
-2026-10-10 約 17:54–17:56 Asia/Taipei 的唯讀檢查結果記於 `docs/SEO-EXTERNAL-SETUP.md`：
+2026-10-10 約 17:54–17:56 Asia/Taipei 的基準檢查，以及 push 後 18:17–18:18 的唯讀刷新均記於 `docs/SEO-EXTERNAL-SETUP.md`：
 
 - Apex HTTPS 首頁、作品列表、三個重點作品、Journal、`sitemap-index.xml`、`robots.txt` 和公開 API 都回 200；公開 API 有 29 組。這表示第二輪已有部分資料／頁面可在正式站讀取，不代表本次補修已發布；當時正式詳情頁 title 仍含舊分類詞，Journal cover alt 仍寫「雙手抬到額前」。
 - Apex HTTP 首頁仍回 200 且沒有 `Location`；`www.phox999.com` DNS 不存在，HTTP／HTTPS www 無法連線。
 - 首頁 HTML 沒有 GA4 `G-...` Measurement ID，也沒有實際 Google Analytics `<script src>`；未讀取 GA4 DebugView／Network 收件資料，事件接收未驗。
 - Search Console／Bing 帳戶驗證、sitemap 提交、URL inspection／索引證據均未取得；公開 sitemap 200 不是提交或索引證明。
-- 唯讀 Wrangler 報告當時 serving version `18297947-c7fa-44ba-a67a-77c267c68aa4`，100% traffic，建立於 2026-10-10 09:19:34 UTC；結果沒有對應 Git SHA，不能歸因本次補修。沒有手動 deploy。
+- Push 後唯讀 Wrangler 仍報 serving version `18297947-c7fa-44ba-a67a-77c267c68aa4`、100% traffic，建立於 2026-10-10 09:19:34 UTC；結果沒有對應 Git SHA，不能歸因本次補修。API 現行三筆分類仍是預期的棚拍／外拍／外拍，但正式學院風頁與 `what-is-tfp` HTML 仍回舊描述，故本次修正已 push 到 `origin/main`、尚無正式站已更新的證據。沒有手動 deploy。
 
 待辦是：Cloudflare proxied `www` DNS 與 HTTP→HTTPS／www→apex redirects；既有 GA4 ID 的環境接線與 DebugView 單筆事件驗收；Search Console／Bing 的既有帳戶驗證、提交 sitemap 和索引抽查；取得 Chrome DevTools MCP 後完成效能 trace；由有權限的人檢視 API 中敦煌／小桃兩段分類詞句。未建立帳號、升級付費方案、修改正式資料庫或送出合作表單。
 
