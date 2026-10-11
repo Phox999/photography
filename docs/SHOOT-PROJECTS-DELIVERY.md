@@ -4,7 +4,7 @@
 
 ## 本輪狀態
 
-本輪以 `ca4fa48` 為基準完成 F01–F07 本機修正與驗收，來源已提交並推送至 `origin/main`：`dc363c9`（`Repair shoot project acceptance gaps`）。本次提交僅含下列 11 個拍攝企劃來源、測試、migration 與交付文件；保留其他既有修改、未追蹤照片與素材。測試企劃只存在於隔離驗證副本。沒有執行正式 migration 或 deploy。
+本輪以 `ca4fa48` 為基準完成 F01–F07 本機修正與驗收，來源修正已提交並推送至 `origin/main`：`dc363c9`（`Repair shoot project acceptance gaps`）；交付狀態曾於 `a252fd5` 更新。2026-10-11 再次核對時，`HEAD` 與 `origin/main` 均為 `a252fd5`。來源提交僅含 11 個拍攝企劃來源、測試、migration 與交付文件；保留其他既有修改、未追蹤照片與素材。測試企劃只存在於隔離驗證副本。沒有執行正式 migration 或手動 deploy。
 
 真實企劃仍維持 `draft`。沒有公開真實企劃照片／條件、資料庫測試連線或 Worker 測試憑證，因此不把靜態建置、Node mock 或正式頁面瀏覽寫成完整送件驗收。
 
@@ -15,10 +15,10 @@
 | F01 文字與 snapshot 驗證 | JavaScript 與新增 SQL validator 都接受 LF、CRLF、TAB，拒絕未支援的 C0／DEL 控制字元；字數按 Unicode code point，snapshot 上限統一為 12,000 UTF-8 bytes。舊 migration 未改，新增修正 migration。 | 新 migration 尚未套用；SQL／pgTAP 尚未連接資料庫執行。 |
 | F02 圖片尺寸 | 列表封面、詳情封面與 3–6 張參考圖使用既有 `sharp` metadata helper 在建置時取得原圖尺寸；沒有新增依賴，也沒有把檔案系統／圖片處理帶入 Worker 共用模組。完整公開 fixture 的 SEO 與 strict Worker 驗證都回報 0 張缺尺寸圖片。 | 公開企劃 fixture 使用現有 `/assets/hero.webp` 作測試素材，不代表真實企劃封面。 |
 | F03 截止時間 | 首次載入、計時跨截止、`pageshow`、視窗 focus 與頁面恢復時更新狀態。選中企劃和已填資料保留；到期後新申請停用並提示。前端允許同資料的未確認結果重試；API 仍先查既有回條，再驗證新申請當下狀態，寫入前再次檢查截止。 | 以瀏覽器測到跨截止後的 UI 保留與停用；沒有對 Worker API 注入模擬 5xx 的瀏覽器送件，也沒有真實 Worker／DB 端到端送件。 |
-| F04 申請頁版面 | 專用模式 class 移到 `Contact.astro` 元件本身；僅該模式隱藏左欄並使用單欄。一般合作表單不套用此 modifier。鍵盤焦點框可見。 | 正式站目前畫面仍顯示左側說明欄，表示本輪本機 CSS 尚未發布。 |
-| F05 SQL 測試 | 修正 pgTAP `has_column(schema, table, column, description)` 斷言；SQL 測試新增一般合作 writer、企劃 writer、snapshot 保存、同資料重試、異資料衝突及回條 snapshot 查詢。Node 測試也覆蓋已收件後在草稿／關閉檢查前返回舊回條，以及沒有既有回條時拒絕目前未開放企劃。 | SQL 寫入測試沒有實際執行。資料庫本身不保存公開企劃狀態；關閉後新申請由 Worker 依目前設定拒絕，需在專用資料庫／Worker 環境驗收完整鏈。 |
+| F04 申請頁版面 | 專用模式 class 移到 `Contact.astro` 元件本身；僅該模式隱藏左欄並使用單欄。一般合作表單不套用此 modifier。隔離瀏覽器在 390／768／1440 CSS px 驗證單欄與 focus-visible。 | 2026-10-11 正式站 accessibility snapshot 未呈現獨立左欄說明文字；本次未取得 live computed CSS 或 viewport 量測，正式部署版本仍未確認。 |
+| F05 SQL 測試 | 修正 pgTAP `has_column(schema, table, column, description)` 斷言；SQL 測試新增一般合作 writer、企劃 writer、snapshot 保存、同資料重試、異資料衝突及回條 snapshot 查詢。Node 測試也覆蓋已收件後在草稿／關閉檢查前返回舊回條，以及沒有既有回條時拒絕目前未開放企劃。 | SQL 寫入測試沒有實際執行。唯讀 Supabase 清單目前只有 `photography-site` 為 active；其 migration 清單仍只有 `20261010163528 / shoot_projects`。另一個 `Phox999's Project` 為 inactive，兩個專案都沒有 branches；沒有可用的本地或專用測試資料庫。沒有對 active 專案套用 migration 或執行寫入。 |
 | F06 空狀態 | 原始草稿資料建置的首頁不輸出企劃 section；`/projects/` 保留空狀態。公開 fixture 在首頁瀏覽期間所有開放企劃截止後即隱藏區塊；列表卡片移至過往企劃組。 | 首頁動態狀態用本機 fixture 與瀏覽器驗證。 |
-| F07 發布證據 | 本輪沒有手動部署。唯讀正式站檢查：`https://phox999.com/projects/` 顯示空列表狀態；`/apply/` 有 `noindex, nofollow, noarchive`，顯示無開放企劃訊息與原一般合作表單；首頁沒有企劃區塊，7 個合作 CTA 均連向原 Google 表單。 | 正式部署 commit／Worker 版本沒有可觀察的版本標記，故版本未確認。正式站申請頁目前仍顯示左欄；不能宣稱本輪修正已上線。 |
+| F07 發布證據 | 本輪沒有手動部署。2026-10-11 瀏覽器唯讀刷新：首頁沒有企劃區塊；`/projects/` 顯示空狀態及一般合作入口；`/apply/` 顯示沒有開放企劃，仍提供一般合作表單與原 Google 表單連結。 | 正式部署 commit／Worker 版本沒有可觀察的版本標記，故版本未確認。瀏覽器安全政策拒絕 `view-source:`，本次未重新讀取申請頁 head；`noindex, nofollow, noarchive` 僅保留歷史驗收的檢查結果，不列為本次刷新證據。 |
 
 ## 實作與變更檔案
 
@@ -38,7 +38,7 @@
 
 ### 自動測試
 
-- 原始資料：`npm.cmd test`，69 passed、0 failed。
+- 原始資料：本輪重跑 `npm.cmd test`，69 passed、0 failed；此前完成的隔離建置矩陣使用的應用來源已於 `dc363c9` 提交，後續 `a252fd5` 只更新文件。
 - 隔離公開企劃 fixture：以 `NODE_OPTIONS=--experimental-loader=file:///C:/Users/chuaj/OneDrive/Desktop/phox999-site/.shoot-projects-validation-f-20261011-013815/fixture-loader.mjs` 執行 `npm.cmd test`，69 passed、0 failed。Node 24 顯示 loader experimental warning；不影響退出碼。此 loader 與 fixture 都是本輪臨時驗證檔，結束後移除。
 - Fixture 含 `open`、建置時尚未截止且瀏覽期間到期、`closed`、`completed`、`draft` 五種狀態；真實設定檔仍保留兩筆 draft。
 - `git diff --check` 通過；Git 只提示部分 CRLF/LF 工作目錄格式轉換警告。
@@ -71,8 +71,8 @@
 
 ### SQL／Worker 實際環境
 
-- 本機沒有可用的 disposable Supabase／pgTAP、Postgres CLI 或 Docker 測試環境，也沒有專用 Worker 測試 bindings／憑證；因此未執行 SQL migration、pgTAP 或瀏覽器 → Worker → Supabase → 私人回條 → 後台篩選的整條流程。
-- 新 migration 尚未套用；沒有對正式資料庫寫入，也沒有在正式站送出測試申請。Node mock 和靜態產物結果不替代上述驗證。
+- PowerShell `Get-Command supabase`、`Get-Command psql`、`Get-Command docker` 都找不到可用命令。Supabase 連線清單有一個 active 的 `photography-site`、一個 inactive 的 `Phox999's Project`，兩者均無測試 branches；前者的只讀 migration 清單只回傳已套用的 `20261010163528 / shoot_projects`。這些資源不足以安全執行本次測試。
+- 新 migration 尚未套用；沒有對 active／正式資料庫寫入，也沒有在正式站送出測試申請。缺少可用測試資料庫與連至該庫的 Worker 測試 bindings／憑證，因此未執行 pgTAP 或瀏覽器 → Worker → Supabase → 私人回條 → 後台篩選的整條流程。Node mock 和靜態產物結果不替代上述驗證。
 - 正式站唯讀瀏覽只證明目前頁面可見狀態，沒有版本 endpoint／commit 可核對。正式 Worker 版本、正式資料庫目前 migration 狀態未由本輪確認。
 
 ## 待辦與發布步驟
@@ -83,4 +83,4 @@
 4. 發布前重跑 `npm test`、`npm run build:worker`、`npm run verify:seo`、`npm run verify:worker`。先套用已驗證相容的 migration，再發布 Worker／資產；部署後以 GET 頁面與專用測試環境驗證，記下實際 Worker version／部署 commit。
 5. 回復時先部署上一個已知 Worker 版本。新增 migration 不搬移資料；如需在測試環境復原 validator，恢復舊 validator function 定義即可。若未來已有允許換行的 snapshot 資料，回復前先確認舊規則不會阻止必要的後續寫入；不要用刪除欄位或申請資料回復。
 
-本輪已 commit／push 至 `origin/main`（`dc363c9`）；沒有執行正式 migration 或 deploy。搜尋排名、真實申請、使用者 Core Web Vitals 與正式 Worker 版本均未由本輪證實。
+來源修正已 commit／push 至 `origin/main`（`dc363c9`），交付狀態更新包含於 `a252fd5`；這次核對時 `HEAD == origin/main == a252fd5`。沒有執行正式 migration 或手動 deploy。搜尋排名、真實申請、使用者 Core Web Vitals 與正式 Worker 版本均未由本輪證實。
