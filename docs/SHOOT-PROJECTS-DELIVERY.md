@@ -1,72 +1,86 @@
-# 可直接申請的拍攝企劃：第一版交付
+# 拍攝企劃功能 F01–F07 驗收補修交付
 
 更新日期：2026-10-11
 
-程式與文件已以 commit `a416fbb` 推送至 `origin/main`。這次只推送企劃功能來源、測試、migration 和交付報告；沒有推送原照、`dist`、`.astro` 或其他既有未追蹤內容。正式 Worker 尚未部署。
+## 本輪狀態
 
-## 交付狀態
+本輪以目前 HEAD `ca4fa48` 與工作目錄為基準，完成 F01–F07 可在本機安全完成的修正與驗收。保留原本所有修改、未追蹤照片與素材；測試企劃只存在於隔離驗證副本。沒有 commit、push、正式 migration 或 deploy。
 
-企劃設定、公開頁面、申請 API、不可變 snapshot、舊申請重試相容、後台篩選、回條呈現及資料庫 migration 已實作。兩筆企劃目前都刻意維持 `draft`：尚無已確認的封面與可公開參考照片、申請對象、服裝／準備、拍攝區域與日期、費用、交付及公開標註條件，因此不會出現在正式作品頁、企劃列表或 sitemap，也不能送出企劃申請。
+真實企劃仍維持 `draft`。沒有公開真實企劃照片／條件、資料庫測試連線或 Worker 測試憑證，因此不把靜態建置、Node mock 或正式頁面瀏覽寫成完整送件驗收。
 
-既有一般合作 CTA 仍連至 Google 表單。新企劃使用 `/apply/` 專用站內申請頁；沒有開放企劃時，使用者仍可選擇原有一般合作入口。
+## F01–F07 結果
 
-## P01–P06 實作範圍
+| 項目 | 本機結果 | 限制 |
+|---|---|---|
+| F01 文字與 snapshot 驗證 | JavaScript 與新增 SQL validator 都接受 LF、CRLF、TAB，拒絕未支援的 C0／DEL 控制字元；字數按 Unicode code point，snapshot 上限統一為 12,000 UTF-8 bytes。舊 migration 未改，新增修正 migration。 | 新 migration 尚未套用；SQL／pgTAP 尚未連接資料庫執行。 |
+| F02 圖片尺寸 | 列表封面、詳情封面與 3–6 張參考圖使用既有 `sharp` metadata helper 在建置時取得原圖尺寸；沒有新增依賴，也沒有把檔案系統／圖片處理帶入 Worker 共用模組。完整公開 fixture 的 SEO 與 strict Worker 驗證都回報 0 張缺尺寸圖片。 | 公開企劃 fixture 使用現有 `/assets/hero.webp` 作測試素材，不代表真實企劃封面。 |
+| F03 截止時間 | 首次載入、計時跨截止、`pageshow`、視窗 focus 與頁面恢復時更新狀態。選中企劃和已填資料保留；到期後新申請停用並提示。前端允許同資料的未確認結果重試；API 仍先查既有回條，再驗證新申請當下狀態，寫入前再次檢查截止。 | 以瀏覽器測到跨截止後的 UI 保留與停用；沒有對 Worker API 注入模擬 5xx 的瀏覽器送件，也沒有真實 Worker／DB 端到端送件。 |
+| F04 申請頁版面 | 專用模式 class 移到 `Contact.astro` 元件本身；僅該模式隱藏左欄並使用單欄。一般合作表單不套用此 modifier。鍵盤焦點框可見。 | 正式站目前畫面仍顯示左側說明欄，表示本輪本機 CSS 尚未發布。 |
+| F05 SQL 測試 | 修正 pgTAP `has_column(schema, table, column, description)` 斷言；SQL 測試新增一般合作 writer、企劃 writer、snapshot 保存、同資料重試、異資料衝突及回條 snapshot 查詢。Node 測試也覆蓋已收件後在草稿／關閉檢查前返回舊回條，以及沒有既有回條時拒絕目前未開放企劃。 | SQL 寫入測試沒有實際執行。資料庫本身不保存公開企劃狀態；關閉後新申請由 Worker 依目前設定拒絕，需在專用資料庫／Worker 環境驗收完整鏈。 |
+| F06 空狀態 | 原始草稿資料建置的首頁不輸出企劃 section；`/projects/` 保留空狀態。公開 fixture 在首頁瀏覽期間所有開放企劃截止後即隱藏區塊；列表卡片移至過往企劃組。 | 首頁動態狀態用本機 fixture 與瀏覽器驗證。 |
+| F07 發布證據 | 本輪沒有手動部署。唯讀正式站檢查：`https://phox999.com/projects/` 顯示空列表狀態；`/apply/` 有 `noindex, nofollow, noarchive`，顯示無開放企劃訊息與原一般合作表單；首頁沒有企劃區塊，7 個合作 CTA 均連向原 Google 表單。 | 正式部署 commit／Worker 版本沒有可觀察的版本標記，故版本未確認。正式站申請頁目前仍顯示左欄；不能宣稱本輪修正已上線。 |
 
-- **P01 共用企劃設定**：`shared/shoot-projects.js` 集中管理 ID、slug、revision、狀態、顯示順序、內容、封面、3–6 張參考照片及相關作品。只有通過完整內容檢核的非草稿項目才可進入公開集合。
-- **P02 首頁、列表與詳情**：首頁加入企劃入口元件；`/projects/` 只列出可公開企劃；`/projects/[slug]/` 只產生可公開詳情。草稿僅在 Astro 開發模式提供 `/projects/preview/[slug]/`，頁面會列缺欄並標示本機預覽。
-- **P03 專用申請頁**：`/apply/` 使用既有合作表單元件和 `/api/inquiries`，提交企劃 ID／revision。一般合作表單及 Google 表單連結保留。
-- **P04 伺服器驗證及重試**：API 不接受客戶端傳入企劃文案或 snapshot；新申請依當下企劃狀態、revision、截止時間驗證，再由伺服器建立 snapshot。重試識別納入企劃 ID／revision，一般申請沿用舊識別。已收件的同一重試會先查原回條，即使企劃後來關閉也回傳原回條；新申請則依當下狀態拒絕。
-- **P05 資料庫與後台**：新增 `shoot_project_id`、`shoot_project_snapshot`、配對約束及 snapshot 白名單驗證；writer RPC 的 payload allowlist 和 INSERT 一併支援企劃資料。既有後台清單可篩選企劃申請，申請回條／進度只顯示允許欄位，舊的一般合作資料仍相容。
-- **P06 驗收與文件**：新增企劃與送件鏈測試、SQL 安全測試檔，修正 SEO 驗證器以把 noindex 的申請頁排除於 sitemap 完整性檢查，並要求該頁仍有正確事件標記。
+## 實作與變更檔案
+
+- `shared/shoot-projects.js`：文字控制字元、Unicode 字數和 snapshot byte 上限驗證。
+- `supabase/migrations/20261011013815_allow_project_snapshot_text_layout.sql`：增量更新 snapshot validator；沿用白名單、ID／snapshot 配對、RLS 與 RPC 權限。
+- `supabase/tests/shoot_projects_security.test.sql`：pgTAP schema／欄位斷言、文字案例與 writer／snapshot／重試測試。
+- `tests/shoot-projects.test.js`：LF／CRLF／TAB、非法控制字元、byte 上限，以及 closed／completed／過期新申請拒絕測試。
+- `src/pages/projects/index.astro`、`src/pages/projects/[slug].astro`：輸出正確圖片尺寸；加上截止狀態標記與頁面行為。
+- `src/components/Contact.astro`、`src/pages/apply/index.astro`：專用單欄樣式、截止選項與重試狀態。
+- `src/components/ShootProjectHighlights.astro`：無公開企劃時不輸出首頁區塊，並監看截止更新。
+- `src/scripts/shoot-project-deadlines.js`：新增共用、輕量截止更新腳本。
+- `docs/SHOOT-PROJECTS-DELIVERY.md`：本報告。
+
+歷史驗收證據保留在 `docs/SHOOT-PROJECTS-ACCEPTANCE-2026-10-11.md`。既存 `.astro`／`dist` 差異、本輪前已存在的素材與其他未追蹤檔均未納入本輪建置或清理。
 
 ## 驗證證據
 
-### 已驗證通過
+### 自動測試
 
-- `npm.cmd test`：66 tests，66 passed，0 failed。
-- 隔離目錄執行 `npm.cmd run build:worker`：成功，輸出 57 個頁面；主目錄現有 `.astro`／`dist` 未被建置覆蓋。
-- 同一隔離產物執行 `npm.cmd run verify:seo`：通過，57 HTML pages、45 sitemap URLs、1499 internal links、1223 images checked、0 missing image dimensions、41 schemas、9 published Journal articles、15 llms links，failures 為空。
-- 同一隔離產物執行 `npm.cmd run verify:worker`：`strictDist: true`，通過，failures 為空。
-- 本機 Astro 開發伺服器瀏覽器 smoke check：`http://127.0.0.1:4322/`，視窗 1280 × 720 CSS px、DPR 1。首頁沒有水平溢出；目前首屏載入的圖片沒有失敗，控制台沒有錯誤或警告；FAQ、導覽及 Google CTA 標記存在。企劃列表顯示空狀態；帶草稿 ID 的申請連結不會默默選中企劃；草稿預覽顯示本機限定與待補欄位。
-- Supabase `photography-site` migration 已套用。唯讀確認 migration 版本 `20261010163528`／`shoot_projects`、兩個 nullable 欄位、ID／snapshot 配對約束、snapshot 白名單、有效／無效 payload 判斷及 RPC 權限；anon 無 writer RPC 執行權。沒有建立企劃申請資料列。
-- migration 本機檔名已對齊遠端版本：`supabase/migrations/20261010163528_shoot_projects.sql`，避免後續 CLI 把已套用 migration 誤判為另一版。
+- 原始資料：`npm.cmd test`，69 passed、0 failed。
+- 隔離公開企劃 fixture：以 `NODE_OPTIONS=--experimental-loader=file:///C:/Users/chuaj/OneDrive/Desktop/phox999-site/.shoot-projects-validation-f-20261011-013815/fixture-loader.mjs` 執行 `npm.cmd test`，69 passed、0 failed。Node 24 顯示 loader experimental warning；不影響退出碼。此 loader 與 fixture 都是本輪臨時驗證檔，結束後移除。
+- Fixture 含 `open`、建置時尚未截止且瀏覽期間到期、`closed`、`completed`、`draft` 五種狀態；真實設定檔仍保留兩筆 draft。
+- `git diff --check` 通過；Git 只提示部分 CRLF/LF 工作目錄格式轉換警告。
 
-### 已實作，尚未完成端到端驗收
+### 隔離建置矩陣
 
-- 兩筆企劃均為草稿，故沒有真實開放申請可在瀏覽器完成成功送件及回條流程；沒有向正式 API 送出假申請。API 的有效 payload、偽造欄位拒絕、草稿／關閉拒絕、已收件後關閉仍回原回條等行為由 Node 測試覆蓋，但不等於正式資料庫插入驗證。
-- SQL／pgTAP 測試檔 `supabase/tests/shoot_projects_security.test.sql` 已加入，這台環境沒有執行本地 Supabase／pgTAP。遠端驗證採唯讀 SQL，未測試實際 RPC 寫入。
-- `wrangler dev` 的 Windows `workerd`／資產監看器無法在此環境啟動可連線的本機 Worker port；因此 Worker 執行時及完整 API → Supabase → 回條流程仍待可用的 Worker runtime 驗收。建置和 strict Worker 靜態資產驗證已通過。
-- 瀏覽器只量測 1280 × 720、DPR 1；390／768 px 與 DPR 2 未驗。首屏檢查時 16 張圖片中 10 張已載入，其餘為延遲載入，不據此宣稱整頁圖片都已在瀏覽器解碼。
+主目錄原本有使用者的 `.astro`／`dist` 差異，所有建置與產物檢查都在新建隔離副本執行。照片只透過 hard link 供隔離副本讀取，沒有覆寫、搬動或刪除原照。
 
-## 待補的企劃事實
+| 資料集 | `build:worker` | `verify:seo` | `verify:worker --strict-dist` |
+|---|---|---|---|
+| 原始兩筆 draft | 通過，57 頁 | 通過；57 HTML、45 sitemap URLs、1,497 internal links、1,223 images、0 missing dimensions、41 schemas、9 篇 Journal、15 llms links | 通過，strictDist=true，0 failures |
+| 公開驗收 fixture | 通過，61 頁 | 通過；61 HTML、49 sitemap URLs、1,599 internal links、1,243 images、0 missing dimensions、41 schemas、9 篇 Journal、15 llms links | 通過，strictDist=true，0 failures |
 
-在 `shared/shoot-projects.js` 將企劃轉為 `open` 前，請先確認並填好：
+公開 fixture 確認 4 筆公開狀態 route 存在，draft route 和其標題不進入輸出；申請頁維持 noindex，closed／completed 不顯示申請 CTA，圖片尺寸存在。Worker 靜態產物連結 1,219 張現有圖片。Astro 有一則既有 `/assets/icons/external-link.svg` 建置解析 warning，SEO 與 Worker 驗證器仍全部通過。
 
-1. 真實企劃名稱、摘要與拍攝構想。
-2. 封面及 3–6 張可公開使用的參考照片、每張替代文字及肖像／著作使用權。
-3. 適合對象、服裝和拍攝前準備。
-4. 可公開的拍攝區域、日期／時段、申請截止時間；未定的資料不要先寫成承諾。
-5. 費用分攤、照片交付方式與時間、公開作品及標註規則。
-6. 若有關聯作品，核對 `relatedPortfolioSlugs` 為現存作品 slug。
+### 本機瀏覽器
 
-資料確認後提高 `revision`，再將 `status` 設為 `open`。重要條件改變時再次提高 revision；將 `open` 改為 `closed` 可阻止新申請，但不撤銷既有回條和 snapshot。此版本沒有企劃編輯後台。
+在隔離公開 fixture 的 Astro dev 頁面完成 smoke check，網址 `http://127.0.0.1:4328/`。頁面可開啟；未向 `/api/inquiries` 送件。Astro dev 沒有 Worker bindings，頁面動態讀取的部分 `/api/*` GET 回 404；這些回應沒有當作 Worker 驗收證據。
 
-## 本機預覽
+- 首頁、企劃列表、企劃詳情、企劃申請頁均測量 viewport 390／768／1440 CSS px；各頁 `scrollWidth` 等於 `clientWidth`，沒有水平溢出。
+- 申請頁在三種尺寸都是單欄；左側欄位 display 為 none。390 px 下企劃選擇 select 有鍵盤 focus-visible，3 px outline。
+- `?project=acceptance-expiring` 預選正確；切換企劃後摘要與 review 標題更新；空白選填說明在 review 顯示「依企劃內容討論。」；返回修改後姓名、聯絡方式、帳號、企劃與勾選狀態保留。
+- 瀏覽期間跨截止：被選企劃仍維持選中但 option disabled，通知說明新申請停用並保留同資料重試；確認及繼續按鈕停用，欄位內容保留。
+- 首頁兩筆 fixture 企劃原先可見；截止後兩張狀態成為「已截止」，整個首頁企劃 section 隱藏。
+- 列表開放組歸空並隱藏，卡片移至「先前企劃」；詳情顯示「已截止」，兩個申請連結隱藏，一般合作連結仍存在。
+- 詳情封面與 3 張測試參考圖片均完整載入；fixture 使用的圖片實際尺寸與輸出 width／height 為 5472 × 3648。首頁 Hero 原圖載入完成，naturalWidth 1440。
+- 首頁 FAQ 可展開、手機選單可開啟；首頁作品錨點、合作頁 `availability`／`process` 錨點存在；7 個首頁／表單合作 CTA 保持原 Google 表單網址。
 
-已用本機 Astro 開發伺服器完成瀏覽器 smoke check；該伺服器已停止。重新預覽時，因主工作目錄已有使用者的 `.astro`／`dist` 差異，請先使用隔離 checkout，再執行：
+此為本機 fixture UI smoke check，不等於 Worker API、Supabase 寫入或正式環境驗收。
 
-```powershell
-npm run dev -- --host 127.0.0.1 --port 4322
-```
+### SQL／Worker 實際環境
 
-開啟 `/`、`/projects/`、`/apply/`、`/projects/preview/city-night-portrait/` 或 `/projects/preview/uniform-portrait/`。草稿預覽只在開發模式註冊；正式建置不輸出草稿頁。
+- 本機沒有可用的 disposable Supabase／pgTAP、Postgres CLI 或 Docker 測試環境，也沒有專用 Worker 測試 bindings／憑證；因此未執行 SQL migration、pgTAP 或瀏覽器 → Worker → Supabase → 私人回條 → 後台篩選的整條流程。
+- 新 migration 尚未套用；沒有對正式資料庫寫入，也沒有在正式站送出測試申請。Node mock 和靜態產物結果不替代上述驗證。
+- 正式站唯讀瀏覽只證明目前頁面可見狀態，沒有版本 endpoint／commit 可核對。正式 Worker 版本、正式資料庫目前 migration 狀態未由本輪確認。
 
-## 發布順序與回復方式
+## 待辦與發布步驟
 
-1. 遠端 Supabase 已先套用 additive migration `20261010163528_shoot_projects`，不需重複套用。
-2. 已完成：本次明確列出的原始碼、migration、測試與交付文件已推送至 `origin/main`（`a416fbb`）；不包含 `dist`、`.astro`、臨時建置目錄或未追蹤照片。
-3. **正式 Worker 尚未部署**：兩筆企劃仍是草稿，正式頁面會是空列表；本機 Worker runtime 無法在目前 Windows 環境啟動，而且沒有可安全驗證的真實開放企劃送件。Push 不等於正式站已更新。補齊真實企劃事實後，先重跑三項驗證，再部署並以無副作用的頁面檢查確認版本；成功送件要用測試環境或明確核准的測試資料驗證。
-4. 真實企劃資訊補齊並確認後，才提高 revision、開啟企劃並重新建置／發布；使用測試環境或明確核准的測試資料驗證成功回條與關閉後重試。
-5. 若前端／Worker 發布需回復，部署前一個已知版本即可；保留 additive 欄位和已收件資料，不以刪除資料表／欄位作為一般回復手段。
+1. 在專用、可丟棄的測試 Supabase 資料庫套用既有 migration 鏈及新增 `20261011013815_allow_project_snapshot_text_layout.sql`，執行 `supabase/tests/shoot_projects_security.test.sql`。確認一般合作 writer、企劃 writer、snapshot、同資料重試、異 payload 衝突、舊回條重試與 RLS／RPC 權限。
+2. 用連到該測試資料庫的 Worker 執行瀏覽器送件，查驗保存 snapshot、私人回條內容與後台企劃分類／篩選；同時驗證 closed／completed／過期新申請拒絕。不要以 Astro dev 的 API route 代替 Worker。
+3. 取得並確認真實企劃封面／參考照片使用權與所有合作條件前，兩筆企劃維持 draft。確認內容後提高 revision，才改為 open。
+4. 發布前重跑 `npm test`、`npm run build:worker`、`npm run verify:seo`、`npm run verify:worker`。先套用已驗證相容的 migration，再發布 Worker／資產；部署後以 GET 頁面與專用測試環境驗證，記下實際 Worker version／部署 commit。
+5. 回復時先部署上一個已知 Worker 版本。新增 migration 不搬移資料；如需在測試環境復原 validator，恢復舊 validator function 定義即可。若未來已有允許換行的 snapshot 資料，回復前先確認舊規則不會阻止必要的後續寫入；不要用刪除欄位或申請資料回復。
 
-本地實作、建置與遠端 schema migration 不代表正式 Worker 已部署，也不代表已收到真實申請。搜尋成效、排名與 AI 引用未在此任務量測。
+本輪不 commit／push／deploy，且不執行正式 migration。搜尋排名、真實申請、使用者 Core Web Vitals 與正式 Worker 版本均未由本輪證實。

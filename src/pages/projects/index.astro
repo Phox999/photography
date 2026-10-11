@@ -4,6 +4,7 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { getPublicShootProjects, getOpenShootProjects } from '../../../shared/shoot-projects.js';
 import { siteConfig } from '../../data/site';
+import { getPublicImageDimensions } from '../../lib/image-dimensions';
 import '../../styles/inner-pages.css';
 
 const allProjects = getPublicShootProjects();
@@ -13,9 +14,14 @@ const pastProjects = allProjects.filter((project) => !openIds.has(project.id));
 const statusLabel = (project) => project.status === 'completed' ? '已完成'
   : project.status === 'closed' || project.deadlineAt && Date.parse(project.deadlineAt) <= Date.now() ? '已截止' : '開放申請';
 const groups = [
-  { label: '目前開放', projects: openProjects },
-  { label: '先前企劃', projects: pastProjects },
+  { key: 'open', label: '目前開放', projects: openProjects },
+  { key: 'past', label: '先前企劃', projects: pastProjects },
 ];
+const coverDimensions = new Map();
+for (const project of allProjects) {
+  const dimensions = await getPublicImageDimensions(project.cover);
+  if (dimensions) coverDimensions.set(project.cover, dimensions);
+}
 ---
 
 <BaseLayout
@@ -32,16 +38,16 @@ const groups = [
     </section>
 
     <div class="container shoot-project-groups">
-      {allProjects.length ? groups.filter((group) => group.projects.length).map((group) => (
-        <section class="shoot-project-group" aria-labelledby={`group-${group.label}`}>
+      {allProjects.length ? groups.map((group) => (
+        <section class="shoot-project-group" data-shoot-project-group={group.key} hidden={!group.projects.length} aria-labelledby={`group-${group.label}`}>
           <h2 id={`group-${group.label}`}>{group.label}</h2>
-          <div class="shoot-project-list">
+          <div class="shoot-project-list" data-shoot-project-list>
             {group.projects.map((project) => (
-              <article class="shoot-project-list-card">
+              <article class="shoot-project-list-card" data-shoot-project-list-card data-shoot-project-open={openIds.has(project.id) ? 'true' : 'false'} data-shoot-project-deadline={openIds.has(project.id) && project.deadlineAt ? project.deadlineAt : undefined}>
                 <a class="shoot-project-list-card__link" href={`/projects/${project.slug}/`}>
-                  <img src={project.cover} alt={project.coverAlt} loading="lazy" decoding="async" />
+                  <img src={project.cover} alt={project.coverAlt} width={coverDimensions.get(project.cover)?.width} height={coverDimensions.get(project.cover)?.height} loading="lazy" decoding="async" />
                   <div class="shoot-project-list-card__body">
-                    <span class={`shoot-project-badge shoot-project-badge--${openIds.has(project.id) ? 'open' : project.status}`}>{statusLabel(project)}</span>
+                    <span class={`shoot-project-badge shoot-project-badge--${openIds.has(project.id) ? 'open' : project.status}`} data-shoot-project-status>{statusLabel(project)}</span>
                     <h3>{project.title}</h3>
                     <p>{project.summary}</p>
                     <span class="shoot-project-list-card__meta">{project.area} · {project.dateNote}</span>
@@ -64,6 +70,10 @@ const groups = [
   </main>
   <Footer />
 </BaseLayout>
+
+<script>
+  import '../../scripts/shoot-project-deadlines.js';
+</script>
 
 <style>
   .shoot-project-page { padding-bottom: 88px; }

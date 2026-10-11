@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { getPublicShootProjects } from '../../../shared/shoot-projects.js';
+import { getPublicImageDimensions } from '../../lib/image-dimensions';
 import '../../styles/inner-pages.css';
 
 export function getStaticPaths() {
@@ -12,6 +13,12 @@ export function getStaticPaths() {
 const { project } = Astro.props;
 const canApply = project.status === 'open' && (!project.deadlineAt || Date.parse(project.deadlineAt) > Date.now());
 const statusLabel = project.status === 'completed' ? '已完成' : canApply ? '開放申請' : '已截止';
+const coverDimensions = await getPublicImageDimensions(project.cover);
+const referenceDimensions = new Map();
+for (const image of project.referenceImages) {
+  const dimensions = await getPublicImageDimensions(image.src);
+  if (dimensions) referenceDimensions.set(image.src, dimensions);
+}
 ---
 
 <BaseLayout title={`${project.title}｜拍攝企劃｜Phox999`} description={project.summary} ogImage={project.cover} ogImageAlt={project.coverAlt}>
@@ -19,22 +26,23 @@ const statusLabel = project.status === 'completed' ? '已完成' : canApply ? '�
   <main class="inner-page shoot-project-detail" id="main-content" tabindex="-1">
     <div class="container">
       <nav class="shoot-project-breadcrumb" aria-label="麵包屑"><a href="/projects/">拍攝企劃</a><span aria-hidden="true">/</span><span>{project.title}</span></nav>
-      <article>
+      <article data-shoot-project-open={canApply ? 'true' : 'false'} data-shoot-project-deadline={canApply && project.deadlineAt ? project.deadlineAt : undefined}>
         <header class="shoot-project-detail__hero inner-panel">
           <div class="shoot-project-detail__copy">
             <p class="inner-kicker">SHOOT PROJECT</p>
-            <span class={`shoot-project-badge shoot-project-badge--${project.status}`}>{statusLabel}</span>
+            <span class={`shoot-project-badge shoot-project-badge--${project.status}`} data-shoot-project-status>{statusLabel}</span>
             <h1>{project.title}</h1>
             <p class="shoot-project-detail__summary">{project.summary}</p>
             <p>{project.concept}</p>
-            {canApply ? <a class="button button--primary" href={`/apply/?project=${encodeURIComponent(project.slug)}`}>申請這個企劃</a> : <p class="shoot-project-closed">這個企劃目前沒有開放申請。你仍可查看內容，或改走一般合作入口。</p>}
+            {canApply && <a class="button button--primary" data-shoot-project-apply href={`/apply/?project=${encodeURIComponent(project.slug)}`}>申請這個企劃</a>}
+            <p class="shoot-project-closed" data-shoot-project-closed hidden={canApply}>這個企劃目前沒有開放申請。你仍可查看內容，或改走一般合作入口。</p>
           </div>
-          <img src={project.cover} alt={project.coverAlt} fetchpriority="high" decoding="async" />
+          <img src={project.cover} alt={project.coverAlt} width={coverDimensions?.width} height={coverDimensions?.height} fetchpriority="high" decoding="async" />
         </header>
 
         {project.referenceImages.length > 0 && <section class="shoot-project-detail__references" aria-labelledby="project-references-title">
           <div><p class="eyebrow">VISUAL REFERENCES</p><h2 id="project-references-title">風格參考</h2><p>以下照片僅供這份企劃的畫面方向參考，不代表企劃已經執行。</p></div>
-          <div class="shoot-project-reference-grid">{project.referenceImages.map((image) => <figure><img src={image.src} alt={image.alt} loading="lazy" decoding="async" /><figcaption>{image.alt}</figcaption></figure>)}</div>
+          <div class="shoot-project-reference-grid">{project.referenceImages.map((image) => <figure><img src={image.src} alt={image.alt} width={referenceDimensions.get(image.src)?.width} height={referenceDimensions.get(image.src)?.height} loading="lazy" decoding="async" /><figcaption>{image.alt}</figcaption></figure>)}</div>
         </section>}
 
         <section class="shoot-project-detail__facts inner-panel" aria-labelledby="project-facts-title">
@@ -53,14 +61,18 @@ const statusLabel = project.status === 'completed' ? '已完成' : canApply ? '�
         {project.relatedPortfolioSlugs.length > 0 && <nav class="shoot-project-related" aria-label="相關作品"><h2>相關作品</h2><ul>{project.relatedPortfolioSlugs.map((slug) => <li><a href={`/portfolio/${encodeURIComponent(slug)}/`}>{slug}</a></li>)}</ul></nav>}
 
         <section class="shoot-project-next inner-next" aria-label="企劃下一步">
-          <div><p class="eyebrow">NEXT STEP</p><h2>{canApply ? '想參與這個企劃嗎？' : '想從一般合作開始？'}</h2><p>送出企劃申請後會再確認內容與日期，並不會自動錄取或預約。</p></div>
-          <div class="inner-actions">{canApply && <a class="button button--primary" href={`/apply/?project=${encodeURIComponent(project.slug)}`}>申請這個企劃</a>}<a class="button button--secondary" href="/cooperation/">了解一般合作</a></div>
+          <div><p class="eyebrow">NEXT STEP</p><h2 data-shoot-project-next-title>{canApply ? '想參與這個企劃嗎？' : '想從一般合作開始？'}</h2><p>送出企劃申請後會再確認內容與日期，並不會自動錄取或預約。</p></div>
+          <div class="inner-actions">{canApply && <a class="button button--primary" data-shoot-project-apply href={`/apply/?project=${encodeURIComponent(project.slug)}`}>申請這個企劃</a>}<a class="button button--secondary" href="/cooperation/">了解一般合作</a></div>
         </section>
       </article>
     </div>
   </main>
   <Footer />
 </BaseLayout>
+
+<script>
+  import '../../scripts/shoot-project-deadlines.js';
+</script>
 
 <style>
   .shoot-project-detail { padding-bottom: 84px; }

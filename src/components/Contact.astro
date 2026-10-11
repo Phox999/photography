@@ -7,6 +7,7 @@ interface ShootProjectOption {
   revision: number;
   title: string;
   summary: string;
+  deadlineAt: string | null;
 }
 interface Props {
   projectApplication?: boolean;
@@ -31,7 +32,7 @@ const shootStyles = [
 const showThemeImages = false;
 ---
 
-<section class="section contact-section" id="contact" aria-labelledby="contact-title">
+<section class:list={['section', 'contact-section', projectApplication && 'contact-section--project-application']} id="contact" aria-labelledby="contact-title">
   <div class="container contact-layout">
     <header class="contact-copy">
       <p class="eyebrow">CONTACT</p>
@@ -50,7 +51,7 @@ const showThemeImages = false;
           <label for="shoot-project-select">這次想申請的企劃</label>
           <select id="shoot-project-select" data-shoot-project-select>
             <option value="">一般合作申請</option>
-            {projectOptions.map((project) => <option value={project.slug} data-project-id={project.id} data-project-revision={project.revision} data-project-title={project.title} data-project-summary={project.summary}>{project.title}</option>)}
+            {projectOptions.map((project) => <option value={project.slug} data-project-id={project.id} data-project-revision={project.revision} data-project-title={project.title} data-project-summary={project.summary} data-shoot-project-deadline={project.deadlineAt ?? undefined}>{project.title}</option>)}
           </select>
           <div class="project-application__summary" data-shoot-project-summary hidden>
             <p data-shoot-project-summary-text></p>
@@ -207,6 +208,10 @@ const showThemeImages = false;
 </section>
 
 <style>
+  .contact-section--project-application { padding-top: 0; }
+  .contact-section--project-application .contact-copy { display: none; }
+  .contact-section--project-application .contact-layout { grid-template-columns: minmax(0, 1fr); }
+  .contact-section--project-application .contact-form { width: 100%; max-width: 100%; }
   .project-application { margin-bottom: 24px; padding: clamp(20px, 3vw, 30px); border: 1px solid #dcebf1; border-radius: 24px; background: #f5fbfe; }
   .project-application h3 { margin: 0 0 14px; font: 700 1.1rem/1.5 var(--font-heading); }
   .project-application > label { display: block; margin-bottom: 8px; font-weight: 700; }
@@ -223,6 +228,7 @@ const showThemeImages = false;
 <script>
   import { buildInquiryPayload, normalizeInquiryDraft, validateInquiryDraft } from '../lib/inquiry-form.js';
   import { submissionIdentityFor } from '../lib/inquiry-workflow';
+  import { refreshShootProjectDeadlines } from '../scripts/shoot-project-deadlines.js';
 
   const inquiryForm = document.querySelector('[data-inquiry-form]');
 
@@ -264,6 +270,7 @@ const showThemeImages = false;
     let referenceFiles = [];
     let pending = false;
     const retryIdentities = new Map();
+    const uncertainRetryFingerprints = new Set();
 
     const selectedStyles = () => styleButtons
       .filter((button) => button.getAttribute('aria-pressed') === 'true')
@@ -274,6 +281,18 @@ const showThemeImages = false;
       ? projectSelect.selectedOptions[0]
       : null;
     const readDraft = () => normalizeInquiryDraft(new FormData(inquiryForm), selectedStyles());
+    const updateExpiredProjectControls = () => {
+      if (!(confirmButton instanceof HTMLButtonElement) || pending) return;
+      const option = selectedProjectOption();
+      const deadline = Date.parse(option?.dataset.shootProjectDeadline || '');
+      const expired = Boolean(option) && Number.isFinite(deadline) && deadline <= Date.now();
+      const fingerprint = JSON.stringify(buildInquiryPayload(readDraft()));
+      const disableNewRequest = expired && !uncertainRetryFingerprints.has(fingerprint);
+      const continueButton = inquiryForm.querySelector('[type="submit"]');
+      if (continueButton instanceof HTMLButtonElement) continueButton.disabled = disableNewRequest;
+      confirmButton.disabled = disableNewRequest;
+      confirmButton.title = disableNewRequest ? '企劃已截止，無法送出新的申請。' : '';
+    };
 
     const updateProjectSelection = (slug, updateAddress = false) => {
       if (!projectSelect) return;
@@ -294,13 +313,19 @@ const showThemeImages = false;
       if (projectSummary) projectSummary.hidden = !active;
       if (projectSummaryText) projectSummaryText.textContent = active ? option.dataset.projectSummary || '' : '';
       if (projectDetailLink) projectDetailLink.href = active ? `/projects/${encodeURIComponent(option.value)}/` : '/projects/';
-      if (projectNotice && active) projectNotice.textContent = '';
+      if (projectNotice) {
+        const deadline = Date.parse(option?.dataset.shootProjectDeadline || '');
+        projectNotice.textContent = active && Number.isFinite(deadline) && deadline <= Date.now()
+          ? '這個企劃已截止。尚未送出的新申請會停用；若送出結果尚未確認，保留原內容重試可查回原回條。'
+          : '';
+      }
       if (updateAddress) {
         const url = new URL(window.location.href);
         if (active) url.searchParams.set('project', option.value);
         else url.searchParams.delete('project');
         window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
       }
+      updateExpiredProjectControls();
     };
 
     if (projectSelect) {
@@ -449,6 +474,14 @@ const showThemeImages = false;
         reportValidationError(validationError);
         return;
       }
+      const selectedOption = selectedProjectOption();
+      const deadline = Date.parse(selectedOption?.dataset.shootProjectDeadline || '');
+      const fingerprint = JSON.stringify(buildInquiryPayload(draft));
+      if (draft.shootProjectId && Number.isFinite(deadline) && deadline <= Date.now()
+        && !uncertainRetryFingerprints.has(fingerprint)) {
+        if (status) status.textContent = '這個企劃已截止，不能建立新的申請。表單內容已保留；若先前送出結果不明，請使用同一份資料重試。';
+        return;
+      }
       fillReview(draft);
       if (status) status.textContent = '';
     });
@@ -467,6 +500,15 @@ const showThemeImages = false;
       let payload;
       try {
         const details = buildInquiryPayload(draft);
+        const fingerprint = JSON.stringify(details);
+        const selectedOption = selectedProjectOption();
+        const deadline = Date.parse(selectedOption?.dataset.shootProjectDeadline || '');
+        const isExpiredProject = Boolean(draft.shootProjectId) && Number.isFinite(deadline) && deadline <= Date.now();
+        if (isExpiredProject && !retryIdentities.has(fingerprint)) {
+          if (status) status.textContent = '這個企劃已截止，不能送出新的申請。表單內容已保留；若同一份申請先前送出但結果不明，請重試以查詢原回條。';
+          showEditor();
+          return;
+        }
         payload = { ...details, ...submissionIdentityFor(details, retryIdentities, window.crypto) };
       } catch (error) {
         if (status) status.textContent = error instanceof Error
@@ -481,6 +523,7 @@ const showThemeImages = false;
       if (status) status.textContent = '送出中…';
 
       let responseReceived = false;
+      const retryFingerprint = JSON.stringify(buildInquiryPayload(draft));
       try {
         const response = await fetch('/api/inquiries', {
           method: 'POST',
@@ -489,11 +532,16 @@ const showThemeImages = false;
         });
         responseReceived = true;
         const result = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
+        if (!response.ok) {
+          if (response.status >= 500) uncertainRetryFingerprints.add(retryFingerprint);
+          else uncertainRetryFingerprints.delete(retryFingerprint);
+          throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
+        }
 
         inquiryForm.reset();
         updateProjectSelection('', true);
         retryIdentities.clear();
+        uncertainRetryFingerprints.clear();
         styleButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
         clearPreviews();
         updateDescriptionCount();
@@ -512,18 +560,27 @@ const showThemeImages = false;
           }
         }
       } catch (error) {
+        if (!responseReceived) uncertainRetryFingerprints.add(retryFingerprint);
         if (status) {
           status.textContent = responseReceived
             ? (error instanceof Error ? error.message : '目前無法送出，請改用 Instagram 或 Google 表單聯絡。')
-            : '連線中斷，送出結果尚未確認。為避免重複，請先透過 Instagram 或 Email 與我確認；表單內容仍保留。';
+            : (isProjectInquiry
+              ? '企劃申請的送出結果尚未確認。請保留這份表單後重試，系統會先查詢是否已有回條；若未收件且企劃已截止，會拒絕新申請。'
+              : '連線中斷，送出結果尚未確認。表單內容仍保留，請保留資料後重試。');
         }
       } finally {
         pending = false;
         if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = false;
+        updateExpiredProjectControls();
       }
     });
 
     updateDescriptionCount();
+    refreshShootProjectDeadlines(document);
+    updateExpiredProjectControls();
+    inquiryForm.addEventListener('input', updateExpiredProjectControls);
+    inquiryForm.addEventListener('change', updateExpiredProjectControls);
+    window.addEventListener('shoot-project-deadline-change', updateExpiredProjectControls);
     window.addEventListener('pagehide', clearPreviews);
   }
 </script>

@@ -6,6 +6,17 @@ const PUBLISHED_TEXT_FIELDS = [
   ['suitableFor', 800], ['wardrobe', 800], ['preparation', 1000], ['area', 160],
   ['dateNote', 1000], ['costNote', 1000], ['deliveryNote', 1000], ['publicationNote', 1000],
 ];
+const SNAPSHOT_MAX_BYTES = 12000;
+const DISALLOWED_TEXT_CONTROLS = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
+
+function characterLength(value) {
+  // PostgreSQL char_length counts Unicode code points, as does Array.from.
+  return Array.from(value).length;
+}
+
+function isBlankProjectText(value) {
+  return value.replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, '') === '';
+}
 
 // These are intentionally incomplete working drafts. Keep them out of every
 // production page until the factual content checklist is complete.
@@ -68,9 +79,9 @@ function validLocalImagePath(value) {
 export function projectContentIssues(project) {
   const issues = [];
   for (const [field, max] of PUBLISHED_TEXT_FIELDS) {
-    if (typeof project?.[field] !== 'string' || !project[field].trim()) issues.push(`${field} 尚未填寫`);
-    else if (project[field].length > max) issues.push(`${field} 超過 ${max} 字`);
-    else if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(project[field])) issues.push(`${field} 含控制字元`);
+    if (typeof project?.[field] !== 'string' || isBlankProjectText(project[field])) issues.push(`${field} 尚未填寫`);
+    else if (characterLength(project[field]) > max) issues.push(`${field} 超過 ${max} 字`);
+    else if (DISALLOWED_TEXT_CONTROLS.test(project[field])) issues.push(`${field} 含控制字元`);
   }
   if (!validLocalImagePath(project?.cover)) issues.push('cover 必須是 public/assets 下的本機圖片路徑');
   if (!Array.isArray(project?.referenceImages) || project.referenceImages.length < 3 || project.referenceImages.length > 6
@@ -83,6 +94,10 @@ export function projectContentIssues(project) {
   if (project?.deadlineAt !== null && project?.deadlineAt !== undefined
     && (typeof project.deadlineAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(project.deadlineAt) || !Number.isFinite(Date.parse(project.deadlineAt)))) {
     issues.push('deadlineAt 需為帶時區的 ISO 時間或 null');
+  }
+  if (PUBLISHED_TEXT_FIELDS.every(([field]) => typeof project?.[field] === 'string' && !DISALLOWED_TEXT_CONTROLS.test(project[field]))) {
+    const snapshotBytes = new TextEncoder().encode(JSON.stringify(createShootProjectSnapshot(project))).length;
+    if (snapshotBytes > SNAPSHOT_MAX_BYTES) issues.push(`snapshot 超過 ${SNAPSHOT_MAX_BYTES} bytes`);
   }
   return issues;
 }

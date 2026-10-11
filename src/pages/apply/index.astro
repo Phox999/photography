@@ -7,7 +7,7 @@ import { getOpenShootProjects } from '../../../shared/shoot-projects.js';
 import { siteConfig } from '../../data/site';
 import '../../styles/inner-pages.css';
 
-const projectOptions = getOpenShootProjects().map(({ id, slug, revision, title, summary }) => ({ id, slug, revision, title, summary }));
+const projectOptions = getOpenShootProjects().map(({ id, slug, revision, title, summary, deadlineAt }) => ({ id, slug, revision, title, summary, deadlineAt }));
 ---
 
 <BaseLayout
@@ -30,8 +30,4 @@ const projectOptions = getOpenShootProjects().map(({ id, slug, revision, title, 
 
 <style>
   .project-apply-page { padding-bottom: 64px; }
-  .project-apply-page .contact-section { padding-top: 0; }
-  .project-apply-page .contact-copy { display: none; }
-  .project-apply-page .contact-layout { grid-template-columns: minmax(0, 1fr); }
-  .project-apply-page .contact-form { width: 100%; max-width: 100%; }
 </style>
