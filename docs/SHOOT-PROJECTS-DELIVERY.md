@@ -4,7 +4,7 @@
 
 ## 本輪狀態
 
-本輪以目前 HEAD `ca4fa48` 與工作目錄為基準，完成 F01–F07 可在本機安全完成的修正與驗收。保留原本所有修改、未追蹤照片與素材；測試企劃只存在於隔離驗證副本。沒有 commit、push、正式 migration 或 deploy。
+本輪以 `ca4fa48` 為基準完成 F01–F07 本機修正與驗收，來源已提交並推送至 `origin/main`：`dc363c9`（`Repair shoot project acceptance gaps`）。本次提交僅含下列 11 個拍攝企劃來源、測試、migration 與交付文件；保留其他既有修改、未追蹤照片與素材。測試企劃只存在於隔離驗證副本。沒有執行正式 migration 或 deploy。
 
 真實企劃仍維持 `draft`。沒有公開真實企劃照片／條件、資料庫測試連線或 Worker 測試憑證，因此不把靜態建置、Node mock 或正式頁面瀏覽寫成完整送件驗收。
 
@@ -83,4 +83,4 @@
 4. 發布前重跑 `npm test`、`npm run build:worker`、`npm run verify:seo`、`npm run verify:worker`。先套用已驗證相容的 migration，再發布 Worker／資產；部署後以 GET 頁面與專用測試環境驗證，記下實際 Worker version／部署 commit。
 5. 回復時先部署上一個已知 Worker 版本。新增 migration 不搬移資料；如需在測試環境復原 validator，恢復舊 validator function 定義即可。若未來已有允許換行的 snapshot 資料，回復前先確認舊規則不會阻止必要的後續寫入；不要用刪除欄位或申請資料回復。
 
-本輪不 commit／push／deploy，且不執行正式 migration。搜尋排名、真實申請、使用者 Core Web Vitals 與正式 Worker 版本均未由本輪證實。
+本輪已 commit／push 至 `origin/main`（`dc363c9`）；沒有執行正式 migration 或 deploy。搜尋排名、真實申請、使用者 Core Web Vitals 與正式 Worker 版本均未由本輪證實。
