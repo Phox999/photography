@@ -152,6 +152,7 @@ const showThemeImages = false;
           <label class="checkbox-field">
             <input name="consent" type="checkbox" required />
             <span>我同意以上資料用於本次合作聯繫與檔期確認。</span>
+            <p class="field-help">本網站另會匿名量測公開頁瀏覽與表單流程，不記錄此表單填寫內容；可在頁尾停用量測或清除識別碼。</p>
           </label>
 
           <div class="form-footer">
@@ -228,6 +229,7 @@ const showThemeImages = false;
 <script>
   import { buildInquiryPayload, normalizeInquiryDraft, validateInquiryDraft } from '../lib/inquiry-form.js';
   import { submissionIdentityFor } from '../lib/inquiry-workflow';
+  import { isSiteAnalyticsDisabled, trackSiteEvent } from '../lib/site-analytics';
   import { refreshShootProjectDeadlines } from '../scripts/shoot-project-deadlines.js';
 
   const inquiryForm = document.querySelector('[data-inquiry-form]');
@@ -415,6 +417,7 @@ const showThemeImages = false;
       }
       if (editor) editor.hidden = true;
       if (review) review.hidden = false;
+      trackSiteEvent('form_review');
       inquiryForm.querySelector('#contact-review-title')?.focus();
     };
 
@@ -471,6 +474,7 @@ const showThemeImages = false;
       const draft = readDraft();
       const validationError = getProjectSelectionError(draft) || validateInquiryDraft(draft);
       if (validationError) {
+        trackSiteEvent('form_submit_error', { errorCode: 'validation' });
         reportValidationError(validationError);
         return;
       }
@@ -493,6 +497,7 @@ const showThemeImages = false;
       const draft = readDraft();
       const validationError = getProjectSelectionError(draft) || validateInquiryDraft(draft);
       if (validationError) {
+        trackSiteEvent('form_submit_error', { errorCode: 'validation' });
         showEditor();
         reportValidationError(validationError);
         return;
@@ -518,6 +523,7 @@ const showThemeImages = false;
       }
 
       const isProjectInquiry = Boolean(draft.shootProjectId);
+      trackSiteEvent('form_submit_attempt');
       pending = true;
       if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = true;
       if (status) status.textContent = '送出中…';
@@ -527,12 +533,16 @@ const showThemeImages = false;
       try {
         const response = await fetch('/api/inquiries', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(isSiteAnalyticsDisabled() ? { 'X-Phox-Analytics-Opt-Out': '1' } : {}),
+          },
           body: JSON.stringify(payload),
         });
         responseReceived = true;
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
+          trackSiteEvent('form_submit_error', { errorCode: response.status === 429 ? 'rate_limited' : response.status >= 500 ? 'server' : 'validation' });
           if (response.status >= 500) uncertainRetryFingerprints.add(retryFingerprint);
           else uncertainRetryFingerprints.delete(retryFingerprint);
           throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
@@ -560,6 +570,7 @@ const showThemeImages = false;
           }
         }
       } catch (error) {
+        if (!responseReceived) trackSiteEvent('form_submit_error', { errorCode: 'network' });
         if (!responseReceived) uncertainRetryFingerprints.add(retryFingerprint);
         if (status) {
           status.textContent = responseReceived

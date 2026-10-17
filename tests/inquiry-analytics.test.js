@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { initInquiryAnalytics } from '../src/lib/inquiry-analytics.ts';
 
-function analyticsFixture(pathname = '/', existingTag = false) {
+function analyticsFixture(pathname = '/', existingTag = false, preferenceResolved = true) {
   const events = [];
   const scripts = [];
   const listeners = new Map();
+  const windowListeners = new Map();
   class FakeElement {
     constructor(link) { this.link = link; }
     closest(selector) { return selector === 'a[data-analytics-event="inquiry_click"]' ? this.link : null; }
@@ -17,8 +18,14 @@ function analyticsFixture(pathname = '/', existingTag = false) {
     createElement(tag) { return { tag, dataset: {} }; },
     addEventListener(type, handler, options) { listeners.set(type, { handler, options }); },
   };
-  const window = { location: { origin: 'https://phox999.com', pathname, search: '?private=secret', hash: '#form' }, dataLayer: events };
-  return { document, window, events, scripts, listeners, FakeElement };
+  const window = {
+    location: { origin: 'https://phox999.com', pathname, search: '?private=secret', hash: '#form' },
+    dataLayer: events,
+    __phoxAnalyticsPreferenceResolved: preferenceResolved,
+    addEventListener(type, handler, options) { windowListeners.set(type, { handler, options }); },
+    dispatchEvent(event) { windowListeners.get(event.type)?.handler(event); },
+  };
+  return { document, window, events, scripts, listeners, windowListeners, FakeElement };
 }
 
 test('no measurement ID keeps analytics disabled and adds no script or click listener', () => {
@@ -48,6 +55,12 @@ test('one public inquiry click queues one sanitized event and keeps default navi
   assert.deepEqual(eventCalls[0], ['event', 'inquiry_click', { placement: 'journal-body', page_path: '/journal/what-is-tfp/' }]);
   assert.equal(click.defaultPrevented, false);
   assert.equal(link.target, '_blank');
+  fixture.windowListeners.get('phox-site-analytics-disabled').handler();
+  assert.deepEqual(fixture.events.at(-1), ['consent', 'update', { analytics_storage: 'denied' }]);
+  fixture.window.__phoxAnalyticsDisabled = true;
+  fixture.window.__phoxAnalyticsDisabled = false;
+  fixture.window.dispatchEvent(new Event('phox-site-analytics-enabled'));
+  assert.deepEqual(fixture.events.at(-1), ['consent', 'update', { analytics_storage: 'granted' }]);
   fixture.listeners.get('click').handler({
     target: new fixture.FakeElement({ dataset: { analyticsPlacement: 'hero' }, href: 'https://forms.gle/example' }),
     defaultPrevented: false,
@@ -55,6 +68,19 @@ test('one public inquiry click queues one sanitized event and keeps default navi
   });
   assert.equal(fixture.events.filter((call) => call[0] === 'event').length, 2, 'keyboard activation is measured once');
   assert.equal(initInquiryAnalytics('G-ABC123', fixture.window, fixture.document), true);
+  assert.equal(fixture.listeners.size, 1);
+});
+
+test('GA4 waits for server-confirmed measurement preference before loading', () => {
+  const fixture = analyticsFixture('/', false, false);
+  assert.equal(initInquiryAnalytics('G-ABC123', fixture.window, fixture.document), false);
+  assert.equal(fixture.scripts.length, 0);
+  assert.equal(fixture.listeners.size, 0);
+  assert.equal(fixture.windowListeners.get('phox-site-analytics-enabled').options.once, true);
+
+  fixture.window.__phoxAnalyticsPreferenceResolved = true;
+  fixture.windowListeners.get('phox-site-analytics-enabled').handler();
+  assert.equal(fixture.scripts.length, 1);
   assert.equal(fixture.listeners.size, 1);
 });
 

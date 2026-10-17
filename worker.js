@@ -5,6 +5,9 @@ import { onRequest as feedback } from './functions/api/feedback.js';
 import { onRequest as cooperation } from './functions/api/cooperation.js';
 import { onRequestGet as publicAvailabilityGet } from './functions/api/availability.js';
 import { onRequest as adminOverview } from './functions/api/admin/overview.js';
+import { onRequest as analyticsEvents } from './functions/api/analytics/events.js';
+import { onRequest as adminAnalytics } from './functions/api/admin/analytics.js';
+import { runAnalyticsRetention } from './server/site-analytics.js';
 import { onRequest as adminInquiries } from './functions/api/admin/inquiries.js';
 import { onRequest as adminInquiry } from './functions/api/admin/inquiries/[id].js';
 import { onRequest as adminInquiryReferences } from './functions/api/admin/inquiries/[id]/references.js';
@@ -43,6 +46,8 @@ const apiRoutes = [
   [/^\/api\/cooperation$/, cooperation],
   [/^\/api\/availability$/, publicAvailability],
   [/^\/api\/admin\/overview$/, adminOverview],
+  [/^\/api\/analytics\/events$/, analyticsEvents],
+  [/^\/api\/admin\/analytics$/, adminAnalytics],
   [/^\/api\/admin\/inquiries$/, adminInquiries],
   [/^\/api\/admin\/inquiries\/([^/]+)\/references$/, adminInquiryReferences, ['id']],
   [/^\/api\/admin\/inquiries\/([^/]+)\/confirmation$/, adminInquiryConfirmation, ['id']],
@@ -77,6 +82,11 @@ function decodeParams(match, names = []) {
 }
 
 export default {
+  async scheduled(controller, env, context) {
+    context.waitUntil(runAnalyticsRetention(env).catch((error) => {
+      console.error('Site analytics retention failed', error instanceof Error ? error.message : 'unknown_error');
+    }));
+  },
   async fetch(request, env, executionContext) {
     const { pathname } = new URL(request.url);
 

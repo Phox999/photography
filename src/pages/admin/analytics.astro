@@ -1,0 +1,434 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import '../../styles/admin-analytics.css';
+---
+
+<AdminLayout title="流量與轉換" current="analytics">
+  <header class="admin-page-heading analytics-heading">
+    <div><span class="admin-eyebrow">網站成效</span><h1>流量與轉換</h1><p>本站匿名事件與已收件合作意向，時間以台北時區計算。</p></div>
+    <button class="admin-button admin-button--quiet" type="button" data-analytics-reload>重新載入</button>
+  </header>
+
+  <form class="admin-card analytics-controls" data-analytics-controls>
+    <label for="analytics-range">報表區間</label>
+    <select id="analytics-range" name="range">
+      <option value="today">今日</option>
+      <option value="yesterday">昨日</option>
+      <option value="7d">近 7 天</option>
+      <option value="30d">近 30 天</option>
+      <option value="custom">自訂區間</option>
+    </select>
+    <div class="analytics-custom-range" data-analytics-custom hidden>
+      <label for="analytics-start">開始日期</label><input id="analytics-start" name="start" type="date" />
+      <label for="analytics-end">結束日期</label><input id="analytics-end" name="end" type="date" />
+    </div>
+    <button class="admin-button" type="submit">套用</button>
+    <p class="analytics-range-note" data-analytics-range-note>正在載入區間…</p>
+  </form>
+
+  <p class="admin-status analytics-status" role="status" aria-live="polite" data-analytics-status>正在載入報表…</p>
+
+  <section class="analytics-metrics" aria-label="流量與轉換摘要">
+    <article class="admin-card analytics-metric"><h2>訪客數（估計）</h2><strong data-metric="visitors">—</strong><p data-compare="visitors">等待資料</p></article>
+    <article class="admin-card analytics-metric"><h2>造訪次數</h2><strong data-metric="sessions">—</strong><p data-compare="sessions">等待資料</p></article>
+    <article class="admin-card analytics-metric"><h2>頁面瀏覽量</h2><strong data-metric="pageViews">—</strong><p data-compare="pageViews">等待資料</p></article>
+    <article class="admin-card analytics-metric"><h2>成功合作意向</h2><strong data-metric="inquiries">—</strong><p data-compare="inquiries">等待資料</p></article>
+    <article class="admin-card analytics-metric analytics-metric--accent"><h2>訪客轉換率</h2><strong data-metric="conversionRate">—</strong><p data-compare="conversionRate">分子／分母：—</p></article>
+    <article class="admin-card analytics-metric analytics-metric--accent"><h2>表單完成率</h2><strong data-metric="formCompletionRate">—</strong><p data-metric-detail="formCompletionRate">開始填表的 session 中完成收件的比例</p></article>
+  </section>
+
+  <section class="analytics-grid">
+    <article class="admin-card analytics-panel analytics-trend">
+      <div class="analytics-panel__heading"><div><span class="admin-eyebrow">趨勢</span><h2>訪客、瀏覽與意向</h2></div>
+        <div class="analytics-metric-switch" role="group" aria-label="選擇趨勢指標">
+          <button type="button" data-trend-metric="visitors" aria-pressed="false">訪客</button>
+          <button type="button" data-trend-metric="pageViews" aria-pressed="true">瀏覽</button>
+          <button type="button" data-trend-metric="inquiries" aria-pressed="false">意向</button>
+        </div>
+      </div>
+      <p class="analytics-chart-summary" data-trend-summary>圖表載入後會顯示文字摘要。</p>
+      <svg class="analytics-chart" viewBox="0 0 720 240" role="img" aria-labelledby="analytics-chart-title" data-analytics-chart>
+        <title id="analytics-chart-title">本站流量趨勢</title>
+      </svg>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table"><caption>各時間區間的訪客、造訪、瀏覽與意向</caption>
+          <thead><tr><th scope="col">時間</th><th scope="col">訪客</th><th scope="col">造訪</th><th scope="col">瀏覽</th><th scope="col">意向</th></tr></thead>
+          <tbody data-trend-rows><tr><td colspan="5">尚無資料</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="admin-card analytics-panel">
+      <span class="admin-eyebrow">表單流程</span><h2>合作意向漏斗</h2>
+      <p class="analytics-panel__note">以不同 session 計數；資料遺失或跨 session 提交不會補造漏斗事件。</p>
+      <ol class="analytics-funnel" data-analytics-funnel><li>尚無資料</li></ol>
+      <p class="analytics-unpaired" data-unpaired-inquiries>未能配對漏斗的成功意向：—</p>
+    </article>
+
+    <article class="admin-card analytics-panel">
+      <span class="admin-eyebrow">造訪來源</span><h2>來源與活動</h2>
+      <p class="analytics-panel__note">只保存來源分類與受限活動代碼，不保存原始 referrer 路徑或查詢字串。</p>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table"><caption>來源造訪與可歸因成功意向</caption>
+          <thead><tr><th scope="col">來源／活動</th><th scope="col">造訪</th><th scope="col">意向</th></tr></thead>
+          <tbody data-source-rows><tr><td colspan="3">尚無資料</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="admin-card analytics-panel">
+      <span class="admin-eyebrow">熱門內容</span><h2>熱門頁面</h2>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table"><caption>公開頁面瀏覽量與不同訪客數</caption>
+          <thead><tr><th scope="col">頁面</th><th scope="col">瀏覽</th><th scope="col">訪客</th></tr></thead>
+          <tbody data-page-rows><tr><td colspan="3">尚無資料</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+    <article class="admin-card analytics-panel">
+      <span class="admin-eyebrow">合作意圖</span><h2>入口與外連點擊</h2>
+      <p class="analytics-panel__note">外連點擊只代表前往表單或社群的意圖，不代表對方已完成外站表單。</p>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table"><caption>合作入口與聯絡管道點擊</caption>
+          <thead><tr><th scope="col">事件</th><th scope="col">位置／目的</th><th scope="col">次數</th></tr></thead>
+          <tbody data-click-rows><tr><td colspan="3">尚無合作入口點擊</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="analytics-grid analytics-grid--status">
+    <article class="admin-card analytics-panel">
+      <span class="admin-eyebrow">量測狀態</span><h2>本站資料</h2>
+      <dl class="analytics-status-list">
+        <div><dt>最近事件</dt><dd data-last-event>尚未收到本站事件</dd></div>
+        <div><dt>本期可歸因意向</dt><dd data-attribution-rate>—</dd></div>
+        <div><dt>更新時間</dt><dd data-updated-at>—</dd></div>
+        <div><dt>原始資料保留</dt><dd>90 天</dd></div>
+      </dl>
+      <p class="analytics-panel__note">新量測只從啟用後開始；歷史真人流量無法回填。訪客是瀏覽器估計值，清除 cookie、跨裝置或阻擋追蹤會造成低估或重複。</p>
+    </article>
+    <article class="admin-card analytics-panel analytics-cloudflare">
+      <span class="admin-eyebrow">獨立診斷來源</span><h2>Cloudflare HTTP 流量</h2>
+      <p>Cloudflare 請求、掃描與錯誤尚未接入本站報表。這些數字不會併入訪客轉換率的分母。</p>
+      <a class="admin-text-link" href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">前往 Cloudflare 控制台</a>
+    </article>
+  </section>
+</AdminLayout>
+
+<script>
+  import { requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate } from '../../lib/admin-client';
+
+  type Totals = { visitors: number; sessions: number; pageViews: number; inquiries: number; convertedVisitors: number; conversionRate: number | null; unattributedInquiries: number };
+  type Trend = { bucket: string; visitors: number; sessions: number; pageViews: number; inquiries: number };
+  type Source = { source: string; medium: string | null; campaign: string | null; sessions: number; inquiries: number };
+  type ClickRow = { event: string; placement: string | null; destination: string | null; events: number };
+  type PageRow = { path: string; pageViews: number; visitors: number };
+  type FunnelRow = { stage: string; sessions: number };
+  type AnalyticsReport = { totals: Totals; trend: Trend[]; sources: Source[]; clicks: ClickRow[]; pages: PageRow[]; funnel: FunnelRow[]; unpairedInquiries: number; lastEventAt: string | null };
+  type AnalyticsResponse = {
+    range: { range: string; startDate: string; endDate: string; start: string; end: string; hourly: boolean; isCurrentDay: boolean };
+    current: AnalyticsReport;
+    previous: AnalyticsReport | null;
+    updatedAt: string;
+    timezone: string;
+    retentionDays: number;
+  };
+
+  const $ = <T extends Element>(selector: string) => document.querySelector<T>(selector)!;
+  const rangeSelect = $('#analytics-range') as HTMLSelectElement;
+  const customRange = $('[data-analytics-custom]') as HTMLElement;
+  const startInput = $('#analytics-start') as HTMLInputElement;
+  const endInput = $('#analytics-end') as HTMLInputElement;
+  const status = $('[data-analytics-status]') as HTMLElement;
+  const rangeNote = $('[data-analytics-range-note]') as HTMLElement;
+  const reloadButton = $('[data-analytics-reload]') as HTMLButtonElement;
+  const numberFormat = new Intl.NumberFormat('zh-TW');
+  let report: AnalyticsResponse | null = null;
+  let metric = 'pageViews';
+  let loading = false;
+
+  const sourceLabels: Record<string, string> = {
+    direct: '直接／來源不明', instagram: 'Instagram', threads: 'Threads',
+    facebook: 'Facebook', google: 'Google', other: '其他外部來源',
+  };
+  const mediumLabels: Record<string, string> = {
+    social: '社群', story: '限時動態', post: '貼文', bio: '個人頁', referral: '外部連結',
+    organic: '自然搜尋', paid: '付費', email: '電子郵件', other: '其他',
+  };
+  const funnelLabels: Record<string, string> = {
+    form_start: '開始填寫', form_review: '進入確認', form_submit_attempt: '嘗試送出', inquiry_created: '資料庫成功收件',
+  };
+  const pathLabels: Record<string, string> = {
+    '/': '首頁', '/about/': '關於攝影師', '/behind-scenes/': '幕後花絮',
+    '/cooperation/': '合作方式', '/apply/': '合作申請', '/portfolio/': '作品集',
+    '/projects/': '拍攝企劃', '/journal/': '創作文章', '/inspiration/': '靈感板',
+  };
+  const placementLabels: Record<string, string> = {
+    'header-desktop': '桌面導覽', 'header-mobile': '手機導覽', hero: '首頁主視覺',
+    'projects-general': '企劃區', 'projects-empty': '企劃空狀態', cooperation: '合作方式頁',
+    'portfolio-index': '作品集頁', 'behind-scenes': '幕後花絮', 'inspiration-board': '靈感板',
+    'journal-footer': '文章頁尾', 'journal-body': '文章內文', plans: '方案區', footer: '頁尾', other: '其他位置',
+  };
+  const destinationLabels: Record<string, string> = {
+    internal: '站內頁面', google_form: 'Google 表單', instagram: 'Instagram', threads: 'Threads',
+    facebook: 'Facebook', email: 'Email', other: '其他聯絡管道',
+  };
+
+  function count(value: unknown): string {
+    return typeof value === 'number' && Number.isFinite(value) ? numberFormat.format(value) : '—';
+  }
+  function percent(value: number | null): string {
+    return value === null || !Number.isFinite(value) ? '—' : value.toFixed(1) + '%';
+  }
+  function pageLabel(path: string): string {
+    if (pathLabels[path]) return pathLabels[path];
+    if (path.startsWith('/portfolio/')) return '作品集單頁';
+    if (path.startsWith('/projects/')) return '拍攝企劃單頁';
+    if (path.startsWith('/journal/')) return '創作文章單頁';
+    return path;
+  }
+  function showComparison(current: number | null, previous: number | null, hasPrevious: boolean): string {
+    if (!hasPrevious) return '前期資料已超出 90 天保留範圍';
+    if (previous === null) return '前期樣本不足';
+    if (current === null || !Number.isFinite(current)) return '樣本不足';
+    if (previous === 0) return current === 0 ? '較前期無變化' : '較前期 +' + count(current);
+    const delta = current - previous;
+    const change = (delta / previous) * 100;
+    return '較前期 ' + (delta > 0 ? '+' : '') + count(delta) + '（' + (change > 0 ? '+' : '') + change.toFixed(1) + '%）';
+  }
+  function totalsMetric(data: AnalyticsReport, key: string): number | null {
+    if (key === 'formCompletionRate') {
+      const started = data.funnel.find((item) => item.stage === 'form_start')?.sessions || 0;
+      const completed = data.funnel.find((item) => item.stage === 'inquiry_created')?.sessions || 0;
+      return started > 0 ? (completed / started) * 100 : null;
+    }
+    const value = data.totals[key as keyof Totals];
+    return typeof value === 'number' ? value : null;
+  }
+  function updateMetric(key: string, current: AnalyticsReport, previous: AnalyticsReport | null) {
+    const target = document.querySelector<HTMLElement>('[data-metric="' + key + '"]');
+    if (!target) return;
+    if (key === 'conversionRate' || key === 'formCompletionRate') {
+      const value = key === 'conversionRate' ? current.totals.conversionRate : totalsMetric(current, key);
+      target.textContent = percent(value);
+    } else {
+      target.textContent = count(totalsMetric(current, key));
+    }
+    const comparison = document.querySelector<HTMLElement>('[data-compare="' + key + '"]');
+    if (comparison && key !== 'formCompletionRate') {
+      const currentValue = key === 'conversionRate' ? current.totals.conversionRate : totalsMetric(current, key);
+      const previousValue = previous
+        ? key === 'conversionRate' ? previous.totals.conversionRate : totalsMetric(previous, key)
+        : null;
+      comparison.textContent = key === 'conversionRate'
+        ? '轉換 ' + count(current.totals.convertedVisitors) + '／' + count(current.totals.visitors) + ' 位訪客 · ' + showComparison(currentValue, previousValue, previous !== null)
+        : showComparison(currentValue, previousValue, previous !== null);
+    }
+    if (key === 'formCompletionRate') {
+      const started = current.funnel.find((item) => item.stage === 'form_start')?.sessions || 0;
+      const completed = current.funnel.find((item) => item.stage === 'inquiry_created')?.sessions || 0;
+      const detail = document.querySelector<HTMLElement>('[data-metric-detail="formCompletionRate"]');
+      if (detail) detail.textContent = started
+        ? count(completed) + '／' + count(started) + ' 個開始填寫的 session 完成收件 · 僅計同 session 漏斗'
+        : '沒有開始填表的 session；樣本不足';
+    }
+  }
+
+  function drawChart(data: AnalyticsReport) {
+    const svg = $('[data-analytics-chart]') as SVGSVGElement;
+    const values = data.trend.map((item) => Number(item[metric as keyof Trend]) || 0);
+    const title = metric === 'visitors' ? '訪客估計趨勢' : metric === 'inquiries' ? '成功意向趨勢' : '頁面瀏覽趨勢';
+    $('#analytics-chart-title').textContent = title;
+    const summary = $('[data-trend-summary]') as HTMLElement;
+    const total = values.reduce((sum, value) => sum + value, 0);
+    const peak = values.length ? Math.max(...values) : 0;
+    summary.textContent = data.trend.length
+      ? title + '共有 ' + data.trend.length + ' 個時間點，區間各點合計 ' + count(total) + '，最高單點 ' + count(peak) + '。訪客分日去重，不能相加當成區間訪客數。'
+      : '這個區間尚無本站事件資料。';
+
+    const ns = 'http://www.w3.org/2000/svg';
+    const elements: SVGElement[] = [svg.querySelector('title')!];
+    const width = 720, height = 240, padX = 18, padY = 22;
+    for (let index = 0; index < 4; index += 1) {
+      const line = document.createElementNS(ns, 'line');
+      const y = padY + (height - padY * 2) * index / 3;
+      line.setAttribute('x1', String(padX)); line.setAttribute('x2', String(width - padX));
+      line.setAttribute('y1', String(y)); line.setAttribute('y2', String(y));
+      line.setAttribute('class', 'analytics-chart__gridline');
+      elements.push(line);
+    }
+    if (values.length) {
+      const maximum = Math.max(1, ...values);
+      const points = values.map((value, index) => {
+        const x = values.length === 1 ? width / 2 : padX + (width - padX * 2) * index / (values.length - 1);
+        const y = height - padY - (height - padY * 2) * value / maximum;
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      });
+      const line = document.createElementNS(ns, 'polyline');
+      line.setAttribute('points', points.join(' ')); line.setAttribute('class', 'analytics-chart__line');
+      elements.push(line);
+      values.forEach((value, index) => {
+        const [x, y] = points[index].split(',');
+        const circle = document.createElementNS(ns, 'circle');
+        circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r', '3.5');
+        circle.setAttribute('class', 'analytics-chart__point');
+        circle.setAttribute('aria-label', data.trend[index].bucket + ': ' + count(value));
+        elements.push(circle);
+      });
+    }
+    svg.replaceChildren(...elements);
+    renderTrendTable(data.trend);
+  }
+
+  function renderTrendTable(rows: Trend[]) {
+    const body = $('[data-trend-rows]') as HTMLTableSectionElement;
+    body.replaceChildren();
+    if (!rows.length) {
+      const row = body.insertRow(); const cell = row.insertCell(); cell.colSpan = 5; cell.textContent = '尚無資料';
+      return;
+    }
+    rows.forEach((item) => {
+      const row = body.insertRow();
+      [item.bucket, count(item.visitors), count(item.sessions), count(item.pageViews), count(item.inquiries)]
+        .forEach((value) => { const cell = row.insertCell(); cell.textContent = value; });
+    });
+  }
+
+  function renderSources(rows: Source[]) {
+    const body = $('[data-source-rows]') as HTMLTableSectionElement;
+    body.replaceChildren();
+    if (!rows.length) {
+      const row = body.insertRow(); const cell = row.insertCell(); cell.colSpan = 3; cell.textContent = '尚未收到可歸因造訪';
+      return;
+    }
+    rows.forEach((item) => {
+      const row = body.insertRow();
+      const source = row.insertCell();
+      source.textContent = (sourceLabels[item.source] || '其他')
+        + (item.medium ? ' · ' + (mediumLabels[item.medium] || item.medium) : '')
+        + (item.campaign ? ' · ' + item.campaign : '');
+      row.insertCell().textContent = count(item.sessions);
+      row.insertCell().textContent = count(item.inquiries);
+    });
+  }
+
+  function renderPages(rows: PageRow[]) {
+    const body = $('[data-page-rows]') as HTMLTableSectionElement;
+    body.replaceChildren();
+    if (!rows.length) {
+      const row = body.insertRow(); const cell = row.insertCell(); cell.colSpan = 3; cell.textContent = '尚無公開頁瀏覽資料';
+      return;
+    }
+    rows.forEach((item) => {
+      const row = body.insertRow();
+      const page = row.insertCell(); page.textContent = pageLabel(item.path);
+      page.title = item.path;
+      const path = document.createElement('span'); path.className = 'analytics-page-path'; path.textContent = item.path;
+      page.append(document.createElement('br'), path);
+      row.insertCell().textContent = count(item.pageViews);
+      row.insertCell().textContent = count(item.visitors);
+    });
+  }
+
+  function renderClicks(rows: ClickRow[]) {
+    const body = $('[data-click-rows]') as HTMLTableSectionElement;
+    body.replaceChildren();
+    if (!rows.length) {
+      const row = body.insertRow(); const cell = row.insertCell(); cell.colSpan = 3; cell.textContent = '尚無合作入口點擊';
+      return;
+    }
+    rows.forEach((item) => {
+      const row = body.insertRow();
+      row.insertCell().textContent = item.event === 'outbound_contact_click' ? '外連點擊' : '合作入口點擊';
+      const detail = item.placement ? placementLabels[item.placement] || item.placement : '';
+      const destination = item.destination ? destinationLabels[item.destination] || item.destination : '';
+      row.insertCell().textContent = [detail, destination].filter(Boolean).join(' · ') || '未分類';
+      row.insertCell().textContent = count(item.events);
+    });
+  }
+
+  function renderFunnel(data: AnalyticsReport) {
+    const list = $('[data-analytics-funnel]') as HTMLOListElement;
+    list.replaceChildren();
+    const started = data.funnel.find((item) => item.stage === 'form_start')?.sessions || 0;
+    data.funnel.forEach((item) => {
+      const row = document.createElement('li');
+      const heading = document.createElement('div'); heading.className = 'analytics-funnel__heading';
+      const name = document.createElement('span'); name.textContent = funnelLabels[item.stage] || item.stage;
+      const value = document.createElement('strong'); value.textContent = count(item.sessions);
+      heading.append(name, value);
+      const progress = document.createElement('progress');
+      progress.max = Math.max(1, started, item.sessions); progress.value = item.sessions;
+      progress.setAttribute('aria-label', name.textContent + '，' + count(item.sessions) + ' 個 session');
+      row.append(heading, progress);
+      list.append(row);
+    });
+    $('[data-unpaired-inquiries]').textContent = '未能配對漏斗的成功意向：' + count(data.unpairedInquiries) + ' 筆；成功收件總數仍依資料庫計算。';
+  }
+
+  function renderStatus(data: AnalyticsResponse) {
+    const current = data.current;
+    $('[data-last-event]').textContent = current.lastEventAt ? formatAdminDate(current.lastEventAt) : '尚未收到本站事件';
+    const accounted = current.totals.inquiries - current.totals.unattributedInquiries;
+    $('[data-attribution-rate]').textContent = current.totals.inquiries > 0
+      ? count(accounted) + '／' + count(current.totals.inquiries) + ' 筆（' + ((accounted / current.totals.inquiries) * 100).toFixed(1) + '%）'
+      : '本期沒有成功意向';
+    $('[data-updated-at]').textContent = formatAdminDate(data.updatedAt);
+    rangeNote.textContent = data.range.startDate + ' 至 ' + data.range.endDate + (data.range.isCurrentDay ? '（今日尚未結束）' : '') + ' · Asia/Taipei · 原始事件保留 ' + data.retentionDays + ' 天';
+  }
+
+  function render(data: AnalyticsResponse) {
+    report = data;
+    for (const key of ['visitors', 'sessions', 'pageViews', 'inquiries', 'conversionRate', 'formCompletionRate']) {
+      updateMetric(key, data.current, data.previous);
+    }
+    drawChart(data.current);
+    renderFunnel(data.current);
+    renderSources(data.current.sources);
+    renderClicks(data.current.clicks);
+    renderPages(data.current.pages);
+    renderStatus(data);
+  }
+
+  async function load() {
+    if (loading) return;
+    loading = true; status.textContent = '正在載入流量與轉換資料…';
+    reloadButton.disabled = true;
+    const params = new URLSearchParams({ range: rangeSelect.value });
+    if (rangeSelect.value === 'custom') {
+      if (!startInput.value || !endInput.value) {
+        status.textContent = '請選擇開始與結束日期。'; loading = false; reloadButton.disabled = false; return;
+      }
+      params.set('start', startInput.value); params.set('end', endInput.value);
+    }
+    try {
+      const result = await requestAdmin<AnalyticsResponse>('/api/admin/analytics?' + params);
+      render(result);
+      status.textContent = result.current.totals.visitors
+        ? '報表已更新。訪客與轉換數是基於可量測事件的估計。'
+        : '目前尚無可量測的公開頁瀏覽；請確認追蹤已啟用。成功意向仍會依資料庫顯示。';
+    } catch (error) {
+      status.textContent = adminErrorMessage(error);
+      if (report) status.textContent += ' · 上次成功載入的資料仍顯示於下方。';
+    } finally {
+      loading = false; reloadButton.disabled = false;
+    }
+  }
+
+  rangeSelect.addEventListener('change', () => {
+    customRange.hidden = rangeSelect.value !== 'custom';
+    if (rangeSelect.value !== 'custom') void load();
+  });
+  $('[data-analytics-controls]').addEventListener('submit', (event) => { event.preventDefault(); void load(); });
+  reloadButton.addEventListener('click', () => void load());
+  document.querySelectorAll<HTMLButtonElement>('[data-trend-metric]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (!report) return;
+      metric = button.dataset.trendMetric || 'pageViews';
+      document.querySelectorAll('[data-trend-metric]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+      drawChart(report.current);
+    });
+  });
+  requireAdminSession().then(() => void load()).catch((error) => { status.textContent = adminErrorMessage(error); });
+</script>

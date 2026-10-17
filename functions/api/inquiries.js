@@ -2,6 +2,25 @@ import { endpoint, json, getSecretConfig } from '../../server/auth.js';
 import { readInquirySubmission, referenceLinks, validateReferenceImages, persistInquiry } from '../../server/inquiry-references.js';
 import { existingReceipt, prepareSubmission } from '../../server/inquiry-workflow.js';
 import { attachShootProjectSnapshot, parseShootProjectRequest, projectForNewRequest } from '../../server/shoot-projects.js';
+import { existingAnalyticsIdentity, recordInquiryAttribution } from '../../server/site-analytics.js';
+
+async function attachAnalyticsAttribution(request, env, workflow, context) {
+  if (!workflow?.submissionId || request.headers.get('x-phox-analytics-opt-out') === '1') return null;
+  let attribution;
+  try { attribution = await existingAnalyticsIdentity(request, env); }
+  catch {
+    console.error('Inquiry analytics attribution failed');
+    return null;
+  }
+  if (!attribution) return null;
+  const write = recordInquiryAttribution(env, workflow.submissionId, attribution.identity).catch(() => {
+    // Attribution is optional. A failure must never change a committed inquiry or its retry behavior.
+    console.error('Inquiry analytics attribution failed');
+  });
+  if (typeof context?.waitUntil === 'function') context.waitUntil(write);
+  else await write;
+  return attribution.cookie;
+}
 
 const contactMethods = new Set(['Instagram', 'Line', 'Facebook', 'Threads', '手機', '其他']);
 const collaborationTypes = new Set(['輕量體驗(2hr)', '標準方案(3hr)', '主題合作']);
@@ -135,13 +154,21 @@ export const onRequest = endpoint(async (context) => {
     // A committed receipt wins before the current project state is checked.
     // This keeps the same request retryable after a project closes or changes.
     const priorReceipt = await existingReceipt(config, workflow);
-    if (priorReceipt) return json({ success: true, message: '企劃申請已收到。', receipt: priorReceipt }, 201);
+    if (priorReceipt) {
+      const analyticsCookie = await attachAnalyticsAttribution(request, env, workflow, context);
+      return json(
+        { success: true, message: '企劃申請已收到。', receipt: priorReceipt },
+        201,
+        analyticsCookie ? { 'Set-Cookie': analyticsCookie } : {},
+      );
+    }
     const project = projectForNewRequest(projectRequest);
     persistedPayload = attachShootProjectSnapshot(payload, project);
   }
   const receipt = await persistInquiry(config, persistedPayload, images, workflow, projectRequest
     ? { beforeCommit: () => { projectForNewRequest(projectRequest); } }
     : undefined);
+  const analyticsCookie = await attachAnalyticsAttribution(request, env, workflow, context);
 
   return json(
     {
@@ -150,5 +177,6 @@ export const onRequest = endpoint(async (context) => {
       receipt,
     },
     201,
+    analyticsCookie ? { 'Set-Cookie': analyticsCookie } : {},
   );
 });
