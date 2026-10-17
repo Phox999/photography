@@ -13,7 +13,7 @@
 .analytics-metric strong { display: block; margin-top: 10px; color: var(--color-text, #26373e); font-size: clamp(1.8rem, 3vw, 2.4rem); font-variant-numeric: tabular-nums; line-height: 1.1; }
 .analytics-metric p { margin: 8px 0 0; color: var(--color-muted, #64727a); font-size: .76rem; line-height: 1.5; }
 .analytics-metric--accent { border-top: 3px solid var(--color-primary-dark, #176b8a); }
-.analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 14px; margin: 14px 0; }
+.analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 14px; margin: 14px 0; }
 .analytics-grid--status { grid-template-columns: 1.2fr .8fr; }
 .analytics-panel { min-width: 0; }
 .analytics-panel h2 { margin: 3px 0 8px; font-size: 1.14rem; }
