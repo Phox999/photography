@@ -28,6 +28,38 @@ import '../../styles/admin-analytics.css';
 
   <p class="admin-status analytics-status" role="status" aria-live="polite" data-analytics-status>正在載入報表…</p>
 
+  <nav class="analytics-navigation" aria-label="分析面板主要區域">
+    <button class="admin-button" type="button" data-analytics-view-button="overview" aria-pressed="true">改善總覽</button>
+    <button class="admin-button admin-button--quiet" type="button" data-analytics-view-button="sessions" aria-pressed="false">造訪紀錄</button>
+    <button class="admin-button admin-button--quiet" type="button" data-analytics-view-button="pages" aria-pressed="false">頁面表現</button>
+  </nav>
+  <div class="analytics-active-filters" data-global-active-filters aria-label="目前作用中的篩選"></div>
+
+  <div data-analytics-panel="overview">
+    <section class="analytics-observations" aria-labelledby="analytics-observation-title">
+      <div><span class="admin-eyebrow">需要查看的現象</span><h2 id="analytics-observation-title">從指標回查相關造訪</h2></div>
+      <p class="analytics-panel__note" data-journey-capability role="status" aria-live="polite">正在確認造訪查詢功能…</p>
+      <div class="analytics-observation-grid">
+        <button class="admin-card analytics-observation" type="button" data-observation-result="portfolio_no_form_start">
+          <span>觀察</span><strong data-observation-count="portfolio_no_form_start">—</strong>
+          <span>看過作品，本次未開始填表</span><small data-observation-ratio="portfolio_no_form_start">符合條件造訪／期間造訪：—／—。可能原因需回查該次頁面與後續歷程。</small>
+        </button>
+        <button class="admin-card analytics-observation" type="button" data-observation-result="cta_no_form_start">
+          <span>觀察</span><strong data-observation-count="cta_no_form_start">—</strong>
+          <span>點過合作入口，本次未開始填表</span><small data-observation-ratio="cta_no_form_start">符合條件造訪／期間造訪：—／—。點擊只表示前往意圖，不代表外站表單已開啟。</small>
+        </button>
+        <button class="admin-card analytics-observation" type="button" data-observation-result="submit_error">
+          <span>觀察</span><strong data-observation-count="submit_error">—</strong>
+          <span>送出流程發生錯誤</span><small data-observation-ratio="submit_error">符合條件造訪／期間造訪：—／—。錯誤分類需與前後端收到時間一併查看。</small>
+        </button>
+        <button class="admin-card analytics-observation" type="button" data-observation-result="error_then_success">
+          <span>觀察</span><strong data-observation-count="error_then_success">—</strong>
+          <span>發生錯誤後仍成功收件</span><small data-observation-ratio="error_then_success">符合條件造訪／期間造訪：—／—。此類可同時屬於錯誤與成功，不互斥。</small>
+        </button>
+      </div>
+      <p class="analytics-panel__note">數字是可觀測事件與後端收件的關聯，不自動判定訪客原因。成功以合作資料庫確認收件為準。</p>
+    </section>
+
   <section class="analytics-metrics" aria-label="流量與轉換摘要">
     <article class="admin-card analytics-metric"><h2>訪客數（估計）</h2><strong data-metric="visitors">—</strong><p data-compare="visitors">等待資料</p></article>
     <article class="admin-card analytics-metric"><h2>造訪次數</h2><strong data-metric="sessions">—</strong><p data-compare="sessions">等待資料</p></article>
@@ -60,7 +92,7 @@ import '../../styles/admin-analytics.css';
 
     <article class="admin-card analytics-panel">
       <span class="admin-eyebrow">表單流程</span><h2>合作意向漏斗</h2>
-      <p class="analytics-panel__note">以不同 session 計數；資料遺失或跨 session 提交不會補造漏斗事件。</p>
+      <p class="analytics-panel__note" data-funnel-note>以不同 session 計數；資料遺失或跨 session 提交不會補造漏斗事件。</p>
       <ol class="analytics-funnel" data-analytics-funnel><li>尚無資料</li></ol>
       <p class="analytics-unpaired" data-unpaired-inquiries>未能配對漏斗的成功意向：—</p>
     </article>
@@ -114,6 +146,63 @@ import '../../styles/admin-analytics.css';
       <a class="admin-text-link" href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">前往 Cloudflare 控制台</a>
     </article>
   </section>
+  </div>
+
+  <section class="analytics-journeys" data-analytics-panel="sessions" hidden aria-labelledby="analytics-sessions-title">
+    <header class="analytics-panel__heading"><div><span class="admin-eyebrow">一次造訪一列</span><h2 id="analytics-sessions-title">造訪紀錄</h2></div><p data-sessions-total>尚未載入造訪</p></header>
+    <form class="admin-card analytics-controls analytics-journey-filters" data-session-filters>
+      <label>當次來源
+        <select data-session-filter="source"><option value="">全部來源</option><option value="direct">直接／來源不明</option><option value="instagram">Instagram</option><option value="threads">Threads</option><option value="facebook">Facebook</option><option value="google">Google</option><option value="other">其他外部來源</option></select>
+      </label>
+      <label>裝置分類
+        <select data-session-filter="device"><option value="">全部裝置</option><option value="mobile">手機</option><option value="tablet">平板</option><option value="desktop">桌面</option><option value="unknown">未知</option></select>
+      </label>
+      <label>公開頁面
+        <input type="text" data-session-filter="page" list="analytics-page-options" placeholder="例如 /portfolio/" autocomplete="off" />
+        <datalist id="analytics-page-options" data-analytics-page-options></datalist>
+      </label>
+      <label>結果
+        <select data-session-filter="result"><option value="">全部結果</option><option value="portfolio_no_form_start">看作品未開始填表</option><option value="cta_no_form_start">點合作入口未開始填表</option><option value="submit_error">送出發生錯誤</option><option value="error_then_success">錯誤後成功收件</option></select>
+      </label>
+      <label>訪客代碼
+        <input type="search" data-session-filter="visitor" placeholder="V-ABC123" maxlength="8" autocomplete="off" />
+      </label>
+      <button class="admin-button" type="submit">套用篩選</button>
+      <p class="analytics-panel__note">期間依事件 received_at 與後端收件 created_at 分別判斷；入口頁只從實際 page_view 推定。訪客代碼代表可辨識期間內的瀏覽器，不是真實人物。</p>
+    </form>
+    <div class="analytics-journey-layout" data-journey-layout>
+      <section class="admin-card analytics-session-list" data-session-list-panel aria-label="造訪清單">
+        <p class="analytics-panel__note" data-session-list-status role="status" aria-live="polite">準備載入造訪。</p>
+        <ol class="analytics-session-rows" data-session-rows></ol>
+        <button class="admin-button admin-button--quiet" type="button" data-session-next hidden>載入較舊造訪</button>
+      </section>
+      <aside class="admin-card analytics-session-detail" data-session-detail-panel hidden aria-label="造訪詳情">
+        <button class="admin-button admin-button--quiet analytics-mobile-back" type="button" data-session-back>返回造訪清單</button>
+        <div data-session-detail><p>選擇一筆造訪查看詳情。</p></div>
+        <button class="admin-button admin-button--quiet" type="button" data-visitor-next hidden>載入較早的同訪客造訪</button>
+      </aside>
+    </div>
+  </section>
+
+  <section class="analytics-pages" data-analytics-panel="pages" hidden aria-labelledby="analytics-pages-title">
+    <header class="analytics-panel__heading"><div><span class="admin-eyebrow">以 page_view received_at 計數</span><h2 id="analytics-pages-title">頁面表現</h2></div><p data-paths-status role="status">準備載入頁面資料。</p></header>
+    <p class="analytics-panel__note">CTA 曝光分母為 page_visit_id＋placement 的去重聯集：可視面積至少 50% 且 1 秒，或實際點擊。點擊補足的曝光會另列；舊版沒有 page_visit_id 的點擊不進入比率。下一頁只列同 session、同 tab 且連續 v2 tab_seq 的歷史觀測。</p>
+    <article class="admin-card analytics-panel">
+      <h3>公開頁面與合作入口</h3>
+      <div class="analytics-table-wrap"><table class="analytics-table"><caption>頁面瀏覽、訪客及合作入口配對</caption>
+        <thead><tr><th scope="col">頁面</th><th scope="col">瀏覽</th><th scope="col">訪客</th><th scope="col">入口點擊率</th><th scope="col">曝光證據</th><th scope="col">回查</th></tr></thead>
+        <tbody data-path-rows><tr><td colspan="6">尚無資料</td></tr></tbody>
+      </table></div>
+    </article>
+    <article class="admin-card analytics-panel analytics-next-pages">
+      <h3>下一個被觀測到的頁面</h3>
+      <p class="analytics-panel__note">沒有轉移紀錄不代表訪客離開；歷史 v1 資料缺少分頁識別，不用來判定確定路徑。</p>
+      <div class="analytics-table-wrap"><table class="analytics-table"><caption>同一 session 同一分頁的相鄰 v2 頁面瀏覽；每組流向按造訪去重</caption>
+        <thead><tr><th scope="col">本頁</th><th scope="col">下一個觀測頁</th><th scope="col">造訪</th><th scope="col">回查</th></tr></thead>
+        <tbody data-transition-rows><tr><td colspan="4">尚無可判定的 v2 頁面轉移</td></tr></tbody>
+      </table></div>
+    </article>
+  </section>
 </AdminLayout>
 
 <script>
@@ -125,7 +214,7 @@ import '../../styles/admin-analytics.css';
   type ClickRow = { event: string; placement: string | null; destination: string | null; events: number };
   type PageRow = { path: string; pageViews: number; visitors: number };
   type FunnelRow = { stage: string; sessions: number };
-  type AnalyticsReport = { totals: Totals; trend: Trend[]; sources: Source[]; clicks: ClickRow[]; pages: PageRow[]; funnel: FunnelRow[]; unpairedInquiries: number; lastEventAt: string | null };
+  type AnalyticsReport = { totals: Totals; trend: Trend[]; sources: Source[]; clicks: ClickRow[]; pages: PageRow[]; funnel: FunnelRow[]; unpairedInquiries: number; lastEventAt: string | null; funnelVersion?: string };
   type AnalyticsResponse = {
     range: { range: string; startDate: string; endDate: string; start: string; end: string; hourly: boolean; isCurrentDay: boolean };
     current: AnalyticsReport;
@@ -134,6 +223,41 @@ import '../../styles/admin-analytics.css';
     timezone: string;
     retentionDays: number;
   };
+  type JourneyCursor = { startedAt: string; sessionId: string };
+  type AnalyticsSession = {
+    sessionId: string; visitorId: string; startedAt: string; source: string; medium: string | null;
+    campaign: string | null; device: string; entryPath: string | null; entryPathUncertain: boolean;
+    lastPagePath: string | null; lastPageUncertain: boolean; pageViews: number; distinctPages: number;
+    eventCount: number; formStarted: boolean; ctaClicked: boolean; submitError: boolean;
+    inquiryReceived: boolean; everInquiryReceived: boolean; errorThenSuccess: boolean;
+    errorAt: string | null; inquiryAt: string | null; everInquiryAt: string | null;
+    lastEventAt: string | null; matchesCurrentFilter: boolean;
+  };
+  type SessionPage = { items: AnalyticsSession[]; total: number; nextCursor: JourneyCursor | null; range: AnalyticsResponse['range'] };
+  type AnalyticsEvent = {
+    eventId: string; schemaVersion: number; eventName: string; pagePath: string;
+    clientAt: string | null; receivedAt: string; pageVisitId: string | null; tabId: string | null;
+    documentId: string | null; eventSeq: number | null; tabSeq: number | null;
+    formInstanceId: string | null; stepId: string | null; placement: string | null;
+    destination: string | null; errorCode: string | null; visiblePercent: number | null; visibleMs: number | null;
+  };
+  type SessionDetail = {
+    session: Partial<AnalyticsSession> & {
+      sessionId: string; visitorId: string; startedAt: string; lastSeenAt: string;
+      source: string; medium: string | null; campaign: string | null; device: string;
+      entryPath: string | null; entryPathUncertain: boolean; lastPagePath: string | null;
+      lastPageUncertain: boolean; pageViews: number;
+    };
+    events: AnalyticsEvent[]; eventCount: number; eventsTruncated: boolean;
+    inquiries: { receivedAt: string }[]; firstMeasuredSource: string | null; firstMeasuredSourceUncertain: boolean;
+  };
+  type PathRow = {
+    path: string; pageViews: number; visitors: number; sessions: number;
+    ctaDenominator: number; ctaClicks: number; ctaClickRate: number | null;
+    visibleProof: number; clickSupplement: number; clickWithoutVisibleEvent: number; legacyUnpairedClicks: number;
+  };
+  type TransitionRow = { from: string; to: string; sessions: number; visits: number };
+  type PathResponse = { pages: PathRow[]; transitions: TransitionRow[]; legacyUnpairedClicks: number; transitionBasis: string };
 
   const $ = <T extends Element>(selector: string) => document.querySelector<T>(selector)!;
   const rangeSelect = $('#analytics-range') as HTMLSelectElement;
@@ -147,6 +271,19 @@ import '../../styles/admin-analytics.css';
   let report: AnalyticsResponse | null = null;
   let metric = 'pageViews';
   let loading = false;
+  let journeyAvailable: boolean | null = null;
+  let sessionRows: AnalyticsSession[] = [];
+  let sessionNextCursor: JourneyCursor | null = null;
+  let sessionTotal = 0;
+  let selectedSession: AnalyticsSession | null = null;
+  let selectedDetail: SessionDetail | null = null;
+  let visitorRows: AnalyticsSession[] = [];
+  let visitorNextCursor: JourneyCursor | null = null;
+  let visitorHistoryTotal = 0;
+  let sessionListLoading = false;
+  let visitorHistoryLoading = false;
+  let pathsLoading = false;
+  let listScrollY = 0;
 
   const sourceLabels: Record<string, string> = {
     direct: '直接／來源不明', instagram: 'Instagram', threads: 'Threads',
@@ -364,6 +501,9 @@ import '../../styles/admin-analytics.css';
       row.append(heading, progress);
       list.append(row);
     });
+    $('[data-funnel-note]').textContent = data.funnelVersion === 'form_instance_v2'
+      ? '開始、確認與送出依 form_instance_id 配對，再以不同 session 計數；歷史 v1 只能依 session 與時間順序配對。成功只以後端資料庫收件為準。'
+      : '此環境尚未提供 form_instance 查詢；沿用舊版 session 與時間順序口徑。資料遺失或跨 session 提交不會補造漏斗事件。';
     $('[data-unpaired-inquiries]').textContent = '未能配對漏斗的成功意向：' + count(data.unpairedInquiries) + ' 筆；成功收件總數仍依資料庫計算。';
   }
 
@@ -391,6 +531,486 @@ import '../../styles/admin-analytics.css';
     renderStatus(data);
   }
 
+  const observationResults = ['portfolio_no_form_start', 'cta_no_form_start', 'submit_error', 'error_then_success'] as const;
+  const filterInputs = {
+    source: $('[data-session-filter="source"]') as HTMLSelectElement,
+    device: $('[data-session-filter="device"]') as HTMLSelectElement,
+    page: $('[data-session-filter="page"]') as HTMLInputElement,
+    result: $('[data-session-filter="result"]') as HTMLSelectElement,
+    visitor: $('[data-session-filter="visitor"]') as HTMLInputElement,
+  };
+  let transitionDrill: { from: string; to: string } | null = null;
+  const resultLabels: Record<string, string> = {
+    portfolio_no_form_start: '看作品未開始填表', cta_no_form_start: '點合作入口未開始填表',
+    submit_error: '送出發生錯誤', error_then_success: '錯誤後成功收件',
+  };
+  const deviceLabels: Record<string, string> = { mobile: '手機', tablet: '平板', desktop: '桌面', unknown: '未知裝置' };
+  const eventLabels: Record<string, string> = {
+    page_view: '瀏覽頁面', inquiry_cta_click: '點擊合作入口', cta_view: '合作入口符合可視條件',
+    outbound_contact_click: '點擊外部聯絡方式', form_start: '開始填寫表單', form_review: '進入表單確認',
+    form_submit_attempt: '嘗試送出表單', form_submit_error: '表單送出錯誤',
+    form_step_enter: '進入表單步驟', form_step_complete: '完成表單步驟',
+  };
+  const errorLabels: Record<string, string> = {
+    validation: '欄位驗證', network: '網路錯誤', server: '伺服器錯誤', rate_limited: '請求過於頻繁', unknown: '未分類錯誤',
+  };
+
+  function textElement<K extends keyof HTMLElementTagNameMap>(tag: K, text: string, className = ''): HTMLElementTagNameMap[K] {
+    const node = document.createElement(tag);
+    node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  }
+
+  function buildRangeParams(): URLSearchParams {
+    const params = new URLSearchParams({ range: rangeSelect.value });
+    if (rangeSelect.value === 'custom') {
+      if (!startInput.value || !endInput.value) throw new Error('請選擇開始與結束日期。');
+      params.set('start', startInput.value);
+      params.set('end', endInput.value);
+    }
+    return params;
+  }
+
+  function buildJourneyParams({ result = true, cursor = false } = {}): URLSearchParams {
+    const params = buildRangeParams();
+    for (const key of ['source', 'device', 'page', 'result', 'visitor'] as const) {
+      const value = filterInputs[key].value.trim();
+      if (value && (result || key !== 'result')) params.set(key, value);
+    }
+    if (transitionDrill) {
+      params.set('transition_from', transitionDrill.from);
+      params.set('transition_to', transitionDrill.to);
+    }
+    params.set('limit', '25');
+    if (cursor && sessionNextCursor) {
+      params.set('cursor_at', sessionNextCursor.startedAt);
+      params.set('cursor_id', sessionNextCursor.sessionId);
+    }
+    return params;
+  }
+
+  function activePanel(): string {
+    return document.querySelector<HTMLElement>('[data-analytics-panel]:not([hidden])')?.dataset.analyticsPanel || 'overview';
+  }
+
+  function journeyError(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'code' in error
+      && (error as { code?: unknown }).code === 'analytics_journeys_unavailable') {
+      return '新旅程查詢尚未啟用，原有報表仍可使用。';
+    }
+    return adminErrorMessage(error);
+  }
+
+  function renderFilterChips() {
+    const host = $('[data-global-active-filters]') as HTMLElement;
+    host.replaceChildren();
+    const active: { key: keyof typeof filterInputs | 'transition'; label: string }[] = [];
+    for (const key of ['source', 'device', 'page', 'result', 'visitor'] as const) {
+      const value = filterInputs[key].value.trim();
+      if (!value) continue;
+      let label = value;
+      if (key === 'source') label = sourceLabels[value] || value;
+      if (key === 'device') label = deviceLabels[value] || value;
+      if (key === 'page') label = pageLabel(value) + ' · ' + value;
+      if (key === 'result') label = resultLabels[value] || value;
+      if (key === 'visitor') label = value.toUpperCase().startsWith('V-') ? value.toUpperCase() : 'V-' + value.toUpperCase();
+      active.push({ key, label });
+    }
+    if (transitionDrill) {
+      active.push({ key: 'transition', label: pageLabel(transitionDrill.from) + ' → ' + pageLabel(transitionDrill.to) });
+    }
+    if (!active.length) return;
+    host.append(textElement('span', '目前篩選：', 'analytics-filter-caption'));
+    active.forEach(({ key, label }) => {
+      const button = textElement('button', label + ' ×');
+      button.type = 'button';
+      button.setAttribute('aria-label', '移除篩選：' + label);
+      button.dataset.removeFilter = key;
+      host.append(button);
+    });
+  }
+
+  async function fetchSessionPage(params: URLSearchParams): Promise<SessionPage> {
+    return requestAdmin<SessionPage>('/api/admin/analytics/sessions?' + params.toString());
+  }
+
+  async function loadObservationCounts() {
+    const note = $('[data-journey-capability]') as HTMLElement;
+    try {
+      const base = buildJourneyParams({ result: false });
+      base.set('limit', '1');
+      const [total, ...observations] = await Promise.all([
+        fetchSessionPage(new URLSearchParams(base)),
+        ...observationResults.map((result) => {
+          const params = new URLSearchParams(base);
+          params.set('result', result);
+          return fetchSessionPage(params);
+        }),
+      ]);
+      journeyAvailable = true;
+      observationResults.forEach((result, index) => {
+        const numerator = observations[index].total;
+        const countNode = document.querySelector<HTMLElement>('[data-observation-count="' + result + '"]');
+        const ratioNode = document.querySelector<HTMLElement>('[data-observation-ratio="' + result + '"]');
+        if (countNode) countNode.textContent = count(numerator);
+        if (ratioNode) {
+          const denominator = total.total;
+          const ratio = denominator ? ((numerator / denominator) * 100).toFixed(1) + '%' : '—';
+          ratioNode.textContent = '符合條件造訪／期間造訪：' + count(numerator) + '／' + count(denominator) + '（' + ratio + '）。' + (result === 'cta_no_form_start'
+            ? '點擊只表示前往意圖，不代表外站表單已開啟。'
+            : result === 'error_then_success' ? '此類可同時屬於錯誤與成功，不互斥。'
+              : result === 'submit_error' ? '錯誤分類需與前後端收到時間一併查看。'
+                : '可能原因需回查該次頁面與後續歷程。');
+        }
+      });
+      note.textContent = '現象以同一造訪為單位。n/N 是目前其他篩選下的造訪比例；不同現象可能重疊。';
+    } catch (error) {
+      journeyAvailable = false;
+      const unavailable = typeof error === 'object' && error !== null && 'code' in error
+        && (error as { code?: unknown }).code === 'analytics_journeys_unavailable';
+      note.textContent = unavailable ? journeyError(error) : '造訪現象暫時無法載入：' + journeyError(error);
+      observationResults.forEach((result) => {
+        const countNode = document.querySelector<HTMLElement>('[data-observation-count="' + result + '"]');
+        const ratioNode = document.querySelector<HTMLElement>('[data-observation-ratio="' + result + '"]');
+        if (countNode) countNode.textContent = '—';
+        if (ratioNode) ratioNode.textContent = '未量測或新查詢暫不可用。';
+      });
+    }
+  }
+
+  function renderSessionRows() {
+    const list = $('[data-session-rows]') as HTMLOListElement;
+    const listStatus = $('[data-session-list-status]') as HTMLElement;
+    list.replaceChildren();
+    const totalNode = $('[data-sessions-total]') as HTMLElement;
+    totalNode.textContent = '符合條件 ' + count(sessionTotal) + ' 次造訪 · 顯示 ' + count(sessionRows.length) + ' 筆';
+    if (!sessionRows.length) {
+      listStatus.textContent = journeyAvailable === false
+        ? '新旅程查詢尚未啟用；改善總覽原有報表仍可查看。'
+        : '目前條件沒有符合的造訪。';
+    } else {
+      listStatus.textContent = '清單每列是一個 session。時間依事件接收與後端收件時間篩選。';
+    }
+    sessionRows.forEach((session) => {
+      const item = document.createElement('li');
+      const button = textElement('button', '', 'analytics-session-row');
+      button.type = 'button';
+      button.dataset.openSession = session.sessionId;
+      const code = visitorCode(session.visitorId);
+      const heading = document.createElement('span'); heading.className = 'analytics-session-row__heading';
+      heading.append(textElement('strong', code), textElement('time', formatAdminDate(session.startedAt)));
+      const meta = textElement('span', (sourceLabels[session.source] || session.source)
+        + ' · ' + (deviceLabels[session.device] || session.device), 'analytics-session-row__meta');
+      const entry = session.entryPath
+        ? pageLabel(session.entryPath) + (session.entryPathUncertain ? '（入口順序不確定）' : '')
+        : '入口頁未量測';
+      const last = session.lastPagePath
+        ? pageLabel(session.lastPagePath) + (session.lastPageUncertain ? '（最後頁順序不確定）' : '')
+        : '最後觀測頁未量測';
+      const pages = textElement('span', entry + ' → ' + last + ' · ' + count(session.pageViews) + ' 次頁面瀏覽', 'analytics-session-row__pages');
+      const badges = document.createElement('span'); badges.className = 'analytics-badges';
+      if (session.formStarted) badges.append(textElement('span', '開始填表', 'analytics-badge'));
+      if (session.submitError) badges.append(textElement('span', '送出錯誤', 'analytics-badge analytics-badge--error'));
+      if (session.inquiryReceived) badges.append(textElement('span', '本期後端收件', 'analytics-badge analytics-badge--success'));
+      else if (session.everInquiryReceived) badges.append(textElement('span', '保留期內曾收件', 'analytics-badge analytics-badge--success'));
+      if (!badges.childElementCount) badges.append(textElement('span', '本次未觀測到表單或收件事件', 'analytics-badge'));
+      button.append(heading, meta, pages, badges);
+      item.append(button); list.append(item);
+    });
+    const next = $('[data-session-next]') as HTMLButtonElement;
+    next.hidden = !sessionNextCursor;
+    next.disabled = sessionListLoading;
+  }
+
+  function visitorCode(id: string): string {
+    return 'V-' + id.replace(/-/g, '').slice(0, 6).toUpperCase();
+  }
+
+  async function loadSessions(append = false) {
+    if (sessionListLoading) return;
+    if (append && !sessionNextCursor) return;
+    sessionListLoading = true;
+    const listStatus = $('[data-session-list-status]') as HTMLElement;
+    if (!append) {
+      sessionRows = [];
+      sessionNextCursor = null;
+      sessionTotal = 0;
+    }
+    listStatus.textContent = append ? '正在載入較舊造訪…' : '正在載入造訪…';
+    renderSessionRows();
+    try {
+      const params = buildJourneyParams({ cursor: append });
+      const result = await fetchSessionPage(params);
+      journeyAvailable = true;
+      sessionRows = append ? sessionRows.concat(result.items) : result.items;
+      sessionNextCursor = result.nextCursor;
+      sessionTotal = result.total;
+    } catch (error) {
+      journeyAvailable = false;
+      listStatus.textContent = journeyError(error);
+    } finally {
+      sessionListLoading = false;
+      renderSessionRows();
+    }
+  }
+
+  function renderVisitorHistory() {
+    const host = document.querySelector<HTMLElement>('[data-visitor-history]');
+    if (!host) return;
+    host.replaceChildren();
+    if (!visitorRows.length) {
+      host.append(textElement('p', '此訪客在保留期間沒有其他可顯示造訪。', 'analytics-detail-note'));
+      return;
+    }
+    const list = document.createElement('ol'); list.className = 'analytics-visitor-history';
+    visitorRows.forEach((session) => {
+      const item = document.createElement('li');
+      const button = textElement('button', ''); button.type = 'button';
+      button.dataset.openVisitorSession = session.sessionId;
+      button.dataset.contextMatch = String(session.matchesCurrentFilter);
+      const match = session.matchesCurrentFilter ? '符合目前篩選' : '篩選外上下文';
+      const outcome = session.inquiryReceived ? ' · 本期後端成功收件'
+        : session.everInquiryReceived ? ' · 保留期內曾成功收件' : session.submitError ? ' · 有送出錯誤' : '';
+      button.append(textElement('strong', formatAdminDate(session.startedAt) + ' · ' + (sourceLabels[session.source] || session.source)),
+        textElement('small', match + outcome + ' · ' + (session.entryPath ? pageLabel(session.entryPath) : '入口頁未量測')
+          + (session.lastPagePath ? ' → ' + pageLabel(session.lastPagePath) : '')));
+      item.append(button); list.append(item);
+    });
+    host.append(list);
+    if (visitorRows.length < visitorHistoryTotal) {
+      host.append(textElement('p', '已載入 ' + count(visitorRows.length) + '／' + count(visitorHistoryTotal) + ' 次保留期造訪。', 'analytics-detail-note'));
+    }
+    updateVisitorNextButton();
+  }
+
+  function updateVisitorNextButton() {
+    const next = $('[data-visitor-next]') as HTMLButtonElement;
+    next.hidden = !visitorNextCursor;
+    next.disabled = visitorHistoryLoading;
+  }
+
+  function renderSessionDetail(detail: SessionDetail) {
+    const container = $('[data-session-detail]') as HTMLElement;
+    const session = detail.session;
+    container.replaceChildren();
+    const heading = textElement('h3', visitorCode(session.visitorId) + ' · 造訪詳情');
+    heading.tabIndex = -1;
+    container.append(heading);
+    const summary = document.createElement('dl'); summary.className = 'analytics-detail-summary';
+    const summaryRows: [string, string][] = [
+      ['造訪時間', formatAdminDate(session.startedAt)],
+      ['當次來源', (sourceLabels[session.source] || session.source) + (session.medium ? ' · ' + (mediumLabels[session.medium] || session.medium) : '') + (session.campaign ? ' · ' + session.campaign : '')],
+      ['裝置分類', deviceLabels[session.device] || session.device],
+      ['有證據的入口頁', session.entryPath ? pageLabel(session.entryPath) + (session.entryPathUncertain ? '（同時間多頁，順序不確定）' : '') : '未量測'],
+      ['最後觀測頁', session.lastPagePath ? pageLabel(session.lastPagePath) + (session.lastPageUncertain ? '（同時間多頁，順序不確定）' : '') : '未量測'],
+      ['頁面瀏覽', count(session.pageViews) + ' 次 · 詳情保留事件最多 500 筆'],
+      ['首次量測來源', detail.firstMeasuredSource ? (sourceLabels[detail.firstMeasuredSource] || detail.firstMeasuredSource)
+        + (detail.firstMeasuredSourceUncertain ? '（同時有多個來源，無法唯一判定）' : '') : '未量測'],
+    ];
+    summaryRows.forEach(([label, value]) => {
+      const row = document.createElement('div'); row.append(textElement('dt', label), textElement('dd', value)); summary.append(row);
+    });
+    container.append(summary);
+    container.append(textElement('p', '訪客代碼只代表保留期間內可辨識的瀏覽器。當次來源、首次量測來源與後端收件是不同層級。', 'analytics-detail-note'));
+
+    const sourcePath = document.createElement('section'); sourcePath.className = 'analytics-source-path';
+    sourcePath.append(textElement('h4', '保留期內的觀測接觸路徑'));
+    const chronological = visitorRows.slice().sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+    const pathText = chronological.map((row) => {
+      const page = row.entryPath ? pageLabel(row.entryPath) : '入口頁未量測';
+      const outcome = row.everInquiryReceived ? '（之後有後端收件證據）' : '';
+      return (sourceLabels[row.source] || row.source) + ' · ' + page + outcome;
+    }).join(' → ');
+    sourcePath.append(textElement('p', pathText || '尚無可呈現路徑。'));
+    sourcePath.append(textElement('p', '這是造訪來源與頁面事件的簡化串接，不建立推測歸因權重；篩選外造訪只提供上下文。', 'analytics-detail-note'));
+    const history = document.createElement('div'); history.dataset.visitorHistory = '';
+    sourcePath.append(history);
+    container.append(sourcePath);
+    renderVisitorHistory();
+
+    const timeline = document.createElement('section'); timeline.className = 'analytics-timeline';
+    timeline.append(textElement('h4', '事件時間線（依伺服器收到順序）'));
+    timeline.append(textElement('p', detail.eventsTruncated
+      ? '已達 500 筆顯示上限；事件總數 ' + count(detail.eventCount) + '。'
+      : 'client_at 是瀏覽器時間，received_at 是伺服器接收時間；時間線以 received_at 排序。v1 舊事件缺乏分頁序號，局部順序不確定。', 'analytics-detail-note'));
+    const eventsList = document.createElement('ol');
+    detail.events.forEach((event) => {
+      const item = document.createElement('li');
+      const extras = [
+        pageLabel(event.pagePath),
+        event.placement ? placementLabels[event.placement] || event.placement : '',
+        event.destination ? destinationLabels[event.destination] || event.destination : '',
+        event.stepId ? '步驟：' + event.stepId : '',
+        event.errorCode ? '錯誤：' + (errorLabels[event.errorCode] || event.errorCode) : '',
+        event.formInstanceId ? '表單次序碼 ' + event.formInstanceId.slice(0, 8) : '',
+        event.schemaVersion === 1 ? 'v1，分頁／事件順序未量測' : 'v2 · 頁面序 ' + (event.tabSeq ?? '—') + ' · 事件序 ' + (event.eventSeq ?? '—'),
+      ].filter(Boolean).join(' · ');
+      item.append(textElement('strong', eventLabels[event.eventName] || event.eventName),
+        textElement('small', '瀏覽器：' + (event.clientAt ? formatAdminDate(event.clientAt) : '未提供') + ' · 伺服器：' + formatAdminDate(event.receivedAt)),
+        textElement('small', extras));
+      if (event.eventName === 'cta_view') item.append(textElement('small', '可視面積 ' + (event.visiblePercent ?? '—') + '% · ' + count(event.visibleMs) + ' ms'));
+      eventsList.append(item);
+    });
+    if (!detail.events.length) eventsList.append(textElement('li', '尚無保留的前端事件。'));
+    timeline.append(eventsList);
+    const receipts = document.createElement('section'); receipts.className = 'analytics-receipts';
+    receipts.append(textElement('h4', '後端確認收件'));
+    receipts.append(textElement('p', detail.inquiries.length
+      ? detail.inquiries.map((inquiry) => formatAdminDate(inquiry.receivedAt)).join('、')
+      : '此造訪沒有可歸因的後端收件紀錄。'));
+    if (selectedSession?.submitError && detail.inquiries.length) receipts.append(textElement('p', '此造訪同時有送出錯誤與後端收件證據；兩者可同時成立。', 'analytics-detail-note'));
+    timeline.append(receipts);
+    container.append(timeline);
+  }
+
+  async function openSession(session: AnalyticsSession) {
+    listScrollY = window.scrollY;
+    selectedSession = session;
+    selectedDetail = null;
+    visitorRows = [];
+    visitorNextCursor = null;
+    visitorHistoryTotal = 0;
+    const layout = $('[data-journey-layout]') as HTMLElement;
+    layout.dataset.showDetail = 'true';
+    const detailHost = $('[data-session-detail]') as HTMLElement;
+    detailHost.replaceChildren(textElement('p', '正在載入造訪事件與同訪客保留期歷程…'));
+    const panel = $('[data-session-detail-panel]') as HTMLElement;
+    panel.hidden = false;
+    panel.setAttribute('aria-busy', 'true');
+    try {
+      const params = buildJourneyParams({ cursor: false });
+      params.set('limit', '50');
+      const [detail, history] = await Promise.all([
+        requestAdmin<SessionDetail>('/api/admin/analytics/sessions/' + encodeURIComponent(session.sessionId)),
+        requestAdmin<{ items: AnalyticsSession[]; total: number; nextCursor: JourneyCursor | null }>(
+          '/api/admin/analytics/visitors/' + encodeURIComponent(session.visitorId) + '/sessions?' + params.toString()),
+      ]);
+      selectedDetail = detail;
+      visitorRows = history.items;
+      visitorHistoryTotal = history.total;
+      visitorNextCursor = history.nextCursor;
+      renderSessionDetail(detail);
+      window.requestAnimationFrame(() => {
+        panel.scrollIntoView({ block: 'start' });
+        panel.querySelector<HTMLElement>('h3')?.focus();
+      });
+    } catch (error) {
+      detailHost.replaceChildren(textElement('p', '造訪詳情載入失敗：' + journeyError(error), 'analytics-panel__note'));
+    } finally { panel.removeAttribute('aria-busy'); }
+  }
+
+  async function loadMoreVisitorHistory() {
+    if (!selectedSession || !visitorNextCursor || visitorHistoryLoading) return;
+    visitorHistoryLoading = true;
+    try {
+      const params = buildJourneyParams({ cursor: false });
+      params.set('limit', '50');
+      params.set('cursor_at', visitorNextCursor.startedAt);
+      params.set('cursor_id', visitorNextCursor.sessionId);
+      const result = await requestAdmin<{ items: AnalyticsSession[]; total: number; nextCursor: JourneyCursor | null }>(
+        '/api/admin/analytics/visitors/' + encodeURIComponent(selectedSession.visitorId) + '/sessions?' + params.toString());
+      visitorRows = visitorRows.concat(result.items);
+      visitorNextCursor = result.nextCursor;
+      visitorHistoryTotal = result.total;
+      if (selectedDetail) renderSessionDetail(selectedDetail);
+    } catch (error) {
+      const host = document.querySelector<HTMLElement>('[data-visitor-history]');
+      host?.append(textElement('p', '載入較早造訪失敗：' + journeyError(error), 'analytics-detail-note'));
+    } finally { visitorHistoryLoading = false; updateVisitorNextButton(); }
+  }
+
+  function renderPaths(data: PathResponse) {
+    const pagesBody = $('[data-path-rows]') as HTMLTableSectionElement;
+    pagesBody.replaceChildren();
+    if (!data.pages.length) {
+      const row = pagesBody.insertRow(); const cell = row.insertCell(); cell.colSpan = 6; cell.textContent = '此區間尚無公開頁面瀏覽。';
+    }
+    data.pages.forEach((page) => {
+      const row = pagesBody.insertRow();
+      const pageCell = row.insertCell(); pageCell.append(textElement('strong', pageLabel(page.path)));
+      pageCell.append(document.createElement('br'), textElement('span', page.path, 'analytics-page-path'));
+      row.insertCell().textContent = count(page.pageViews);
+      row.insertCell().textContent = count(page.visitors);
+      row.insertCell().textContent = (page.ctaDenominator ? percent(page.ctaClickRate) : '—')
+        + ' · ' + count(page.ctaClicks) + '／' + count(page.ctaDenominator);
+      row.insertCell().textContent = '可視 ' + count(page.visibleProof) + ' · 點擊補足 ' + count(page.clickSupplement)
+        + ' · 無可視事件點擊 ' + count(page.clickWithoutVisibleEvent) + (page.legacyUnpairedClicks ? ' · 舊版未配對 ' + count(page.legacyUnpairedClicks) : '');
+      const drill = row.insertCell();
+      const button = textElement('button', '回查造訪', 'analytics-drill-button'); button.type = 'button';
+      button.dataset.pageDrill = page.path; button.setAttribute('aria-label', '回查 ' + pageLabel(page.path) + ' 的造訪');
+      drill.append(button);
+    });
+    const options = $('[data-analytics-page-options]') as HTMLDataListElement;
+    options.replaceChildren();
+    data.pages.forEach((page) => {
+      const option = document.createElement('option'); option.value = page.path; option.label = pageLabel(page.path); options.append(option);
+    });
+
+    const transitionsBody = $('[data-transition-rows]') as HTMLTableSectionElement;
+    transitionsBody.replaceChildren();
+    if (!data.transitions.length) {
+      const row = transitionsBody.insertRow(); const cell = row.insertCell(); cell.colSpan = 4;
+      cell.textContent = '尚無可判定的同分頁 v2 相鄰瀏覽；v1 順序未量測。';
+    }
+    data.transitions.forEach((transition) => {
+      const row = transitionsBody.insertRow();
+      row.insertCell().textContent = pageLabel(transition.from) + ' · ' + transition.from;
+      row.insertCell().textContent = pageLabel(transition.to) + ' · ' + transition.to;
+      const sessionCell = row.insertCell();
+      sessionCell.textContent = count(transition.sessions);
+      sessionCell.title = '此流向的相鄰頁面瀏覽共 ' + count(transition.visits) + ' 次；造訪數按 session 去重。';
+      const cell = row.insertCell();
+      const button = textElement('button', '回查造訪', 'analytics-drill-button'); button.type = 'button';
+      button.dataset.transitionFrom = transition.from;
+      button.dataset.transitionTo = transition.to;
+      button.setAttribute('aria-label', '回查從 ' + pageLabel(transition.from) + ' 到 ' + pageLabel(transition.to) + ' 的 ' + count(transition.sessions) + ' 次造訪');
+      cell.append(button);
+    });
+    const warning = data.legacyUnpairedClicks
+      ? '舊版無 page_visit_id 的合作入口點擊未計入點擊率：' + count(data.legacyUnpairedClicks) + ' 次。'
+      : '舊版無 page_visit_id 的合作入口點擊未計入點擊率：0 次。';
+    $('[data-paths-status]').textContent = warning + ' 下一頁只代表同 session、同 tab 的 v2 相鄰觀測。';
+  }
+
+  async function loadPaths() {
+    if (pathsLoading) return;
+    pathsLoading = true;
+    $('[data-paths-status]').textContent = '正在載入頁面表現…';
+    try {
+      const params = buildJourneyParams({ cursor: false });
+      params.set('limit', '50');
+      const data = await requestAdmin<PathResponse>('/api/admin/analytics/paths?' + params.toString());
+      journeyAvailable = true;
+      renderPaths(data);
+    } catch (error) {
+      journeyAvailable = false;
+      $('[data-paths-status]').textContent = journeyError(error);
+      const pagesBody = $('[data-path-rows]') as HTMLTableSectionElement;
+      const transitionsBody = $('[data-transition-rows]') as HTMLTableSectionElement;
+      pagesBody.replaceChildren(); transitionsBody.replaceChildren();
+      const pageRow = pagesBody.insertRow(); const pageCell = pageRow.insertCell(); pageCell.colSpan = 6; pageCell.textContent = journeyError(error);
+      const transitionRow = transitionsBody.insertRow(); const transitionCell = transitionRow.insertCell(); transitionCell.colSpan = 4; transitionCell.textContent = '新流向查詢尚未啟用。';
+    } finally { pathsLoading = false; }
+  }
+
+  async function selectPanel(name: 'overview' | 'sessions' | 'pages') {
+    document.querySelectorAll<HTMLElement>('[data-analytics-panel]').forEach((panel) => { panel.hidden = panel.dataset.analyticsPanel !== name; });
+    document.querySelectorAll<HTMLButtonElement>('[data-analytics-view-button]').forEach((button) => {
+      const active = button.dataset.analyticsViewButton === name;
+      button.setAttribute('aria-pressed', String(active));
+      button.classList.toggle('admin-button--quiet', !active);
+    });
+    if (name === 'sessions') await Promise.all([loadObservationCounts(), loadSessions()]);
+    if (name === 'pages') await loadPaths();
+  }
+
+  async function refreshJourneyViews() {
+    await loadObservationCounts();
+    if (activePanel() === 'sessions') await loadSessions();
+    if (activePanel() === 'pages') await loadPaths();
+  }
+
   async function load() {
     if (loading) return;
     loading = true; status.textContent = '正在載入流量與轉換資料…';
@@ -408,6 +1028,7 @@ import '../../styles/admin-analytics.css';
       status.textContent = result.current.totals.visitors
         ? '報表已更新。訪客與轉換數是基於可量測事件的估計。'
         : '目前尚無可量測的公開頁瀏覽；請確認追蹤已啟用。成功意向仍會依資料庫顯示。';
+      await refreshJourneyViews();
     } catch (error) {
       status.textContent = adminErrorMessage(error);
       if (report) status.textContent += ' · 上次成功載入的資料仍顯示於下方。';
@@ -422,6 +1043,76 @@ import '../../styles/admin-analytics.css';
   });
   $('[data-analytics-controls]').addEventListener('submit', (event) => { event.preventDefault(); void load(); });
   reloadButton.addEventListener('click', () => void load());
+  document.querySelectorAll<HTMLButtonElement>('[data-analytics-view-button]').forEach((button) => {
+    button.addEventListener('click', () => { void selectPanel(button.dataset.analyticsViewButton as 'overview' | 'sessions' | 'pages'); });
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-observation-result]').forEach((button) => {
+    button.addEventListener('click', () => {
+      filterInputs.result.value = button.dataset.observationResult || '';
+      renderFilterChips();
+      void selectPanel('sessions');
+    });
+  });
+  $('[data-session-filters]').addEventListener('submit', (event) => {
+    event.preventDefault();
+    renderFilterChips();
+    void selectPanel('sessions');
+  });
+  $('[data-global-active-filters]').addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest<HTMLButtonElement>('[data-remove-filter]');
+    const key = button?.dataset.removeFilter;
+    if (!button || !key) return;
+    if (key === 'transition') transitionDrill = null;
+    else if (key in filterInputs) filterInputs[key as keyof typeof filterInputs].value = '';
+    else return;
+    renderFilterChips();
+    void refreshJourneyViews();
+  });
+  $('[data-session-next]').addEventListener('click', () => { void loadSessions(true); });
+  $('[data-visitor-next]').addEventListener('click', () => { void loadMoreVisitorHistory(); });
+  $('[data-session-back]').addEventListener('click', () => {
+    const layout = $('[data-journey-layout]') as HTMLElement;
+    layout.dataset.showDetail = 'false';
+    window.scrollTo({ top: listScrollY, behavior: 'auto' });
+    window.requestAnimationFrame(() => {
+      if (selectedSession) document.querySelector<HTMLButtonElement>('[data-open-session="' + selectedSession.sessionId + '"]')?.focus();
+    });
+  });
+  $('[data-session-rows]').addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest<HTMLButtonElement>('[data-open-session]');
+    const session = sessionRows.find((row) => row.sessionId === button?.dataset.openSession);
+    if (session) void openSession(session);
+  });
+  $('[data-session-detail]').addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest<HTMLButtonElement>('[data-open-visitor-session]');
+    const session = visitorRows.find((row) => row.sessionId === button?.dataset.openVisitorSession);
+    if (session) void openSession(session);
+  });
+  const drillToSessions = (event: Event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest<HTMLButtonElement>('[data-page-drill]');
+    const transitionButton = target.closest<HTMLButtonElement>('[data-transition-from][data-transition-to]');
+    if (!button && !transitionButton) return;
+    if (transitionButton?.dataset.transitionFrom && transitionButton.dataset.transitionTo) {
+      transitionDrill = { from: transitionButton.dataset.transitionFrom, to: transitionButton.dataset.transitionTo };
+      filterInputs.page.value = transitionDrill.to;
+    } else if (button) {
+      transitionDrill = null;
+      filterInputs.page.value = button.dataset.pageDrill || '';
+    }
+    renderFilterChips();
+    void selectPanel('sessions');
+  };
+  $('[data-path-rows]').addEventListener('click', drillToSessions);
+  $('[data-transition-rows]').addEventListener('click', drillToSessions);
+  renderFilterChips();
   document.querySelectorAll<HTMLButtonElement>('[data-trend-metric]').forEach((button) => {
     button.addEventListener('click', () => {
       if (!report) return;

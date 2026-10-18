@@ -2,18 +2,26 @@ import { HttpError, getSecretConfig, supabaseRequest } from './auth.js';
 
 const EVENT_NAMES = new Set([
   'page_view', 'inquiry_cta_click', 'outbound_contact_click',
-  'form_start', 'form_review', 'form_submit_attempt', 'form_submit_error',
+  'cta_view', 'form_start', 'form_review', 'form_submit_attempt', 'form_submit_error',
+  'form_step_enter', 'form_step_complete',
 ]);
-const EVENT_KEYS = new Set(['id', 'name', 'path', 'clientAt', 'placement', 'destination', 'errorCode']);
+const EVENT_KEYS = new Set(['id', 'name', 'path', 'clientAt', 'placement', 'destination', 'errorCode', 'schemaVersion', 'pageVisitId', 'tabId', 'documentId', 'eventSeq', 'tabSeq', 'formInstanceId', 'stepId', 'visiblePercent', 'visibleMs']);
 const SOURCE_KEYS = new Set(['utmSource', 'utmMedium', 'utmCampaign', 'referrerHost']);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PLACEMENTS = new Set([
+  'header-desktop', 'header-mobile', 'hero', 'projects-general', 'projects-empty',
+  'cooperation', 'portfolio-index', 'behind-scenes', 'inspiration-board',
+  'contact-icon',
+  'journal-footer', 'journal-body', 'plans', 'footer', 'other',
+]);
+const LEGACY_PLACEMENTS = new Set([
   'header-desktop', 'header-mobile', 'hero', 'projects-general', 'projects-empty',
   'cooperation', 'portfolio-index', 'behind-scenes', 'inspiration-board',
   'journal-footer', 'journal-body', 'plans', 'footer', 'other',
 ]);
 const DESTINATIONS = new Set(['internal', 'google_form', 'instagram', 'threads', 'facebook', 'email', 'other']);
 const ERROR_CODES = new Set(['validation', 'network', 'server', 'rate_limited', 'unknown']);
+const FORM_STEPS = new Set(['styles', 'details', 'review']);
 const UTM_SOURCES = new Set(['instagram', 'threads', 'facebook', 'google', 'other']);
 const UTM_MEDIA = new Set(['social', 'story', 'post', 'bio', 'referral', 'organic', 'paid', 'email', 'other']);
 const DEVICE_TYPES = new Set(['mobile', 'tablet', 'desktop', 'unknown']);
@@ -50,17 +58,29 @@ export function normalizeAnalyticsEvent(value, now = Date.now()) {
   if (!value || typeof value !== 'object' || Array.isArray(value)
     || Object.keys(value).some((key) => !EVENT_KEYS.has(key))) throw badRequest();
   if (!UUID_PATTERN.test(value.id || '') || !EVENT_NAMES.has(value.name)) throw badRequest();
+  const schemaVersion = value.schemaVersion === undefined ? 1 : value.schemaVersion;
+  if (![1, 2].includes(schemaVersion)) throw badRequest('不支援這個事件版本。');
   const path = normalizePublicAnalyticsPath(value.path);
   if (!path) throw badRequest('不支援這個頁面路徑。');
 
   const event = {
     event_id: value.id.toLowerCase(),
+    schema_version: schemaVersion,
     event_name: value.name,
     page_path: path,
     client_at: null,
     placement: null,
     destination: null,
     error_code: null,
+    page_visit_id: null,
+    tab_id: null,
+    document_id: null,
+    event_seq: null,
+    tab_seq: null,
+    form_instance_id: null,
+    step_id: null,
+    visible_percent: null,
+    visible_ms: null,
   };
   if (value.clientAt !== undefined && value.clientAt !== null) {
     if (typeof value.clientAt !== 'string' || value.clientAt.length > 40) throw badRequest();
@@ -68,17 +88,52 @@ export function normalizeAnalyticsEvent(value, now = Date.now()) {
     if (!Number.isFinite(clientTime) || clientTime < now - 5 * 60_000 || clientTime > now + 60_000) throw badRequest('事件時間已過期。');
     event.client_at = new Date(clientTime).toISOString();
   }
+  if (schemaVersion === 2) {
+    for (const [key, column] of [['pageVisitId', 'page_visit_id'], ['tabId', 'tab_id'], ['documentId', 'document_id']]) {
+      if (!UUID_PATTERN.test(value[key] || '')) throw badRequest();
+      event[column] = value[key].toLowerCase();
+    }
+    if (!Number.isSafeInteger(value.eventSeq) || value.eventSeq < 1 || value.eventSeq > 10_000
+      || !Number.isSafeInteger(value.tabSeq) || value.tabSeq < 1 || value.tabSeq > 1_000_000_000) throw badRequest();
+    event.event_seq = value.eventSeq;
+    event.tab_seq = value.tabSeq;
+  } else if (['pageVisitId', 'tabId', 'documentId', 'eventSeq', 'tabSeq', 'formInstanceId', 'stepId', 'visiblePercent', 'visibleMs'].some((key) => value[key] !== undefined)) {
+    throw badRequest('舊版事件不可包含 v2 識別欄位。');
+  }
+
+  const formEvent = ['form_start', 'form_review', 'form_submit_attempt', 'form_submit_error', 'form_step_enter', 'form_step_complete'].includes(value.name);
+  if (schemaVersion === 2 && formEvent) {
+    if (!UUID_PATTERN.test(value.formInstanceId || '')) throw badRequest();
+    event.form_instance_id = value.formInstanceId.toLowerCase();
+  } else if (value.formInstanceId !== undefined) {
+    throw badRequest();
+  }
+  if (value.name === 'form_step_enter' || value.name === 'form_step_complete') {
+    if (!FORM_STEPS.has(value.stepId)) throw badRequest();
+    event.step_id = value.stepId;
+  } else if (value.stepId !== undefined) {
+    throw badRequest();
+  }
+
   if (value.name === 'inquiry_cta_click') {
     if (!PLACEMENTS.has(value.placement) || !DESTINATIONS.has(value.destination)) throw badRequest();
     event.placement = value.placement;
     event.destination = value.destination;
+  } else if (value.name === 'cta_view') {
+    if (schemaVersion !== 2 || !PLACEMENTS.has(value.placement)
+      || !Number.isSafeInteger(value.visiblePercent) || value.visiblePercent < 50 || value.visiblePercent > 100
+      || !Number.isSafeInteger(value.visibleMs) || value.visibleMs < 1_000 || value.visibleMs > 60_000) throw badRequest();
+    event.placement = value.placement;
+    event.visible_percent = value.visiblePercent;
+    event.visible_ms = value.visibleMs;
   } else if (value.name === 'outbound_contact_click') {
     if (!DESTINATIONS.has(value.destination) || value.destination === 'internal') throw badRequest();
     event.destination = value.destination;
   } else if (value.name === 'form_submit_error') {
     if (!ERROR_CODES.has(value.errorCode)) throw badRequest();
     event.error_code = value.errorCode;
-  } else if (value.placement !== undefined || value.destination !== undefined || value.errorCode !== undefined) {
+  } else if (value.placement !== undefined || value.destination !== undefined || value.errorCode !== undefined
+    || value.visiblePercent !== undefined || value.visibleMs !== undefined) {
     throw badRequest();
   }
   return event;
@@ -86,8 +141,12 @@ export function normalizeAnalyticsEvent(value, now = Date.now()) {
 
 export function normalizeAnalyticsBatch(body, now = Date.now()) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw badRequest();
-  const allowed = new Set(['events', 'landing', 'device', 'preference']);
+  const allowed = new Set(['events', 'landing', 'device', 'preference', 'bootstrap']);
   if (Object.keys(body).some((key) => !allowed.has(key))) throw badRequest();
+  if (body.bootstrap !== undefined) {
+    if (body.bootstrap !== true || Object.keys(body).length !== 1) throw badRequest();
+    return { bootstrap: true };
+  }
   if (body.preference !== undefined) {
     if (!['disabled', 'enabled', 'clear'].includes(body.preference) || body.events !== undefined || body.landing !== undefined || body.device !== undefined) throw badRequest();
     return { preference: body.preference };
@@ -209,26 +268,61 @@ export async function existingAnalyticsIdentity(request, env, now = Date.now()) 
 
 export async function recordAnalyticsEvents(env, identity, events, landing, device) {
   const config = getSecretConfig(env);
-  return supabaseRequest(config, '/rest/v1/rpc/record_site_analytics_events', {
-    method: 'POST',
-    body: {
-      p_visitor_id: identity.visitorId,
-      p_session_id: identity.sessionId,
-      p_events: events,
-      p_source: landing.source,
-      p_medium: landing.medium,
-      p_campaign: landing.campaign,
-      p_device: device,
-    },
-  });
+  const schemaVersion = events.some((event) => event.schema_version === 2) ? 2 : 1;
+  const payload = {
+    p_visitor_id: identity.visitorId,
+    p_session_id: identity.sessionId,
+    p_events: events,
+    p_source: landing.source,
+    p_medium: landing.medium,
+    p_campaign: landing.campaign,
+    p_device: device,
+  };
+  if (schemaVersion === 1) return supabaseRequest(config, '/rest/v1/rpc/record_site_analytics_events', { method: 'POST', body: payload });
+
+  try {
+    return await supabaseRequest(config, '/rest/v1/rpc/record_site_analytics_events_v2', {
+      method: 'POST', body: payload,
+    });
+  } catch (error) {
+    if (!(error instanceof HttpError) || error.code !== 'upstream_http_404') throw error;
+    const legacyEvents = events.filter((event) => !['cta_view', 'form_step_enter', 'form_step_complete'].includes(event.event_name))
+      .map((event) => ({
+        event_id: event.event_id,
+        event_name: event.event_name,
+        page_path: event.page_path,
+        client_at: event.client_at,
+        placement: event.placement && !LEGACY_PLACEMENTS.has(event.placement) ? 'other' : event.placement,
+        destination: event.destination,
+        error_code: event.error_code,
+      }));
+    if (!legacyEvents.length) return { data: { accepted: 0, rate_limited: false, v2Unavailable: true } };
+    return supabaseRequest(config, '/rest/v1/rpc/record_site_analytics_events', {
+      method: 'POST', body: { ...payload, p_events: legacyEvents },
+    });
+  }
 }
 
-export async function recordInquiryAttribution(env, submissionId, identity) {
+export async function recordInquiryAttribution(env, submissionId, identity, formInstanceId = null) {
   const config = getSecretConfig(env);
-  return supabaseRequest(config, '/rest/v1/rpc/record_site_analytics_inquiry', {
-    method: 'POST',
-    body: { p_submission_id: submissionId, p_visitor_id: identity.visitorId, p_session_id: identity.sessionId },
-  });
+  const validFormId = typeof formInstanceId === 'string' && UUID_PATTERN.test(formInstanceId) ? formInstanceId.toLowerCase() : null;
+  try {
+    return await supabaseRequest(config, '/rest/v1/rpc/record_site_analytics_inquiry_v2', {
+      method: 'POST',
+      body: {
+        p_submission_id: submissionId,
+        p_visitor_id: identity.visitorId,
+        p_session_id: identity.sessionId,
+        p_form_instance_id: validFormId,
+      },
+    });
+  } catch (error) {
+    if (!(error instanceof HttpError) || error.code !== 'upstream_http_404') throw error;
+    return supabaseRequest(config, '/rest/v1/rpc/record_site_analytics_inquiry', {
+      method: 'POST',
+      body: { p_submission_id: submissionId, p_visitor_id: identity.visitorId, p_session_id: identity.sessionId },
+    });
+  }
 }
 
 export async function runAnalyticsRetention(env) {

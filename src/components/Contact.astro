@@ -67,7 +67,7 @@ const showThemeImages = false;
 
       <div class="contact-editor" data-contact-editor>
         <section class="contact-form-section" aria-labelledby="contact-step-1-title">
-          <h3 id="contact-step-1-title" data-contact-step-title>1. 挑選想拍攝的風格</h3>
+          <h3 id="contact-step-1-title" data-contact-step-title data-analytics-form-step="styles">1. 挑選想拍攝的風格</h3>
           <fieldset class="contact-style-select" data-general-style-picker>
             <legend>a.本期推薦主題 <span>可複選</span></legend>
             <div class:list={['contact-style-grid', !showThemeImages && 'contact-style-grid--text-only']}>
@@ -108,7 +108,7 @@ const showThemeImages = false;
         </section>
 
         <section class="contact-form-section" aria-labelledby="contact-step-2-title">
-          <h3 id="contact-step-2-title">2. 填寫合作資訊</h3>
+          <h3 id="contact-step-2-title" data-analytics-form-step="details">2. 填寫合作資訊</h3>
           <div class="form-grid">
             <div class="form-field">
               <label for="name">姓名／暱稱</label>
@@ -279,6 +279,34 @@ const showThemeImages = false;
       .map((button) => button.getAttribute('data-style-title'))
       .filter(Boolean);
 
+    let analyticsFormInstanceId = window.crypto.randomUUID();
+    let analyticsFormStarted = false;
+    let analyticsReviewTracked = false;
+    const analyticsEnteredSteps = new Set<string>();
+    const trackFormStep = (name: 'form_step_enter' | 'form_step_complete', stepId: 'styles' | 'details' | 'review') => {
+      trackSiteEvent(name, { formInstanceId: analyticsFormInstanceId, stepId });
+    };
+    const startFormAnalytics = () => {
+      if (analyticsFormStarted) return;
+      analyticsFormStarted = true;
+      trackSiteEvent('form_start', { formInstanceId: analyticsFormInstanceId });
+    };
+    inquiryForm.addEventListener('input', (event) => {
+      if (event.target instanceof Element && event.target.closest('input[name="website"]')) return;
+      startFormAnalytics();
+    }, { capture: true });
+    if (typeof IntersectionObserver !== 'undefined') {
+      const stepObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const step = (entry.target as HTMLElement).dataset.analyticsFormStep as 'styles' | 'details' | undefined;
+          if (!step || entry.intersectionRatio < 0.5 || analyticsEnteredSteps.has(step)) return;
+          analyticsEnteredSteps.add(step);
+          trackFormStep('form_step_enter', step);
+        });
+      }, { threshold: 0.5 });
+      inquiryForm.querySelectorAll<HTMLElement>('[data-analytics-form-step]').forEach((heading) => stepObserver.observe(heading));
+    }
+
     const selectedProjectOption = () => projectSelect?.selectedOptions[0]?.value
       ? projectSelect.selectedOptions[0]
       : null;
@@ -417,7 +445,16 @@ const showThemeImages = false;
       }
       if (editor) editor.hidden = true;
       if (review) review.hidden = false;
-      trackSiteEvent('form_review');
+      trackFormStep('form_step_complete', 'styles');
+      trackFormStep('form_step_complete', 'details');
+      if (!analyticsReviewTracked) {
+        analyticsReviewTracked = true;
+        if (!analyticsEnteredSteps.has('review')) {
+          analyticsEnteredSteps.add('review');
+          trackFormStep('form_step_enter', 'review');
+        }
+        trackSiteEvent('form_review', { formInstanceId: analyticsFormInstanceId });
+      }
       inquiryForm.querySelector('#contact-review-title')?.focus();
     };
 
@@ -474,7 +511,7 @@ const showThemeImages = false;
       const draft = readDraft();
       const validationError = getProjectSelectionError(draft) || validateInquiryDraft(draft);
       if (validationError) {
-        trackSiteEvent('form_submit_error', { errorCode: 'validation' });
+        trackSiteEvent('form_submit_error', { errorCode: 'validation', formInstanceId: analyticsFormInstanceId });
         reportValidationError(validationError);
         return;
       }
@@ -497,7 +534,7 @@ const showThemeImages = false;
       const draft = readDraft();
       const validationError = getProjectSelectionError(draft) || validateInquiryDraft(draft);
       if (validationError) {
-        trackSiteEvent('form_submit_error', { errorCode: 'validation' });
+        trackSiteEvent('form_submit_error', { errorCode: 'validation', formInstanceId: analyticsFormInstanceId });
         showEditor();
         reportValidationError(validationError);
         return;
@@ -523,7 +560,8 @@ const showThemeImages = false;
       }
 
       const isProjectInquiry = Boolean(draft.shootProjectId);
-      trackSiteEvent('form_submit_attempt');
+      trackFormStep('form_step_complete', 'review');
+      trackSiteEvent('form_submit_attempt', { formInstanceId: analyticsFormInstanceId });
       pending = true;
       if (confirmButton instanceof HTMLButtonElement) confirmButton.disabled = true;
       if (status) status.textContent = '送出中…';
@@ -535,14 +573,16 @@ const showThemeImages = false;
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(isSiteAnalyticsDisabled() ? { 'X-Phox-Analytics-Opt-Out': '1' } : {}),
+            ...(isSiteAnalyticsDisabled()
+              ? { 'X-Phox-Analytics-Opt-Out': '1' }
+              : { 'X-Phox-Analytics-Form-Instance': analyticsFormInstanceId }),
           },
           body: JSON.stringify(payload),
         });
         responseReceived = true;
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
-          trackSiteEvent('form_submit_error', { errorCode: response.status === 429 ? 'rate_limited' : response.status >= 500 ? 'server' : 'validation' });
+          trackSiteEvent('form_submit_error', { errorCode: response.status === 429 ? 'rate_limited' : response.status >= 500 ? 'server' : 'validation', formInstanceId: analyticsFormInstanceId });
           if (response.status >= 500) uncertainRetryFingerprints.add(retryFingerprint);
           else uncertainRetryFingerprints.delete(retryFingerprint);
           throw new Error(result.message || '目前無法送出，請改用 Instagram 或 Google 表單聯絡。');
@@ -552,6 +592,10 @@ const showThemeImages = false;
         updateProjectSelection('', true);
         retryIdentities.clear();
         uncertainRetryFingerprints.clear();
+        analyticsFormInstanceId = window.crypto.randomUUID();
+        analyticsFormStarted = false;
+        analyticsReviewTracked = false;
+        analyticsEnteredSteps.clear();
         styleButtons.forEach((button) => button.setAttribute('aria-pressed', 'false'));
         clearPreviews();
         updateDescriptionCount();
@@ -570,7 +614,7 @@ const showThemeImages = false;
           }
         }
       } catch (error) {
-        if (!responseReceived) trackSiteEvent('form_submit_error', { errorCode: 'network' });
+        if (!responseReceived) trackSiteEvent('form_submit_error', { errorCode: 'network', formInstanceId: analyticsFormInstanceId });
         if (!responseReceived) uncertainRetryFingerprints.add(retryFingerprint);
         if (status) {
           status.textContent = responseReceived
