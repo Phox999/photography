@@ -1,11 +1,16 @@
 export type SiteAnalyticsEventName =
-  | 'page_view' | 'inquiry_cta_click' | 'outbound_contact_click'
-  | 'form_start' | 'form_review' | 'form_submit_attempt' | 'form_submit_error';
+  | 'page_view' | 'inquiry_cta_click' | 'cta_view' | 'outbound_contact_click'
+  | 'form_start' | 'form_review' | 'form_submit_attempt' | 'form_submit_error'
+  | 'form_step_enter' | 'form_step_complete';
 
 type AnalyticsAttributes = {
   placement?: string;
   destination?: string;
   errorCode?: string;
+  formInstanceId?: string;
+  stepId?: 'styles' | 'details' | 'review';
+  visiblePercent?: number;
+  visibleMs?: number;
 };
 
 type AnalyticsEvent = {
@@ -13,20 +18,27 @@ type AnalyticsEvent = {
   name: SiteAnalyticsEventName;
   path: string;
   clientAt: string;
-  placement?: string;
-  destination?: string;
-  errorCode?: string;
-};
+  schemaVersion: 2;
+  pageVisitId: string;
+  tabId: string;
+  documentId: string;
+  eventSeq: number;
+  tabSeq: number;
+} & AnalyticsAttributes;
 
 type EventDetail = { name: SiteAnalyticsEventName } & AnalyticsAttributes;
 
 const OPT_OUT_KEY = 'phox999.analytics-disabled.v1';
+const TAB_ID_KEY = 'phox999.analytics-tab.v2';
+const TAB_SEQ_KEY = 'phox999.analytics-tab-seq.v2';
 const EVENT_NAME = 'phox-site-analytics-event';
+const IDENTITY_LOCK = 'phox999.analytics.identity.v2';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const initialized = new WeakSet<Document>();
 const destinations = new Set(['internal', 'google_form', 'instagram', 'threads', 'facebook', 'email', 'other']);
 const placements = new Set([
   'header-desktop', 'header-mobile', 'hero', 'projects-general', 'projects-empty',
-  'cooperation', 'portfolio-index', 'behind-scenes', 'inspiration-board',
+  'cooperation', 'portfolio-index', 'behind-scenes', 'inspiration-board', 'contact-icon',
   'journal-footer', 'journal-body', 'plans', 'footer',
 ]);
 let runtimeOptOut = false;
@@ -92,85 +104,177 @@ function destinationFor(rawHref: string): 'internal' | 'google_form' | 'instagra
   return 'other';
 }
 
-function createEvent(detail: EventDetail, path: string): AnalyticsEvent | null {
-  if (!window.crypto?.randomUUID) return null;
-  const event: AnalyticsEvent = {
-    id: window.crypto.randomUUID(),
-    name: detail.name,
-    path,
-    clientAt: new Date().toISOString(),
-  };
-  if (detail.name === 'inquiry_cta_click') {
-    event.placement = safePlacement(detail.placement);
-    event.destination = destinations.has(detail.destination || '') ? detail.destination : 'other';
-  } else if (detail.name === 'outbound_contact_click') {
-    event.destination = destinations.has(detail.destination || '') && detail.destination !== 'internal' ? detail.destination : 'other';
-  } else if (detail.name === 'form_submit_error') {
-    const codes = new Set(['validation', 'network', 'server', 'rate_limited', 'unknown']);
-    event.errorCode = codes.has(detail.errorCode || '') ? detail.errorCode : 'unknown';
-  }
-  return event;
+function uuid(targetWindow: Window): string | null {
+  const cryptoApi = targetWindow.crypto;
+  if (cryptoApi?.randomUUID) return cryptoApi.randomUUID();
+  if (!cryptoApi?.getRandomValues) return null;
+  const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
 }
 
-export function trackSiteEvent(name: SiteAnalyticsEventName, attributes: AnalyticsAttributes = {}): void {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent<EventDetail>(EVENT_NAME, { detail: { name, ...attributes } }));
+function readTabId(targetWindow: Window): string | null {
+  const storageWindow = targetWindow as Window & { sessionStorage: Storage };
+  try {
+    // Without cross-tab coordination, a copied sessionStorage ID cannot be trusted for path joins.
+    if (typeof BroadcastChannel === 'undefined') {
+      const perDocument = uuid(targetWindow);
+      if (perDocument) storageWindow.sessionStorage.setItem(TAB_ID_KEY, perDocument);
+      return perDocument;
+    }
+    const stored = storageWindow.sessionStorage.getItem(TAB_ID_KEY);
+    if (stored && UUID_PATTERN.test(stored)) return stored;
+    const created = uuid(targetWindow);
+    if (created) storageWindow.sessionStorage.setItem(TAB_ID_KEY, created);
+    return created;
+  } catch { return uuid(targetWindow); }
 }
 
-async function sendPreference(preference: 'disabled' | 'enabled' | 'clear'): Promise<void> {
-  const response = await fetch('/api/analytics/events', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    keepalive: true,
-    body: JSON.stringify({ preference }),
+async function resolveTabId(targetWindow: Window, currentTabId: string | null): Promise<string | null> {
+  if (!currentTabId || typeof BroadcastChannel === 'undefined') return currentTabId;
+  const ownerToken = uuid(targetWindow);
+  if (!ownerToken) return currentTabId;
+  let tabId = currentTabId;
+  let collided = false;
+  const channel = new BroadcastChannel('phox999-analytics-tabs-v2');
+  channel.addEventListener('message', (event: MessageEvent) => {
+    const data = event.data;
+    if (!data || data.type !== 'hello' || data.tabId !== tabId || data.ownerToken === ownerToken) return;
+    collided = true;
+    const replacement = uuid(targetWindow);
+    if (!replacement) return;
+    tabId = replacement;
+    try {
+      targetWindow.sessionStorage.setItem(TAB_ID_KEY, tabId);
+      targetWindow.sessionStorage.removeItem(TAB_SEQ_KEY);
+    } catch { /* A per-document ID still prevents false event joins. */ }
   });
-  if (!response.ok) throw new Error('preference_update_failed');
+  channel.postMessage({ type: 'hello', tabId, ownerToken });
+  await new Promise<void>((resolve) => targetWindow.setTimeout(resolve, 60));
+  channel.close();
+  return collided ? tabId : currentTabId;
 }
 
-function bindPreferences() {
-  const toggle = document.querySelector<HTMLButtonElement>('[data-site-analytics-toggle]');
-  const clear = document.querySelector<HTMLButtonElement>('[data-site-analytics-clear]');
-  const status = document.querySelector<HTMLElement>('[data-site-analytics-status]');
+function withIdentityLock<T>(targetWindow: Window, callback: () => Promise<T>): Promise<T> {
+  const navigatorWithLocks = targetWindow.navigator as Navigator & {
+    locks?: { request: (name: string, callback: () => Promise<T>) => Promise<T> };
+  };
+  if (navigatorWithLocks.locks?.request) return navigatorWithLocks.locks.request(IDENTITY_LOCK, callback);
+  if (typeof BroadcastChannel !== 'undefined') return withBroadcastIdentityLock(targetWindow, callback);
+  return callback();
+}
+
+async function withBroadcastIdentityLock<T>(targetWindow: Window, callback: () => Promise<T>): Promise<T> {
+  const owner = uuid(targetWindow);
+  if (!owner) return callback();
+  const channel = new BroadcastChannel(IDENTITY_LOCK + '.fallback');
+  const contenders = new Set([owner]);
+  const wakeWaiters: Array<() => void> = [];
+  let heldBy: string | null = null;
+  const wake = () => wakeWaiters.splice(0).forEach((notify) => notify());
+  channel.addEventListener('message', (event: MessageEvent) => {
+    const data = event.data;
+    if (!data || typeof data.owner !== 'string' || data.owner === owner) return;
+    if (data.type === 'request') {
+      contenders.add(data.owner);
+      if (heldBy === owner) channel.postMessage({ type: 'held', owner });
+    } else if (data.type === 'held') {
+      heldBy = data.owner;
+    } else if (data.type === 'release') {
+      contenders.delete(data.owner);
+      if (heldBy === data.owner) heldBy = null;
+    }
+    wake();
+  });
+  channel.postMessage({ type: 'request', owner });
+
+  const delay = (milliseconds: number) => new Promise<void>((resolve) => targetWindow.setTimeout(resolve, milliseconds));
+  const waitForSignal = () => new Promise<void>((resolve) => {
+    let timer = 0;
+    const notify = () => { targetWindow.clearTimeout(timer); resolve(); };
+    timer = targetWindow.setTimeout(() => {
+      const index = wakeWaiters.indexOf(notify);
+      if (index >= 0) wakeWaiters.splice(index, 1);
+      resolve();
+    }, 50);
+    wakeWaiters.push(notify);
+  });
+
+  try {
+    await delay(75);
+    while (true) {
+      if (!heldBy && [...contenders].sort()[0] === owner) {
+        heldBy = owner;
+        channel.postMessage({ type: 'held', owner });
+        await delay(75);
+        if (heldBy === owner) return await callback();
+      }
+      await waitForSignal();
+    }
+  } finally {
+    if (heldBy === owner) channel.postMessage({ type: 'release', owner });
+    channel.close();
+  }
+}
+
+function newTabSequence(targetWindow: Window): number {
+  try {
+    const current = Number(targetWindow.sessionStorage.getItem(TAB_SEQ_KEY)) || 0;
+    const next = Math.min(1_000_000_000, Math.max(0, current) + 1);
+    targetWindow.sessionStorage.setItem(TAB_SEQ_KEY, String(next));
+    return next;
+  } catch { return 1; }
+}
+
+function bindPreferences(targetWindow: Window, targetDocument: Document, startPageVisit: () => void) {
+  const toggle = targetDocument.querySelector<HTMLButtonElement>('[data-site-analytics-toggle]');
+  const clear = targetDocument.querySelector<HTMLButtonElement>('[data-site-analytics-clear]');
+  const status = targetDocument.querySelector<HTMLElement>('[data-site-analytics-status]');
   if (!toggle) return;
 
   const update = () => {
     const disabled = optedOut();
     runtimeOptOut = disabled;
-    (window as Window & { __phoxAnalyticsDisabled?: boolean }).__phoxAnalyticsDisabled = disabled;
+    (targetWindow as Window & { __phoxAnalyticsDisabled?: boolean }).__phoxAnalyticsDisabled = disabled;
     toggle.setAttribute('aria-pressed', String(disabled));
     toggle.textContent = disabled ? '啟用匿名量測' : '停用匿名量測';
   };
   update();
 
+  const sendPreference = (preference: 'disabled' | 'enabled' | 'clear') => withIdentityLock(targetWindow, async () => {
+    const response = await fetch('/api/analytics/events', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', keepalive: true,
+      body: JSON.stringify({ preference }),
+    });
+    if (!response.ok) throw new Error('preference_update_failed');
+  });
+
   toggle.addEventListener('click', async () => {
     toggle.disabled = true;
     const disable = !optedOut();
     runtimeOptOut = disable;
-    (window as Window & { __phoxAnalyticsDisabled?: boolean }).__phoxAnalyticsDisabled = disable;
+    (targetWindow as Window & { __phoxAnalyticsDisabled?: boolean }).__phoxAnalyticsDisabled = disable;
     if (disable) {
-      (window as Window & { __phoxAnalyticsPreferenceResolved?: boolean }).__phoxAnalyticsPreferenceResolved = false;
-      window.dispatchEvent(new Event('phox-site-analytics-disabled'));
+      (targetWindow as Window & { __phoxAnalyticsPreferenceResolved?: boolean }).__phoxAnalyticsPreferenceResolved = false;
+      targetWindow.dispatchEvent(new Event('phox-site-analytics-disabled'));
     }
-    try {
-      if (disable) window.localStorage.setItem(OPT_OUT_KEY, '1');
-      else window.localStorage.removeItem(OPT_OUT_KEY);
-    } catch { /* The server cookie still records the preference when available. */ }
+    try { if (disable) targetWindow.localStorage.setItem(OPT_OUT_KEY, '1'); else targetWindow.localStorage.removeItem(OPT_OUT_KEY); }
+    catch { /* The signed server cookie still records the preference when available. */ }
     update();
     if (status) status.textContent = disable ? '已在此瀏覽器停用匿名量測。' : '已在此瀏覽器啟用匿名量測。';
     try {
       await sendPreference(disable ? 'disabled' : 'enabled');
       if (!disable) {
-        markAnalyticsPreferenceResolved(window);
-        trackSiteEvent('page_view');
+        markAnalyticsPreferenceResolved(targetWindow);
+        startPageVisit();
       }
     } catch {
       if (status) status.textContent = disable
         ? '本機已停用量測；伺服器偏好同步尚未確認。'
         : '本機偏好已更新；伺服器同步尚未確認。';
-    } finally {
-      toggle.disabled = false;
-    }
+    } finally { toggle.disabled = false; }
   });
 
   clear?.addEventListener('click', async () => {
@@ -183,80 +287,162 @@ function bindPreferences() {
   });
 }
 
+export function trackSiteEvent(name: SiteAnalyticsEventName, attributes: AnalyticsAttributes = {}): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent<EventDetail>(EVENT_NAME, { detail: { name, ...attributes } }));
+}
+
 export function initSiteAnalytics(targetWindow: Window = window, targetDocument: Document = document): boolean {
   if (initialized.has(targetDocument)) return true;
   initialized.add(targetDocument);
   runtimeOptOut = optedOut();
   (targetWindow as Window & { __phoxAnalyticsDisabled?: boolean }).__phoxAnalyticsDisabled = runtimeOptOut;
   const path = publicPath(targetWindow.location.pathname);
-  bindPreferences();
   if (!path) return false;
 
   let queue: AnalyticsEvent[] = [];
+  let pendingDetails: EventDetail[] = [];
   let timer = 0;
   let sending = false;
-  let firstPageMetadata = landingDetails();
+  let bootstrapped = false;
   let landingPending = true;
+  let pageVisitId = uuid(targetWindow);
+  let tabId = readTabId(targetWindow);
+  let documentId = uuid(targetWindow);
+  let eventSeq = 0;
+  let tabSeq = 0;
+  let tabReady = false;
+  let activeRequest: AbortController | null = null;
+  const visiblePlacements = new Set<string>();
+  const firstPageMetadata = landingDetails();
 
-  const flush = async (attempt = 0): Promise<void> => {
-    if (sending || queue.length === 0 || optedOut()) return;
-    sending = true;
-    const batch = queue.splice(0, 10);
-    try {
-      const response = await fetch('/api/analytics/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        keepalive: true,
-        body: JSON.stringify({ events: batch, landing: landingPending ? firstPageMetadata : undefined, device: deviceType() }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (response.ok) landingPending = false;
-      if (response.ok && !optedOut() && result.optedOut !== true && result.filtered !== true) {
-        markAnalyticsPreferenceResolved(targetWindow);
-      }
-      if (result.optedOut === true) {
-        runtimeOptOut = true;
-        (targetWindow as Window & { __phoxAnalyticsDisabled?: boolean }).__phoxAnalyticsDisabled = true;
-        try { targetWindow.localStorage.setItem(OPT_OUT_KEY, '1'); } catch { /* Keep the server-enforced preference. */ }
-        const preferenceToggle = targetDocument.querySelector<HTMLButtonElement>('[data-site-analytics-toggle]');
-        if (preferenceToggle) { preferenceToggle.setAttribute('aria-pressed', 'true'); preferenceToggle.textContent = '啟用匿名量測'; }
-        const preferenceStatus = targetDocument.querySelector<HTMLElement>('[data-site-analytics-status]');
-        if (preferenceStatus) preferenceStatus.textContent = '此瀏覽器已停用匿名量測。';
-        queue = [];
-      } else if (!response.ok && attempt < 2) {
-        queue.unshift(...batch);
-        window.setTimeout(() => { sending = false; void flush(attempt + 1); }, attempt === 0 ? 400 : 1400);
-        return;
-      }
-    } catch {
-      if (attempt < 2) {
-        queue.unshift(...batch);
-        window.setTimeout(() => { sending = false; void flush(attempt + 1); }, attempt === 0 ? 400 : 1400);
-        return;
-      }
+  const newPageVisit = () => {
+    pageVisitId = uuid(targetWindow);
+    tabSeq = newTabSequence(targetWindow);
+    visiblePlacements.clear();
+    enqueue({ name: 'page_view' });
+  };
+
+  const makeEvent = (detail: EventDetail): AnalyticsEvent | null => {
+    const id = uuid(targetWindow);
+    if (!id || !pageVisitId || !tabId || !documentId) return null;
+    eventSeq = Math.min(10_000, eventSeq + 1);
+    const event: AnalyticsEvent = {
+      id, name: detail.name, path, clientAt: new Date().toISOString(), schemaVersion: 2,
+      pageVisitId, tabId, documentId, eventSeq, tabSeq,
+    };
+    if (detail.name === 'inquiry_cta_click') {
+      event.placement = safePlacement(detail.placement);
+      event.destination = destinations.has(detail.destination || '') ? detail.destination : 'other';
+    } else if (detail.name === 'cta_view') {
+      event.placement = safePlacement(detail.placement);
+      event.visiblePercent = Math.max(50, Math.min(100, Math.round(detail.visiblePercent || 50)));
+      event.visibleMs = Math.max(1_000, Math.min(60_000, Math.round(detail.visibleMs || 1_000)));
+    } else if (detail.name === 'outbound_contact_click') {
+      event.destination = destinations.has(detail.destination || '') && detail.destination !== 'internal' ? detail.destination : 'other';
+    } else if (detail.name === 'form_submit_error') {
+      const codes = new Set(['validation', 'network', 'server', 'rate_limited', 'unknown']);
+      event.errorCode = codes.has(detail.errorCode || '') ? detail.errorCode : 'unknown';
+      event.formInstanceId = detail.formInstanceId;
+    } else if (detail.name === 'form_start' || detail.name === 'form_review' || detail.name === 'form_submit_attempt'
+      || detail.name === 'form_step_enter' || detail.name === 'form_step_complete') {
+      event.formInstanceId = detail.formInstanceId;
+      if (detail.name === 'form_step_enter' || detail.name === 'form_step_complete') event.stepId = detail.stepId;
     }
-    sending = false;
-    if (queue.length) void flush();
+    return event;
+  };
+
+  const enqueueReady = (detail: EventDetail) => {
+    if (optedOut()) return;
+    const event = makeEvent(detail);
+    if (!event) return;
+    queue.push(event);
+    if (timer) targetWindow.clearTimeout(timer);
+    timer = targetWindow.setTimeout(() => { void flush(); }, 120);
   };
 
   const enqueue = (detail: EventDetail) => {
     if (optedOut()) return;
-    const event = createEvent(detail, path);
-    if (!event) return;
-    queue.push(event);
-    if (timer) window.clearTimeout(timer);
-    timer = window.setTimeout(() => { void flush(); }, 120);
+    if (!tabReady) { pendingDetails.push(detail); return; }
+    enqueueReady(detail);
   };
 
+  const ensureBootstrap = async (): Promise<boolean> => {
+    if (bootstrapped) return true;
+    const response = await fetch('/api/analytics/events', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', keepalive: true,
+      body: JSON.stringify({ bootstrap: true }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.filtered === true) return false;
+    bootstrapped = true;
+    if (result.optedOut === true) {
+      runtimeOptOut = true;
+      (targetWindow as Window & { __phoxAnalyticsDisabled?: boolean }).__phoxAnalyticsDisabled = true;
+      try { targetWindow.localStorage.setItem(OPT_OUT_KEY, '1'); } catch { /* Keep the server-enforced preference. */ }
+      queue = [];
+      return false;
+    }
+    return true;
+  };
+
+  const flush = async (attempt = 0): Promise<void> => {
+    if (sending || queue.length === 0 || optedOut() || !tabReady) return;
+    sending = true;
+    const batch = queue.splice(0, 10);
+    activeRequest = new AbortController();
+    try {
+      const responseResult = await withIdentityLock(targetWindow, async () => {
+        if (!await ensureBootstrap()) return null;
+        const response = await fetch('/api/analytics/events', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', keepalive: true,
+          body: JSON.stringify({ events: batch, landing: landingPending ? firstPageMetadata : undefined, device: deviceType() }),
+          signal: activeRequest?.signal,
+        });
+        const result = await response.json().catch(() => ({}));
+        return { response, result };
+      });
+      if (!responseResult) {
+        if (!optedOut() && attempt < 2) {
+          queue.unshift(...batch);
+          targetWindow.setTimeout(() => { sending = false; void flush(attempt + 1); }, attempt === 0 ? 400 : 1_400);
+          return;
+        }
+        return;
+      }
+      const { response, result } = responseResult;
+      if (response.ok) landingPending = false;
+      if (response.ok && !optedOut() && result.optedOut !== true && result.filtered !== true) markAnalyticsPreferenceResolved(targetWindow);
+      if (result.optedOut === true) {
+        runtimeOptOut = true;
+        (targetWindow as Window & { __phoxAnalyticsDisabled?: boolean }).__phoxAnalyticsDisabled = true;
+        try { targetWindow.localStorage.setItem(OPT_OUT_KEY, '1'); } catch { /* Keep the server-enforced preference. */ }
+        queue = [];
+      } else if (!response.ok && attempt < 2) {
+        queue.unshift(...batch);
+        targetWindow.setTimeout(() => { sending = false; void flush(attempt + 1); }, attempt === 0 ? 400 : 1_400);
+        return;
+      }
+    } catch {
+      if (attempt < 2 && !optedOut()) {
+        queue.unshift(...batch);
+        targetWindow.setTimeout(() => { sending = false; void flush(attempt + 1); }, attempt === 0 ? 400 : 1_400);
+        return;
+      }
+    }
+    activeRequest = null;
+    sending = false;
+    if (queue.length) void flush();
+  };
+
+  bindPreferences(targetWindow, targetDocument, newPageVisit);
   targetWindow.addEventListener('phox-site-analytics-disabled', () => {
     queue = [];
+    pendingDetails = [];
     if (timer) targetWindow.clearTimeout(timer);
+    activeRequest?.abort();
   });
-
-  targetWindow.addEventListener(EVENT_NAME, ((event: CustomEvent<EventDetail>) => {
-    enqueue(event.detail);
-  }) as EventListener);
+  targetWindow.addEventListener(EVENT_NAME, ((event: CustomEvent<EventDetail>) => enqueue(event.detail)) as EventListener);
 
   const ElementConstructor = targetDocument.defaultView?.Element;
   targetDocument.addEventListener('click', (event) => {
@@ -266,28 +452,68 @@ export function initSiteAnalytics(targetWindow: Window = window, targetDocument:
     if (!link) return;
     const destination = destinationFor(link.href);
     if (link.dataset.analyticsEvent === 'inquiry_click') {
-      enqueue({
-        name: 'inquiry_cta_click',
-        placement: safePlacement(link.dataset.analyticsPlacement),
-        destination,
-      });
+      enqueue({ name: 'inquiry_cta_click', placement: safePlacement(link.dataset.analyticsPlacement), destination });
       if (destination !== 'internal' && destination !== 'other') enqueue({ name: 'outbound_contact_click', destination });
     } else if (destination === 'instagram' || destination === 'threads' || destination === 'facebook' || destination === 'email') {
       enqueue({ name: 'outbound_contact_click', destination });
     }
   }, { capture: true });
 
-  let formStarted = false;
-  const inquiryForm = targetDocument.querySelector<HTMLFormElement>('[data-inquiry-form]');
-  inquiryForm?.addEventListener('input', (event) => {
-    if (formStarted || !ElementConstructor || !(event.target instanceof ElementConstructor)) return;
-    if (event.target.closest('input[name="website"]')) return;
-    formStarted = true;
-    enqueue({ name: 'form_start' });
+  if (typeof IntersectionObserver !== 'undefined') {
+    const candidates = targetDocument.querySelectorAll<HTMLAnchorElement>('a[data-analytics-event="inquiry_click"][data-analytics-placement]');
+    const timers = new WeakMap<Element, number>();
+    const visibility = new WeakMap<Element, { ratio: number; startedAt: number }>();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.intersectionRatio < 0.5 || targetDocument.visibilityState === 'hidden') {
+          const timerId = timers.get(entry.target);
+          if (timerId) targetWindow.clearTimeout(timerId);
+          timers.delete(entry.target);
+          visibility.delete(entry.target);
+          return;
+        }
+        const current = visibility.get(entry.target);
+        if (current) { current.ratio = entry.intersectionRatio; return; }
+        const state = { ratio: entry.intersectionRatio, startedAt: targetWindow.performance.now() };
+        visibility.set(entry.target, state);
+        const timerId = targetWindow.setTimeout(() => {
+          const latest = visibility.get(entry.target);
+          const placement = safePlacement((entry.target as HTMLElement).dataset.analyticsPlacement);
+          if (latest && latest.ratio >= 0.5 && (entry.target as HTMLElement).isConnected && !visiblePlacements.has(placement)) {
+            visiblePlacements.add(placement);
+            enqueue({ name: 'cta_view', placement, visiblePercent: Math.floor(latest.ratio * 100), visibleMs: Math.max(1_000, Math.round(targetWindow.performance.now() - latest.startedAt)) });
+          }
+          timers.delete(entry.target);
+        }, 1_000);
+        timers.set(entry.target, timerId);
+      });
+    }, { threshold: [0, 0.5, 1] });
+    candidates.forEach((link) => observer.observe(link));
+    targetDocument.addEventListener('visibilitychange', () => {
+      if (targetDocument.visibilityState === 'hidden') {
+        candidates.forEach((link) => {
+          const timerId = timers.get(link);
+          if (timerId) targetWindow.clearTimeout(timerId);
+          timers.delete(link);
+          visibility.delete(link);
+        });
+      }
+    });
+  }
+
+  targetDocument.addEventListener('visibilitychange', () => {
+    if (targetDocument.visibilityState === 'hidden') void flush();
+  });
+  targetWindow.addEventListener('pagehide', () => { void flush(); });
+  targetWindow.addEventListener('pageshow', (event) => {
+    if ((event as PageTransitionEvent).persisted && !optedOut()) newPageVisit();
   });
 
-
-  enqueue({ name: 'page_view' });
-
+  void resolveTabId(targetWindow, tabId).then((resolvedTabId) => {
+    if (resolvedTabId) tabId = resolvedTabId;
+    tabReady = true;
+    newPageVisit();
+    pendingDetails.splice(0).forEach(enqueueReady);
+  });
   return true;
 }

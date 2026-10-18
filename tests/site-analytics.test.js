@@ -73,7 +73,7 @@ test('已收件回條重試時，歸因服務失敗仍回傳原收件成功', as
   const identity = await analyticsIdentityForRequest(new Request('https://phox999.com/'), testEnv);
   let attributionWrites = 0;
   globalThis.fetch = async (url) => {
-    if (String(url).endsWith('/rpc/record_site_analytics_inquiry')) {
+    if (String(url).endsWith('/rpc/record_site_analytics_inquiry_v2')) {
       attributionWrites += 1;
       return new Response('{}', { status: 503 });
     }
@@ -146,7 +146,7 @@ test('簽署 cookie 跨頁保持訪客，閒置逾 30 分鐘建立新 session，
   assert.equal(afterIdle.identity.visitorId, initial.identity.visitorId);
   assert.notEqual(afterIdle.identity.sessionId, initial.identity.sessionId);
 
-  const forged = cookie.replace(/.$/, 'A');
+  const forged = cookie.replace(/.$/, (lastCharacter) => lastCharacter === 'A' ? 'B' : 'A');
   assert.equal(await existingAnalyticsIdentity(new Request('https://phox999.com/', { headers: { cookie: forged } }), env, now), null);
 });
 

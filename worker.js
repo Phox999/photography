@@ -7,6 +7,10 @@ import { onRequestGet as publicAvailabilityGet } from './functions/api/availabil
 import { onRequest as adminOverview } from './functions/api/admin/overview.js';
 import { onRequest as analyticsEvents } from './functions/api/analytics/events.js';
 import { onRequest as adminAnalytics } from './functions/api/admin/analytics.js';
+import { onRequest as adminAnalyticsSessions } from './functions/api/admin/analytics/sessions.js';
+import { onRequest as adminAnalyticsSessionDetail } from './functions/api/admin/analytics/sessions/[id].js';
+import { onRequest as adminAnalyticsVisitorSessions } from './functions/api/admin/analytics/visitors/[id]/sessions.js';
+import { onRequest as adminAnalyticsPaths } from './functions/api/admin/analytics/paths.js';
 import { runAnalyticsRetention } from './server/site-analytics.js';
 import { onRequest as adminInquiries } from './functions/api/admin/inquiries.js';
 import { onRequest as adminInquiry } from './functions/api/admin/inquiries/[id].js';
@@ -48,6 +52,10 @@ const apiRoutes = [
   [/^\/api\/admin\/overview$/, adminOverview],
   [/^\/api\/analytics\/events$/, analyticsEvents],
   [/^\/api\/admin\/analytics$/, adminAnalytics],
+  [/^\/api\/admin\/analytics\/sessions$/, adminAnalyticsSessions],
+  [/^\/api\/admin\/analytics\/sessions\/([^/]+)$/, adminAnalyticsSessionDetail, ['id']],
+  [/^\/api\/admin\/analytics\/visitors\/([^/]+)\/sessions$/, adminAnalyticsVisitorSessions, ['id']],
+  [/^\/api\/admin\/analytics\/paths$/, adminAnalyticsPaths],
   [/^\/api\/admin\/inquiries$/, adminInquiries],
   [/^\/api\/admin\/inquiries\/([^/]+)\/references$/, adminInquiryReferences, ['id']],
   [/^\/api\/admin\/inquiries\/([^/]+)\/confirmation$/, adminInquiryConfirmation, ['id']],

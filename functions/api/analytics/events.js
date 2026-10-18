@@ -74,6 +74,14 @@ export const onRequest = endpoint(async ({ request, env }) => {
     return json({ success: true, enabled: !identity.optOut }, 200, { 'Set-Cookie': preferenceCookie });
   }
 
+  if (batch.bootstrap) {
+    const userAgent = request.headers.get('user-agent') || '';
+    if (CRAWLER_PATTERN.test(userAgent) || await isVerifiedAdminVisit(request, env)) {
+      return json({ ready: true, filtered: true }, 202, { 'Set-Cookie': cookie });
+    }
+    return json({ ready: true, optedOut: identity.optOut }, 202, { 'Set-Cookie': cookie });
+  }
+
   const userAgent = request.headers.get('user-agent') || '';
   if (CRAWLER_PATTERN.test(userAgent)) {
     return json({ accepted: 0, filtered: true }, 202, { 'Set-Cookie': cookie });
