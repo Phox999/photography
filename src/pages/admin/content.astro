@@ -1,291 +1,830 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import '../../styles/admin-content.css';
 ---
-<AdminLayout title="網站內容" current="content">
-  <header class="admin-page-heading"><div><span class="admin-eyebrow">網站設定</span><h1>網站內容</h1></div><button class="admin-button admin-button--quiet" type="button" id="content-reload">重新載入</button></header>
-  <p class="admin-status" id="content-load-status" role="status" aria-live="polite">正在載入網站內容…</p>
-  <form id="admin-content-form" method="post" action="/api/admin/content" hidden>
-    <div class="admin-content-grid">
-      <div class="admin-content-form">
-        <section class="admin-card"><fieldset><legend>首頁主視覺</legend><p class="admin-help">修改首頁標題與介紹，並挑選最多 10 張照片輪播。發布後才會套用前台。</p><div class="admin-hero-editor">
-          <div class="admin-hero-editor__fields">
-            <div class="admin-field"><label for="hero-title-input">首頁主標</label><textarea id="hero-title-input" maxlength="120" rows="2" required placeholder="第一次互惠拍攝，&#10;也能安心開始。" aria-describedby="hero-title-help"></textarea><p class="admin-help" id="hero-title-help">純文字，最多 120 字。換行會保留在首頁顯示。</p></div>
-            <div class="admin-field"><label for="hero-copy-input">首頁介紹</label><textarea id="hero-copy-input" maxlength="1000" rows="5" required placeholder="介紹你的拍攝方式與合作特色。" aria-describedby="hero-copy-help"></textarea><p class="admin-help" id="hero-copy-help">純文字，最多 1,000 字。</p></div>
-            <div class="admin-field"><label for="hero-image-input">輪播照片</label><input id="hero-image-input" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="hero-image-help" /><p class="admin-help" id="hero-image-help">可一次選多張 JPEG、PNG 或 WebP；單張最多 8 MiB，輪播最多 10 張。</p><div class="admin-actions"><button class="admin-button admin-button--quiet" type="button" id="hero-image-upload" disabled>加入輪播</button></div><p class="admin-status" id="hero-image-status" role="status" aria-live="polite"></p></div>
-          </div>
-          <figure class="admin-hero-preview"><div class="admin-hero-image-grid" id="hero-image-preview" aria-label="首頁輪播照片預覽"></div><figcaption id="hero-image-caption"></figcaption></figure>
-        </div></fieldset></section>
-        <section class="admin-card"><fieldset><legend>網站公告</legend><label class="admin-check"><input type="checkbox" id="announcement-enabled" />在前台顯示公告</label><div class="admin-field" style="margin-top:20px"><label for="announcement">公告內容</label><textarea id="announcement" maxlength="500" rows="4" placeholder="例如：近期合作安排或拍攝時程提醒。" aria-describedby="announcement-help"></textarea><p class="admin-help" id="announcement-help">純文字內容，最多 500 字。啟用公告時必須填寫內容。</p><span class="admin-count" id="announcement-count">0 / 500</span></div></fieldset></section>
-        <section class="admin-card"><fieldset><legend>常見問題</legend><p class="admin-help" style="margin-bottom:20px">最多 12 題，可調整順序。每題標題最多 160 字，回答最多 1,200 字。</p><div class="admin-faq-items" id="content-faq-list"></div><p class="admin-help" id="faq-empty" hidden>目前沒有常見問題。發布後，前台會隱藏常見問題區塊。</p><button class="admin-button admin-button--quiet" type="button" id="content-add-faq" style="margin-top:20px">＋ 新增問題</button><p class="admin-status" id="faq-status" role="status" aria-live="polite"></p></fieldset></section>
+
+<AdminLayout title="網站內容" current="content" wide>
+  <section class="content-admin" aria-labelledby="content-page-title">
+    <header class="content-page-heading">
+      <div><span class="admin-eyebrow">網站設定</span><h1 id="content-page-title">網站內容</h1><p>編輯首頁文字、輪播照片、公告與常見問題；確認預覽後再發布。</p></div>
+      <button class="admin-button admin-button--quiet" type="button" id="content-reload">重新載入</button>
+    </header>
+    <p class="admin-status content-load-status" id="content-load-status" role="status" aria-live="polite">正在載入網站內容…</p>
+
+    <form class="content-editor" id="admin-content-form" method="post" action="/api/admin/content" novalidate hidden>
+      <div class="content-actionbar" aria-label="發布操作">
+        <div class="content-actionbar__state"><strong id="content-dirty-label">內容與已發布版本一致</strong><span id="content-version">版本 — · 最後發布 —</span></div>
+        <div class="content-actionbar__buttons">
+          <button class="admin-button admin-button--quiet" type="button" id="content-open-preview">預覽</button>
+          <button class="admin-button admin-button--quiet" type="button" id="content-discard" disabled>放棄修改</button>
+          <button class="admin-button" type="button" id="content-publish" disabled>發布更新</button>
+        </div>
       </div>
-      <aside class="admin-card admin-publish-card" aria-labelledby="publish-heading"><span class="admin-eyebrow">發布設定</span><h2 id="publish-heading">發布網站更新</h2><p class="admin-help">發布後首頁會套用最新內容與照片順序；若頁面已開啟，請重新整理。</p><p class="admin-meta" id="content-version" style="margin-top:18px"></p><p class="admin-help" id="content-dirty">內容尚未變更。</p><button type="submit" class="admin-button" id="content-publish">發布更新</button><p class="admin-status" id="content-save-status" role="status" aria-live="polite"></p><hr style="border:0;border-top:1px solid var(--adm-line);margin:22px 0" /><h3>公告預覽</h3><p class="admin-preview-text" id="announcement-preview">前台公告未啟用。</p><a class="admin-text-link" href="/" target="_blank" rel="noopener">開啟前台網站</a></aside>
-    </div>
-  </form>
+      <section class="content-change-panel" aria-labelledby="content-change-heading">
+        <div class="content-change-panel__heading"><strong id="content-change-heading">未發布變更</strong><span id="content-change-count">0 項</span></div>
+        <ul id="content-change-list"><li>尚無未發布修改。</li></ul>
+      </section>
+      <p class="content-no-draft-note">本頁編輯內容只保留在目前瀏覽器頁面；發布前沒有伺服器草稿。照片上傳成功後會先留在 Storage，發布才會加入首頁輪播。</p>
+
+      <div class="content-tabs" role="tablist" aria-label="網站內容編輯區段">
+        <button type="button" class="content-tab" id="content-tab-home" role="tab" aria-selected="true" aria-controls="content-panel-home" tabindex="0" data-content-tab="home">首頁文字</button>
+        <button type="button" class="content-tab" id="content-tab-photos" role="tab" aria-selected="false" aria-controls="content-panel-photos" tabindex="-1" data-content-tab="photos">輪播照片</button>
+        <button type="button" class="content-tab" id="content-tab-announcement" role="tab" aria-selected="false" aria-controls="content-panel-announcement" tabindex="-1" data-content-tab="announcement">網站公告</button>
+        <button type="button" class="content-tab" id="content-tab-faq" role="tab" aria-selected="false" aria-controls="content-panel-faq" tabindex="-1" data-content-tab="faq">常見問題</button>
+      </div>
+
+      <section class="content-panel" id="content-panel-home" role="tabpanel" aria-labelledby="content-tab-home" tabindex="0" data-content-panel="home">
+        <div class="content-card">
+          <div class="content-card__heading"><div><span class="admin-eyebrow">首頁主視覺</span><h2>首頁文字</h2></div><p>文字使用純文字顯示，換行會保留。</p></div>
+          <div class="content-text-fields">
+            <div class="admin-field"><label for="hero-title-input">首頁主標</label><textarea id="hero-title-input" maxlength="120" rows="3" required placeholder="第一次互惠拍攝，&#10;也能安心開始。" aria-describedby="hero-title-help"></textarea><p class="admin-help" id="hero-title-help">最多 120 字。</p></div>
+            <div class="admin-field"><label for="hero-copy-input">首頁介紹</label><textarea id="hero-copy-input" maxlength="1000" rows="6" required placeholder="介紹你的拍攝方式與合作特色。" aria-describedby="hero-copy-help"></textarea><p class="admin-help" id="hero-copy-help">最多 1,000 字。</p></div>
+          </div>
+          <p class="content-section-note">照片排序請到「輪播照片」區調整，避免文字和照片控制互相擠壓。</p>
+        </div>
+      </section>
+
+      <section class="content-panel" id="content-panel-photos" role="tabpanel" aria-labelledby="content-tab-photos" tabindex="0" data-content-panel="photos" hidden>
+        <div class="content-card content-photo-card">
+          <div class="content-card__heading content-photo-heading"><div><span class="admin-eyebrow">首頁主視覺</span><h2>輪播照片</h2></div><strong class="content-photo-count" id="hero-image-count" aria-live="polite">目前 0 / 10 張</strong></div>
+          <p class="content-section-note">拖曳照片把手到另一張照片的位置即可排序；也可用每張照片的上移、下移按鈕。移出只會取消輪播引用，不會刪除原始照片或 Storage 檔案。</p>
+          <p class="content-photo-drop-status" id="hero-drop-status" role="status" aria-live="polite">放置提示：拖曳照片把手到另一張照片的位置即可排序。</p>
+          <div class="content-photo-grid-area" aria-label="輪播照片清單"><div class="content-photo-grid" id="hero-image-preview"></div><p class="content-empty-photos" id="hero-image-empty" hidden>目前沒有輪播照片。上傳照片後會先加入未發布內容。</p></div>
+          <div class="content-photo-undo" id="hero-image-undo" hidden><span id="hero-image-undo-message">已移出輪播。</span><button class="admin-button admin-button--quiet" type="button" id="hero-image-undo-button">復原</button></div>
+
+          <section class="content-upload" aria-labelledby="hero-upload-heading">
+            <div class="content-upload__heading"><div><h3 id="hero-upload-heading">上傳照片</h3><p>JPEG、PNG 或 WebP；單張最多 8 MiB。</p></div><button class="admin-button" type="button" id="hero-image-upload" disabled>上傳待處理照片</button></div>
+            <div class="content-dropzone" id="hero-image-dropzone">
+              <div><strong>選取照片或拖放到這裡</strong><p id="hero-image-help">一次可選多張。上傳會逐張處理，失敗項目可重試或移除。</p></div>
+              <button class="admin-button admin-button--quiet" type="button" id="hero-image-choose">選擇照片</button>
+              <input class="content-visually-hidden" id="hero-image-input" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="hero-image-help" />
+            </div>
+            <p class="content-photo-full-note" id="hero-image-full-note" hidden>輪播已滿，請先移出照片。</p>
+            <ul class="content-upload-queue" id="hero-upload-queue" aria-label="待上傳照片清單"></ul>
+            <p class="admin-status" id="hero-image-status" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+      </section>
+
+      <section class="content-panel" id="content-panel-announcement" role="tabpanel" aria-labelledby="content-tab-announcement" tabindex="0" data-content-panel="announcement" hidden>
+        <div class="content-card">
+          <div class="content-card__heading"><div><span class="admin-eyebrow">前台浮動公告</span><h2>網站公告</h2></div><span class="content-announcement-state" id="announcement-state">目前停用</span></div>
+          <label class="content-switch" for="announcement-enabled"><input type="checkbox" id="announcement-enabled" /><span>在前台顯示公告</span></label>
+          <div class="admin-field content-announcement-field"><label for="announcement">公告內容</label><textarea id="announcement" maxlength="500" rows="6" placeholder="例如：近期合作安排或拍攝時程提醒。" aria-describedby="announcement-help announcement-count"></textarea><div class="content-field-meta"><p class="admin-help" id="announcement-help">純文字內容，最多 500 字。啟用時必須填寫公告。</p><span class="admin-count" id="announcement-count">0 / 500</span></div></div>
+          <div class="content-announcement-preview" aria-labelledby="announcement-preview-heading"><strong id="announcement-preview-heading">公告顯示預覽</strong><p id="announcement-preview">前台公告未啟用。</p></div>
+        </div>
+      </section>
+
+      <section class="content-panel" id="content-panel-faq" role="tabpanel" aria-labelledby="content-tab-faq" tabindex="0" data-content-panel="faq" hidden>
+        <div class="content-card">
+          <div class="content-card__heading"><div><span class="admin-eyebrow">首頁 FAQ</span><h2>常見問題</h2></div><span class="content-faq-count" id="faq-count">0 / 12 題</span></div>
+          <p class="content-section-note">最多 12 題。展開問題可編輯內容與順序；收合或切換區段不會清除輸入。</p>
+          <div class="content-faq-list" id="content-faq-list"></div>
+          <p class="content-empty-faq" id="faq-empty" hidden>目前沒有常見問題，發布後前台會隱藏 FAQ 區塊。</p>
+          <button class="admin-button admin-button--quiet" type="button" id="content-add-faq">＋ 新增問題</button>
+          <p class="admin-status" id="faq-status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+      <p class="admin-status content-save-status" id="content-save-status" role="status" aria-live="polite"></p>
+    </form>
+
+    <dialog class="content-dialog content-preview-dialog" id="content-preview-dialog" aria-labelledby="content-preview-title">
+      <div class="content-dialog__header"><div><span class="admin-eyebrow">未發布內容</span><h2 id="content-preview-title">首頁預覽</h2></div><button class="admin-button admin-button--quiet" type="button" data-dialog-close="preview">關閉預覽</button></div>
+      <p class="content-preview-limit">近似預覽：沿用前台主視覺的滿版裁切與文字位置；不執行輪播動畫或實際前台腳本。預覽不會發布或修改前台內容。</p>
+      <div class="content-preview-device-toggle" role="group" aria-label="預覽尺寸"><button class="admin-button admin-button--quiet" type="button" data-preview-device="desktop" aria-pressed="true">桌面預覽</button><button class="admin-button admin-button--quiet" type="button" data-preview-device="mobile" aria-pressed="false">手機預覽</button></div>
+      <div class="content-preview-scroll"><div class="content-preview-viewport" id="content-preview-viewport" data-preview-mode="desktop"></div></div>
+    </dialog>
+
+    <dialog class="content-dialog content-confirm-dialog" id="content-publish-dialog" aria-labelledby="content-publish-dialog-title" aria-describedby="content-publish-dialog-help">
+      <div class="content-dialog__header"><div><span class="admin-eyebrow">發布前確認</span><h2 id="content-publish-dialog-title">確認發布網站更新？</h2></div></div>
+      <p id="content-publish-dialog-help">下列內容將寫入目前網站版本並套用至前台。</p><ul class="content-confirm-summary" id="content-publish-summary"></ul>
+      <div class="content-dialog__actions"><button class="admin-button admin-button--quiet" type="button" data-dialog-close="publish">返回檢查</button><button class="admin-button" type="button" id="content-publish-confirm">確認發布更新</button></div>
+    </dialog>
+
+    <dialog class="content-dialog content-confirm-dialog" id="content-discard-dialog" aria-labelledby="content-discard-dialog-title" aria-describedby="content-discard-dialog-help">
+      <div class="content-dialog__header"><div><span class="admin-eyebrow">放棄未發布修改</span><h2 id="content-discard-dialog-title">要放棄目前修改嗎？</h2></div></div>
+      <p id="content-discard-dialog-help">頁面會還原到本次載入或最近成功發布的版本。已上傳照片仍會留在 Storage，不會加入前台內容。</p>
+      <div class="content-dialog__actions"><button class="admin-button admin-button--quiet" type="button" data-dialog-close="discard">繼續編輯</button><button class="admin-button admin-button--danger" type="button" id="content-discard-confirm">確認放棄修改</button></div>
+    </dialog>
+
+    <dialog class="content-dialog content-photo-dialog" id="content-photo-dialog" aria-labelledby="content-photo-dialog-title">
+      <div class="content-dialog__header"><div><span class="admin-eyebrow">輪播照片</span><h2 id="content-photo-dialog-title">照片預覽</h2></div><button class="admin-button admin-button--quiet" type="button" data-dialog-close="photo">關閉照片預覽</button></div>
+      <img id="content-photo-dialog-image" alt="" /><p id="content-photo-dialog-caption"></p>
+    </dialog>
+  </section>
 </AdminLayout>
+
 <script>
-  import { requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate, setUnsavedChanges, confirmDiscardChanges, AdminApiError } from '../../lib/admin-client';
+  import {
+    requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate,
+    setUnsavedChanges, AdminApiError,
+  } from '../../lib/admin-client';
+  import {
+    contentChangeSummary, contentHasChanges, hasHeroImageCapacity, hasIncompleteUploads, moveItem,
+    restoreItem, uploadTaskIds, validateHeroUpload,
+  } from '../../lib/admin-content-state.js';
+
   type Faq = { question: string; answer: string };
   type HeroImage = { path: string; url: string };
-  type Content = { id: number; announcement: string; announcement_enabled: boolean; faqs: Faq[]; hero_title: string; hero_copy: string; hero_image_paths: string[]; hero_image_urls: string[]; version: number; updated_at: string };
+  type Content = {
+    id: number; announcement: string; announcement_enabled: boolean; faqs: Faq[];
+    hero_title: string; hero_copy: string; hero_image_paths: string[]; hero_image_urls: string[];
+    version: number; updated_at: string;
+  };
+  type UploadRow = { id: string; file: File; status: 'queued' | 'uploading' | 'uploaded' | 'failed'; error: string; image?: HeroImage };
+  type ValidationError = { tab: string; field: HTMLInputElement | HTMLTextAreaElement; message: string; row?: HTMLDetailsElement };
+
   const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
   const form = $<HTMLFormElement>('#admin-content-form');
   const announcement = $<HTMLTextAreaElement>('#announcement');
   const heroTitle = $<HTMLTextAreaElement>('#hero-title-input');
   const heroCopy = $<HTMLTextAreaElement>('#hero-copy-input');
   const heroFile = $<HTMLInputElement>('#hero-image-input');
-  const heroUpload = $<HTMLButtonElement>('#hero-image-upload');
-  const heroPreview = $('#hero-image-preview');
-  let heroImages: HeroImage[] = [];
+  const heroGrid = $('#hero-image-preview');
+  const photoDialog = $<HTMLDialogElement>('#content-photo-dialog');
+  const previewDialog = $<HTMLDialogElement>('#content-preview-dialog');
+  const publishDialog = $<HTMLDialogElement>('#content-publish-dialog');
+  const discardDialog = $<HTMLDialogElement>('#content-discard-dialog');
   const enabled = $<HTMLInputElement>('#announcement-enabled');
   const faqList = $('#content-faq-list');
-  const add = $<HTMLButtonElement>('#content-add-faq');
-  const publish = $<HTMLButtonElement>('#content-publish');
   const loadStatus = $('#content-load-status');
   const saveStatus = $('#content-save-status');
+  const uploadStatus = $('#hero-image-status');
   let loaded: Content | null = null;
-  let original = '';
+  let heroImages: HeroImage[] = [];
+  let uploadQueue: UploadRow[] = [];
+  let undoPhoto: { image: HeroImage; index: number } | null = null;
   let busy = false;
   let uploading = false;
-  let draggingHeroIndex: number | null = null;
-  let serial = 0;
-  function message(element: HTMLElement, value: string, error = false) { element.textContent = value; element.dataset.error = String(error); }
+  let draggingPhotoIndex: number | null = null;
+  let faqSerial = 0;
+  let uploadSerial = 0;
+  let discardAction: 'reset' | 'reload' = 'reset';
+  let previewMode: 'desktop' | 'mobile' = 'desktop';
+
+  function message(element: HTMLElement, value: string, error = false) {
+    element.textContent = value;
+    element.dataset.error = String(error);
+  }
   function readFaqs(): Faq[] {
-    return Array.from(faqList.querySelectorAll<HTMLElement>('.admin-faq-item')).map((item) => ({ question: item.querySelector<HTMLInputElement>('[data-faq-question]')!.value, answer: item.querySelector<HTMLTextAreaElement>('[data-faq-answer]')!.value }));
+    return Array.from(faqList.querySelectorAll<HTMLDetailsElement>('[data-faq-row]')).map((row) => ({
+      question: row.querySelector<HTMLInputElement>('[data-faq-question]')!.value,
+      answer: row.querySelector<HTMLTextAreaElement>('[data-faq-answer]')!.value,
+    }));
   }
-  function readContent() { return { announcement: announcement.value, announcement_enabled: enabled.checked, faqs: readFaqs(), hero_title: heroTitle.value, hero_copy: heroCopy.value, hero_image_paths: heroImages.map((image) => image.path) }; }
-  function updateState() {
-    const value = readContent();
-    const changed = Boolean(loaded && JSON.stringify(value) !== original);
-    setUnsavedChanges(changed);
-    $('#content-dirty').textContent = changed ? '有尚未發布的修改。' : '內容尚未變更。';
-    $('#announcement-count').textContent = `${announcement.value.length} / 500`;
-    $('#announcement-preview').textContent = enabled.checked ? announcement.value || '啟用公告後，請填寫要顯示的內容。' : '前台公告未啟用。';
+  function readContent() {
+    return {
+      announcement: announcement.value, announcement_enabled: enabled.checked, faqs: readFaqs(),
+      hero_title: heroTitle.value, hero_copy: heroCopy.value, hero_image_paths: heroImages.map((image) => image.path),
+    };
+  }
+
+  function refreshActionState() {
+    if (!loaded) return;
+    const current = readContent();
+    const changes = contentChangeSummary(loaded, current);
+    const hasChanges = contentHasChanges(loaded, current);
+    const hasPendingUploads = hasIncompleteUploads(uploadQueue);
+    const hasAnyUnsavedWork = hasChanges || hasPendingUploads;
+    setUnsavedChanges(hasAnyUnsavedWork);
+    const state = $('#content-dirty-label');
+    state.textContent = hasPendingUploads ? '有未完成上傳' : hasChanges ? '有未發布修改' : '內容與已發布版本一致';
+    state.dataset.dirty = String(hasAnyUnsavedWork);
+    $('#content-version').textContent = '版本 ' + loaded.version + ' · 最後發布 ' + formatAdminDate(loaded.updated_at);
+    $('#content-change-count').textContent = changes.length + ' 項';
+    const changeList = $('#content-change-list');
+    changeList.replaceChildren();
+    if (!changes.length) {
+      const item = document.createElement('li');
+      item.textContent = hasPendingUploads ? '完成或移除待處理上傳後，才能發布。' : '尚無未發布修改。';
+      changeList.append(item);
+    } else changes.forEach((text) => { const item = document.createElement('li'); item.textContent = text; changeList.append(item); });
+
+    $('#hero-image-count').textContent = '目前 ' + heroImages.length + ' / 10 張';
+    $('#hero-image-full-note').toggleAttribute('hidden', hasHeroImageCapacity(heroImages.length));
+    $('#announcement-count').textContent = announcement.value.length + ' / 500';
+    $('#announcement-preview').textContent = enabled.checked ? announcement.value || '啟用公告後，請填寫公告內容。' : '前台公告未啟用。';
+    $('#announcement-state').textContent = enabled.checked ? '目前啟用' : '目前停用';
+    $('#announcement-state').classList.toggle('is-enabled', enabled.checked);
     announcement.required = enabled.checked;
-    const chosenFiles = Array.from(heroFile.files ?? []);
-    const filesValid = chosenFiles.length > 0 && heroImages.length + chosenFiles.length <= 10
-      && chosenFiles.every((file) => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) && file.size > 0 && file.size <= 8 * 1024 * 1024);
-    heroUpload.disabled = busy || uploading || !filesValid;
-    heroFile.disabled = busy || uploading;
-    $<HTMLButtonElement>('#content-reload').disabled = busy || uploading;
-    add.disabled = busy || value.faqs.length >= 12;
-    publish.disabled = busy || uploading || !changed;
-    $('#faq-empty').hidden = value.faqs.length !== 0;
+    $('#faq-count').textContent = readFaqs().length + ' / 12 題';
+    $('#faq-empty').toggleAttribute('hidden', readFaqs().length > 0);
+    $('#hero-image-empty').toggleAttribute('hidden', heroImages.length > 0);
+    $('#content-add-faq').toggleAttribute('disabled', busy || readFaqs().length >= 12);
+    $('#content-discard').toggleAttribute('disabled', busy || !hasAnyUnsavedWork);
+    $('#content-publish').toggleAttribute('disabled', busy || !hasChanges || hasPendingUploads);
+    $('#content-reload').toggleAttribute('disabled', busy || uploading);
+    $('#hero-image-choose').toggleAttribute('disabled', busy || uploading || !hasHeroImageCapacity(heroImages.length));
+    $('#hero-image-upload').toggleAttribute('disabled', busy || uploading || uploadTaskIds(uploadQueue).length === 0);
+    heroFile.disabled = busy || uploading || !hasHeroImageCapacity(heroImages.length);
+    form.setAttribute('aria-busy', String(busy || uploading));
   }
-  function renumber() {
-    const rows = Array.from(faqList.querySelectorAll<HTMLElement>('.admin-faq-item'));
+
+  function renumberFaqs() {
+    const rows = Array.from(faqList.querySelectorAll<HTMLDetailsElement>('[data-faq-row]'));
     rows.forEach((row, index) => {
-      row.querySelector('[data-faq-number]')!.textContent = `問題 ${String(index + 1).padStart(2, '0')}`;
+      row.querySelector<HTMLElement>('[data-faq-number]')!.textContent = '問題 ' + String(index + 1).padStart(2, '0');
+      const value = row.querySelector<HTMLInputElement>('[data-faq-question]')!.value.trim();
+      row.querySelector<HTMLElement>('[data-faq-title]')!.textContent = value || '尚未命名';
       const up = row.querySelector<HTMLButtonElement>('[data-faq-action="up"]')!;
       const down = row.querySelector<HTMLButtonElement>('[data-faq-action="down"]')!;
-      up.disabled = busy || index === 0; down.disabled = busy || index === rows.length - 1;
-      up.setAttribute('aria-label', `將第 ${index + 1} 題往上移`); down.setAttribute('aria-label', `將第 ${index + 1} 題往下移`);
-      row.querySelector('[data-faq-action="remove"]')!.setAttribute('aria-label', `移除第 ${index + 1} 題`);
+      up.disabled = busy || index === 0;
+      down.disabled = busy || index === rows.length - 1;
+      up.setAttribute('aria-label', '將第 ' + (index + 1) + ' 題往上移');
+      down.setAttribute('aria-label', '將第 ' + (index + 1) + ' 題往下移');
+      row.querySelector<HTMLButtonElement>('[data-faq-action="remove"]')!.setAttribute('aria-label', '移除第 ' + (index + 1) + ' 題');
     });
-    updateState();
+    refreshActionState();
   }
+
   function createFaq(value: Faq) {
-    const id = ++serial;
-    const item = document.createElement('div'); item.className = 'admin-faq-item';
-    const header = document.createElement('div'); header.className = 'admin-faq-item__header';
-    const number = document.createElement('strong'); number.dataset.faqNumber = '';
-    const actions = document.createElement('div'); actions.className = 'admin-actions';
-    for (const [action, label] of [['up', '↑ 上移'], ['down', '↓ 下移'], ['remove', '移除']]) {
-      const button = document.createElement('button'); button.type = 'button'; button.dataset.faqAction = action; button.className = `admin-button admin-button--small ${action === 'remove' ? 'admin-button--danger' : 'admin-button--quiet'}`; button.textContent = label; actions.append(button);
-    }
-    header.append(number, actions); item.append(header);
-    const questionField = document.createElement('div'); questionField.className = 'admin-field';
-    const questionLabel = document.createElement('label'); questionLabel.htmlFor = `faq-question-${id}`; questionLabel.textContent = '問題標題';
-    const question = document.createElement('input'); question.type = 'text'; question.id = questionLabel.htmlFor; question.maxLength = 160; question.required = true; question.dataset.faqQuestion = ''; question.value = value.question;
+    const id = ++faqSerial;
+    const row = document.createElement('details');
+    row.className = 'content-faq-item';
+    row.dataset.faqRow = '';
+    const summary = document.createElement('summary');
+    const number = document.createElement('span');
+    number.className = 'content-faq-item__number';
+    number.dataset.faqNumber = '';
+    const title = document.createElement('strong');
+    title.dataset.faqTitle = '';
+    summary.append(number, title);
+    row.append(summary);
+    const body = document.createElement('div');
+    body.className = 'content-faq-item__body';
+    const questionField = document.createElement('div');
+    questionField.className = 'admin-field';
+    const questionLabel = document.createElement('label');
+    questionLabel.htmlFor = 'faq-question-' + id;
+    questionLabel.textContent = '問題標題';
+    const question = document.createElement('input');
+    question.type = 'text'; question.id = questionLabel.htmlFor; question.maxLength = 160;
+    question.required = true; question.dataset.faqQuestion = ''; question.value = value.question;
     questionField.append(questionLabel, question);
-    const answerField = document.createElement('div'); answerField.className = 'admin-field';
-    const answerLabel = document.createElement('label'); answerLabel.htmlFor = `faq-answer-${id}`; answerLabel.textContent = '回答內容';
-    const answer = document.createElement('textarea'); answer.id = answerLabel.htmlFor; answer.maxLength = 1200; answer.required = true; answer.rows = 4; answer.dataset.faqAnswer = ''; answer.value = value.answer;
-    answerField.append(answerLabel, answer); item.append(questionField, answerField); faqList.append(item); return item;
+    const answerField = document.createElement('div');
+    answerField.className = 'admin-field';
+    const answerLabel = document.createElement('label');
+    answerLabel.htmlFor = 'faq-answer-' + id;
+    answerLabel.textContent = '回答內容';
+    const answer = document.createElement('textarea');
+    answer.id = answerLabel.htmlFor; answer.maxLength = 1200; answer.required = true;
+    answer.rows = 4; answer.dataset.faqAnswer = ''; answer.value = value.answer;
+    answerField.append(answerLabel, answer);
+    const controls = document.createElement('div');
+    controls.className = 'content-faq-item__actions';
+    for (const [action, label] of [['up', '↑ 上移'], ['down', '↓ 下移'], ['remove', '移除問題']]) {
+      const button = document.createElement('button');
+      button.type = 'button'; button.dataset.faqAction = action;
+      button.className = 'admin-button admin-button--quiet';
+      if (action === 'remove') button.classList.add('admin-button--danger');
+      button.textContent = label;
+      controls.append(button);
+    }
+    body.append(questionField, answerField, controls);
+    row.append(body);
+    faqList.append(row);
+    return row;
   }
-  function setBusy(value: boolean) {
-    busy = value;
-    form.setAttribute('aria-busy', String(value));
-    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>('input,textarea,button').forEach((element) => { element.disabled = value; });
-    $<HTMLButtonElement>('#content-reload').disabled = value;
-    renumber();
+
+  function renderPhotos() {
+    heroGrid.replaceChildren();
+    heroImages.forEach((image, index) => {
+      const card = document.createElement('article');
+      card.className = 'content-photo';
+      card.dataset.photoIndex = String(index);
+      card.setAttribute('aria-label', '輪播第 ' + (index + 1) + ' 張');
+      const top = document.createElement('div');
+      top.className = 'content-photo__top';
+      const number = document.createElement('strong');
+      number.className = 'content-photo__number';
+      number.textContent = String(index + 1).padStart(2, '0');
+      const handle = document.createElement('button');
+      handle.type = 'button'; handle.className = 'content-photo__drag-handle';
+      handle.draggable = !busy && !uploading; handle.dataset.photoDragHandle = '';
+      handle.setAttribute('aria-label', '拖曳第 ' + (index + 1) + ' 張照片以排序');
+      handle.title = '抓住後拖曳以排序'; handle.textContent = '⠿ 拖曳';
+      top.append(number, handle);
+      const preview = document.createElement('button');
+      preview.type = 'button'; preview.className = 'content-photo__preview'; preview.dataset.photoPreview = '';
+      preview.disabled = busy;
+      preview.setAttribute('aria-label', '放大檢視輪播第 ' + (index + 1) + ' 張照片');
+      const img = document.createElement('img');
+      img.src = image.url; img.alt = '輪播第 ' + (index + 1) + ' 張照片'; img.loading = index < 4 ? 'eager' : 'lazy';
+      preview.append(img);
+      const actions = document.createElement('div');
+      actions.className = 'content-photo__actions';
+      for (const [action, label] of [['up', '↑ 上移'], ['down', '↓ 下移'], ['remove', '移出輪播']]) {
+        const button = document.createElement('button');
+        button.type = 'button'; button.dataset.photoAction = action; button.dataset.photoIndex = String(index);
+        button.className = 'admin-button admin-button--quiet';
+        if (action === 'remove') button.classList.add('admin-button--danger');
+        button.textContent = label;
+        button.disabled = busy || uploading || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1);
+        button.setAttribute('aria-label', action === 'remove'
+          ? '將第 ' + (index + 1) + ' 張照片移出輪播'
+          : '將第 ' + (index + 1) + ' 張照片' + (action === 'up' ? '上移' : '下移'));
+        actions.append(button);
+      }
+      card.append(top, preview, actions);
+      heroGrid.append(card);
+    });
+    $('#hero-image-undo').toggleAttribute('hidden', !undoPhoto);
+    if (undoPhoto) $('#hero-image-undo-message').textContent = '已將照片移出輪播；原始檔案仍保留。';
+    refreshActionState();
   }
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + ' KiB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MiB';
+  }
+
+  function renderUploadQueue() {
+    const list = $('#hero-upload-queue');
+    list.replaceChildren();
+    const labels: Record<UploadRow['status'], string> = {
+      queued: '待上傳', uploading: '上傳中', uploaded: '上傳成功，尚未發布', failed: '上傳失敗',
+    };
+    uploadQueue.forEach((item) => {
+      const row = document.createElement('li');
+      row.className = 'content-upload-item';
+      row.dataset.uploadState = item.status;
+      const file = document.createElement('div');
+      file.className = 'content-upload-item__file';
+      const name = document.createElement('strong');
+      name.textContent = item.file.name; name.title = item.file.name;
+      const size = document.createElement('span');
+      size.textContent = formatFileSize(item.file.size);
+      file.append(name, size);
+      const status = document.createElement('div');
+      status.className = 'content-upload-item__status';
+      status.setAttribute('aria-live', item.status === 'uploading' ? 'polite' : 'off');
+      status.textContent = labels[item.status];
+      if (item.error) { const reason = document.createElement('small'); reason.textContent = item.error; status.append(reason); }
+      const actions = document.createElement('div');
+      actions.className = 'content-upload-item__actions';
+      if (item.status === 'failed' && !validateHeroUpload(item.file)) {
+        const retry = document.createElement('button');
+        retry.type = 'button'; retry.className = 'admin-button admin-button--quiet';
+        retry.dataset.uploadAction = 'retry'; retry.dataset.uploadId = item.id; retry.textContent = '重試上傳';
+        retry.disabled = busy || uploading;
+        actions.append(retry);
+      }
+      const remove = document.createElement('button');
+      remove.type = 'button'; remove.className = 'admin-button admin-button--quiet';
+      remove.dataset.uploadAction = 'remove'; remove.dataset.uploadId = item.id;
+      remove.textContent = '移除項目'; remove.disabled = busy || uploading;
+      actions.append(remove);
+      row.append(file, status, actions);
+      list.append(row);
+    });
+    if (!uploadQueue.length) {
+      const empty = document.createElement('li');
+      empty.className = 'content-upload-empty'; empty.textContent = '尚未選取照片。'; list.append(empty);
+    }
+    const pending = uploadTaskIds(uploadQueue).length;
+    $('#hero-image-upload').textContent = pending ? '上傳待處理照片（' + pending + '）' : '上傳待處理照片';
+    refreshActionState();
+  }
+
   function applyContent(content: Content) {
     loaded = content;
     announcement.value = content.announcement || '';
     heroTitle.value = content.hero_title;
     heroCopy.value = content.hero_copy;
     heroImages = content.hero_image_paths.map((path, index) => ({ path, url: content.hero_image_urls[index] }));
-    renderHeroImages();
     enabled.checked = content.announcement_enabled;
+    uploadQueue = []; undoPhoto = null; heroFile.value = '';
     faqList.replaceChildren();
-    content.faqs.forEach(createFaq);
-    original = JSON.stringify(readContent());
-    $('#content-version').textContent = `版本 ${content.version} · 最後更新 ${formatAdminDate(content.updated_at)}`;
-    renumber();
+    content.faqs.forEach((faq) => createFaq(faq));
+    renderPhotos(); renderUploadQueue(); renumberFaqs(); refreshActionState();
     form.hidden = false;
   }
+
   async function loadContent() {
-    if (busy) return;
+    if (busy || uploading) return;
     setBusy(true);
     message(loadStatus, '正在載入網站內容…');
     try {
       const result = await requestAdmin<{ content: Content }>('/api/admin/content');
       applyContent(result.content);
       message(loadStatus, ''); message(saveStatus, '');
-    } catch (error) { message(loadStatus, adminErrorMessage(error), true); }
-    finally { setBusy(false); }
+    } catch (error) {
+      message(loadStatus, adminErrorMessage(error), true);
+    } finally { setBusy(false); }
   }
-  form.addEventListener('input', updateState);
-  heroFile.addEventListener('change', updateState);
-  enabled.addEventListener('change', updateState);
-  function renderHeroImages() {
-    heroPreview.replaceChildren();
-    heroImages.forEach((image, index) => {
-      const card = document.createElement('div'); card.className = 'admin-hero-image-card';
-      card.draggable = !busy && !uploading;
-      card.dataset.heroIndex = String(index);
-      card.setAttribute('aria-label', `首頁輪播第 ${index + 1} 張照片，可拖曳排序`);
-      const preview = document.createElement('img'); preview.src = image.url; preview.alt = `首頁輪播第 ${index + 1} 張照片`; preview.loading = index < 3 ? 'eager' : 'lazy';
-      card.append(preview);
-      const actions = document.createElement('div'); actions.className = 'admin-hero-image-actions';
-      const order = document.createElement('span'); order.className = 'admin-hero-image-order'; order.textContent = `⠿ 拖曳排序 · ${index + 1} / ${heroImages.length}`; actions.append(order);
-      for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '刪除']]) {
-        const button = document.createElement('button'); button.type = 'button'; button.dataset.heroAction = action; button.dataset.heroIndex = String(index); button.textContent = label;
-        button.disabled = uploading || busy || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1);
-        button.setAttribute('aria-label', action === 'remove' ? `從首頁輪播刪除第 ${index + 1} 張照片` : `將輪播第 ${index + 1} 張照片${action === 'up' ? '上移' : '下移'}`);
-        actions.append(button);
-      }
-      card.append(actions);
-      heroPreview.append(card);
+
+  function setBusy(value: boolean) {
+    busy = value;
+    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>('input,textarea,button').forEach((element) => { element.disabled = value; });
+    refreshActionState(); renderPhotos(); renderUploadQueue(); renumberFaqs();
+  }
+
+  function clearFieldError(field: HTMLInputElement | HTMLTextAreaElement) {
+    field.setCustomValidity('');
+    field.removeAttribute('aria-invalid');
+  }
+
+  function switchPanel(name: string, moveFocus = false) {
+    document.querySelectorAll<HTMLButtonElement>('[data-content-tab]').forEach((tab) => {
+      const selected = tab.dataset.contentTab === name;
+      tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;
     });
-    $('#hero-image-caption').textContent = `目前 ${heroImages.length} 張；拖曳照片即可排序，也可用按鈕調整或刪除。發布後套用至首頁。`;
-    updateState();
+    document.querySelectorAll<HTMLElement>('[data-content-panel]').forEach((panel) => panel.toggleAttribute('hidden', panel.dataset.contentPanel !== name));
+    if (moveFocus) $<HTMLButtonElement>('[data-content-tab="' + name + '"]').focus();
   }
+
+  function validateContent(): ValidationError | null {
+    const errors: ValidationError[] = [];
+    const textError = (value: string, label: string, required: boolean) => {
+      if (required && !value.trim()) return '請填寫' + label + '。';
+      if (/[<>]/.test(value)) return label + '請使用純文字，勿加入 HTML 標籤。';
+      if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value)) return label + '包含不支援的控制字元。';
+      return '';
+    };
+    const titleError = textError(heroTitle.value, '首頁主標', true);
+    const copyError = textError(heroCopy.value, '首頁介紹', true);
+    const announcementError = textError(announcement.value, '公告內容', enabled.checked);
+    if (titleError) errors.push({ tab: 'home', field: heroTitle, message: titleError });
+    if (copyError) errors.push({ tab: 'home', field: heroCopy, message: copyError });
+    if (announcementError) errors.push({ tab: 'announcement', field: announcement, message: announcementError });
+    faqList.querySelectorAll<HTMLDetailsElement>('[data-faq-row]').forEach((row) => {
+      const question = row.querySelector<HTMLInputElement>('[data-faq-question]')!;
+      const answer = row.querySelector<HTMLTextAreaElement>('[data-faq-answer]')!;
+      const questionError = textError(question.value, '問題標題', true);
+      const answerError = textError(answer.value, '回答內容', true);
+      if (questionError) errors.push({ tab: 'faq', field: question, row, message: questionError });
+      if (answerError) errors.push({ tab: 'faq', field: answer, row, message: answerError });
+    });
+    return errors[0] || null;
+  }
+
+  function focusValidationError(error: ValidationError) {
+    switchPanel(error.tab);
+    if (error.row) error.row.open = true;
+    error.field.setCustomValidity(error.message);
+    error.field.setAttribute('aria-invalid', 'true');
+    message(saveStatus, error.message, true);
+    error.field.focus(); error.field.reportValidity();
+  }
+
+  function showDiscardConfirmation(action: 'reset' | 'reload') {
+    discardAction = action;
+    discardDialog.showModal();
+    $('[data-dialog-close="discard"]').focus();
+  }
+
+  function formatUploadError(error: unknown): string {
+    if (error instanceof Error && error.name === 'AbortError') return '上傳逾時，請檢查連線後重試。';
+    return error instanceof Error && error.message ? error.message : '上傳失敗，請稍後重試。';
+  }
+
   async function uploadHeroFile(file: File, retryAuth = true): Promise<HeroImage> {
     const body = new FormData(); body.append('file', file);
-    const controller = new AbortController(); const timeout = window.setTimeout(() => controller.abort(), 30000);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 30000);
     let response: Response;
-    try { response = await fetch('/api/admin/hero-image', { method: 'POST', credentials: 'same-origin', cache: 'no-store', headers: { 'X-Phox-Request': '1' }, body, signal: controller.signal }); }
-    finally { window.clearTimeout(timeout); }
-    if (response.status === 401 && retryAuth) { await requestAdmin('/api/auth/refresh', { method: 'POST', body: {}, retryAuth: false }); return uploadHeroFile(file, false); }
+    try {
+      response = await fetch('/api/admin/hero-image', {
+        method: 'POST', credentials: 'same-origin', cache: 'no-store',
+        headers: { 'X-Phox-Request': '1' }, body, signal: controller.signal,
+      });
+    } finally { window.clearTimeout(timeout); }
+    if (response.status === 401 && retryAuth) {
+      await requestAdmin('/api/auth/refresh', { method: 'POST', body: {}, retryAuth: false });
+      return uploadHeroFile(file, false);
+    }
     const result = await response.json().catch(() => null);
-    if (!response.ok || !result?.image?.path || !result?.image?.url) throw new Error(result?.message || '照片上傳失敗，請稍後重試。');
+    if (response.status === 401) throw new Error('登入已逾時，請重新登入後再重試。');
+    if (!response.ok || !result?.image?.path || !result?.image?.url) throw new Error(result?.message || '照片上傳失敗，請檢查檔案後重試。');
     return result.image as HeroImage;
   }
-  async function uploadHero() {
-    const files = Array.from(heroFile.files ?? []);
-    if (!files.length || busy || uploading) return;
-    if (heroImages.length + files.length > 10) { message($('#hero-image-status'), `目前已有 ${heroImages.length} 張，最多只能選擇 10 張。`, true); return; }
-    if (files.some((file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || !file.size || file.size > 8 * 1024 * 1024)) {
-      message($('#hero-image-status'), '請確認每張照片都是 JPEG、PNG 或 WebP，且不超過 8 MiB。', true);
-      return;
-    }
-    uploading = true; updateState();
-    let uploaded = 0;
-    try {
-      for (const file of files) {
-        message($('#hero-image-status'), `正在上傳第 ${uploaded + 1} / ${files.length} 張…`);
-        heroImages.push(await uploadHeroFile(file)); uploaded += 1;
-        const remaining = new DataTransfer(); files.slice(uploaded).forEach((pending) => remaining.items.add(pending)); heroFile.files = remaining.files;
-        renderHeroImages(); updateState();
+
+  async function uploadItems(ids: string[]) {
+    if (busy || uploading || !ids.length) return;
+    uploading = true; refreshActionState(); renderPhotos();
+    for (const id of ids) {
+      const item = uploadQueue.find((entry) => entry.id === id);
+      if (!item || !['queued', 'failed'].includes(item.status)) continue;
+      if (!hasHeroImageCapacity(heroImages.length)) {
+        item.status = 'failed'; item.error = '輪播已滿，請先移出照片後重試。';
+        renderUploadQueue(); continue;
       }
-      heroFile.value = '';
-      message($('#hero-image-status'), `已加入 ${uploaded} 張照片；發布更新後才會顯示在首頁。`);
-    } catch (error) { message($('#hero-image-status'), `${uploaded ? `已完成 ${uploaded} 張，剩餘照片仍保留在選擇清單中；修正問題後可繼續上傳。` : ''}${error instanceof Error && error.name !== 'AbortError' ? error.message : '照片上傳逾時，請檢查連線後重試。'}`, true); }
-    finally { uploading = false; updateState(); }
-  }
-  heroUpload.addEventListener('click', () => void uploadHero());
-  heroPreview.addEventListener('dragstart', (event) => {
-    const card = event.target instanceof Element ? event.target.closest<HTMLElement>('.admin-hero-image-card') : null;
-    const index = Number(card?.dataset.heroIndex);
-    if (!card || busy || uploading || !Number.isInteger(index) || !heroImages[index]) { event.preventDefault(); return; }
-    draggingHeroIndex = index;
-    card.classList.add('is-dragging');
-    if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', String(index)); }
-  });
-  heroPreview.addEventListener('dragover', (event) => {
-    const card = event.target instanceof Element ? event.target.closest<HTMLElement>('.admin-hero-image-card') : null;
-    if (draggingHeroIndex === null || !card) return;
-    event.preventDefault();
-    heroPreview.querySelectorAll('.is-drop-target').forEach((item) => item.classList.remove('is-drop-target'));
-    if (Number(card.dataset.heroIndex) !== draggingHeroIndex) card.classList.add('is-drop-target');
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-  });
-  heroPreview.addEventListener('drop', (event) => {
-    const card = event.target instanceof Element ? event.target.closest<HTMLElement>('.admin-hero-image-card') : null;
-    const targetIndex = Number(card?.dataset.heroIndex);
-    if (draggingHeroIndex === null || !card || !Number.isInteger(targetIndex)) return;
-    event.preventDefault();
-    const sourceIndex = draggingHeroIndex;
-    if (sourceIndex !== targetIndex) {
-      const [image] = heroImages.splice(sourceIndex, 1);
-      heroImages.splice(targetIndex, 0, image);
-      renderHeroImages();
-      message($('#hero-image-status'), '照片順序已更新；發布後會依照目前順序顯示。');
+      const validationMessage = validateHeroUpload(item.file);
+      if (validationMessage) {
+        item.status = 'failed'; item.error = validationMessage;
+        renderUploadQueue(); continue;
+      }
+      item.status = 'uploading'; item.error = '';
+      message(uploadStatus, '正在上傳「' + item.file.name + '」…'); renderUploadQueue();
+      try {
+        const image = await uploadHeroFile(item.file);
+        item.status = 'uploaded'; item.image = image; heroImages.push(image);
+        renderPhotos(); message(uploadStatus, '「' + item.file.name + '」已上傳成功，尚未發布。');
+      } catch (error) {
+        item.status = 'failed'; item.error = formatUploadError(error);
+        message(uploadStatus, '「' + item.file.name + '」上傳失敗：' + item.error, true);
+      }
+      renderUploadQueue();
     }
-    draggingHeroIndex = null;
-    updateState();
+    uploading = false; renderPhotos(); renderUploadQueue(); refreshActionState();
+  }
+
+  function addUploadFiles(files: FileList | File[]) {
+    if (busy || uploading) return;
+    Array.from(files).forEach((file) => {
+      const error = validateHeroUpload(file);
+      uploadQueue.push({ id: 'upload-' + (++uploadSerial), file, status: error ? 'failed' : 'queued', error });
+    });
+    heroFile.value = '';
+    if (!hasHeroImageCapacity(heroImages.length)) message(uploadStatus, '輪播已滿，請先移出照片。', true);
+    else if (uploadQueue.length) message(uploadStatus, '已加入待上傳清單；完成上傳後仍須發布才會顯示在首頁。');
+    renderUploadQueue();
+  }
+
+  function openPhotoPreview(index: number, returnFocus: HTMLElement) {
+    const image = heroImages[index];
+    if (!image) return;
+    const img = $<HTMLImageElement>('#content-photo-dialog-image');
+    img.src = image.url; img.alt = '輪播第 ' + (index + 1) + ' 張照片';
+    $('#content-photo-dialog-title').textContent = '第 ' + (index + 1) + ' 張照片';
+    $('#content-photo-dialog-caption').textContent = '目前排序：' + (index + 1) + ' / ' + heroImages.length;
+    photoDialog.showModal();
+    $('[data-dialog-close="photo"]').focus();
+    photoDialog.addEventListener('close', () => { if (returnFocus.isConnected) returnFocus.focus(); }, { once: true });
+  }
+
+  function renderPreview() {
+    const viewport = $('#content-preview-viewport');
+    viewport.dataset.previewMode = previewMode; viewport.replaceChildren();
+    document.querySelectorAll<HTMLButtonElement>('[data-preview-device]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.previewDevice === previewMode)));
+    const site = document.createElement('article');
+    site.className = 'content-preview-site' + (previewMode === 'mobile' ? ' is-mobile' : '');
+    const hero = document.createElement('section');
+    hero.className = 'content-preview-hero';
+    const images = heroImages.length ? heroImages : [{ path: '', url: '/assets/hero.webp' }];
+    const mainImage = document.createElement('img');
+    mainImage.className = 'content-preview-hero__image'; mainImage.src = images[0].url; mainImage.alt = '';
+    hero.append(mainImage);
+    const overlay = document.createElement('div');
+    overlay.className = 'content-preview-hero__overlay'; hero.append(overlay);
+    const siteHeader = document.createElement('div');
+    siteHeader.className = 'content-preview-site-header'; siteHeader.textContent = 'Phox999  photography'; hero.append(siteHeader);
+    if (enabled.checked && announcement.value.trim()) {
+      const notice = document.createElement('aside');
+      notice.className = 'content-preview-announcement'; notice.setAttribute('role', 'status');
+      notice.textContent = announcement.value; hero.append(notice);
+    }
+    const copy = document.createElement('div');
+    copy.className = 'content-preview-hero__copy';
+    const heading = document.createElement('h1'); heading.textContent = heroTitle.value;
+    const description = document.createElement('p'); description.textContent = heroCopy.value;
+    const cta = document.createElement('span'); cta.className = 'content-preview-cta'; cta.textContent = '填寫合作意向';
+    copy.append(heading, description, cta); hero.append(copy); site.append(hero);
+
+    const lower = document.createElement('div');
+    lower.className = 'content-preview-lower';
+    const photoHeading = document.createElement('h2'); photoHeading.textContent = '輪播順序 · ' + heroImages.length + ' 張'; lower.append(photoHeading);
+    if (heroImages.length) {
+      const strip = document.createElement('ol'); strip.className = 'content-preview-photo-order';
+      heroImages.forEach((image, index) => {
+        const item = document.createElement('li');
+        const thumbnail = document.createElement('img'); thumbnail.src = image.url; thumbnail.alt = '輪播第 ' + (index + 1) + ' 張'; thumbnail.loading = 'lazy';
+        const number = document.createElement('span'); number.textContent = String(index + 1).padStart(2, '0');
+        item.append(thumbnail, number); strip.append(item);
+      });
+      lower.append(strip);
+    } else {
+      const fallback = document.createElement('p'); fallback.textContent = '未設定照片時，首頁會使用預設主視覺圖片。'; lower.append(fallback);
+    }
+    if (faqList.querySelector('[data-faq-row]')) {
+      const faqHeading = document.createElement('h2'); faqHeading.textContent = '常見問題'; lower.append(faqHeading);
+      const previewFaqs = document.createElement('div'); previewFaqs.className = 'content-preview-faqs';
+      readFaqs().forEach((faq) => {
+        const item = document.createElement('details');
+        const summary = document.createElement('summary'); summary.textContent = faq.question || '尚未命名';
+        const answer = document.createElement('p'); answer.textContent = faq.answer;
+        item.append(summary, answer); previewFaqs.append(item);
+      });
+      lower.append(previewFaqs);
+    }
+    site.append(lower); viewport.append(site);
+  }
+
+  function openPublishConfirmation() {
+    if (busy) return;
+    if (hasIncompleteUploads(uploadQueue)) {
+      switchPanel('photos');
+      message(saveStatus, '請先完成或移除所有待上傳及失敗項目，再發布。', true);
+      $('#hero-image-upload').focus(); return;
+    }
+    const validation = validateContent();
+    if (validation) { focusValidationError(validation); return; }
+    const changes = contentChangeSummary(loaded, readContent());
+    if (!changes.length) { message(saveStatus, '內容與已發布版本一致。'); return; }
+    const summary = $('#content-publish-summary'); summary.replaceChildren();
+    changes.forEach((text) => { const item = document.createElement('li'); item.textContent = text; summary.append(item); });
+    publishDialog.showModal(); $('[data-dialog-close="publish"]').focus();
+  }
+
+  async function publishContent() {
+    if (busy || uploading || !loaded || hasIncompleteUploads(uploadQueue)) return;
+    publishDialog.close(); setBusy(true); message(saveStatus, '正在發布網站更新…');
+    try {
+      const intendedOrder = readContent().hero_image_paths;
+      const result = await requestAdmin<{ content: Content }>('/api/admin/content', {
+        method: 'PATCH', body: { ...readContent(), version: loaded.version },
+      });
+      const savedOrderMatches = JSON.stringify(result.content.hero_image_paths) === JSON.stringify(intendedOrder);
+      applyContent(result.content);
+      message(saveStatus, savedOrderMatches
+        ? '發布成功，已依 API 回傳版本更新編輯基準。'
+        : '發布已完成，已依伺服器回傳內容更新基準；請檢查目前照片順序。', !savedOrderMatches);
+    } catch (error) {
+      if (error instanceof AdminApiError && error.status === 409) {
+        message(saveStatus, '版本衝突：本頁修改已保留。請先檢查其他分頁或管理者的最新內容，再按「重新載入」確認版本後編輯。', true);
+      } else if (error instanceof AdminApiError && error.status === 401) {
+        message(saveStatus, '登入已逾時：本頁修改已保留。請使用後台「重新登入」後再發布。', true);
+      } else message(saveStatus, adminErrorMessage(error), true);
+    } finally { setBusy(false); }
+  }
+
+  function confirmDiscard() {
+    discardDialog.close();
+    if (discardAction === 'reload') { void loadContent(); return; }
+    if (loaded) applyContent(loaded);
+    message(saveStatus, '已放棄未發布修改。已上傳照片仍保留在 Storage，且未加入前台內容。');
+  }
+
+  form.addEventListener('input', (event) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) clearFieldError(target);
+    if (target instanceof HTMLInputElement && target.matches('[data-faq-question]')) {
+      const row = target.closest<HTMLDetailsElement>('[data-faq-row]');
+      if (row) row.querySelector<HTMLElement>('[data-faq-title]')!.textContent = target.value.trim() || '尚未命名';
+    }
+    refreshActionState();
   });
-  heroPreview.addEventListener('dragend', () => {
-    draggingHeroIndex = null;
-    heroPreview.querySelectorAll('.is-dragging, .is-drop-target').forEach((item) => item.classList.remove('is-dragging', 'is-drop-target'));
-  });
-  heroPreview.addEventListener('click', (event) => {
-    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-hero-action]') : null;
-    const index = Number(button?.dataset.heroIndex);
-    if (!button || busy || uploading || !Number.isInteger(index) || !heroImages[index]) return;
-    if (button.dataset.heroAction === 'remove') heroImages.splice(index, 1);
-    else if (button.dataset.heroAction === 'up' && index > 0) [heroImages[index - 1], heroImages[index]] = [heroImages[index], heroImages[index - 1]];
-    else if (button.dataset.heroAction === 'down' && index < heroImages.length - 1) [heroImages[index + 1], heroImages[index]] = [heroImages[index], heroImages[index + 1]];
-    renderHeroImages(); updateState();
-  });
-  add.addEventListener('click', () => {
-    if (busy || readFaqs().length >= 12) return;
-    const row = createFaq({ question: '', answer: '' }); renumber(); row.querySelector<HTMLInputElement>('input')!.focus();
-    message($('#faq-status'), `已新增第 ${readFaqs().length} 題。`);
-  });
+  form.addEventListener('submit', (event) => event.preventDefault());
+  enabled.addEventListener('change', refreshActionState);
+
   faqList.addEventListener('click', (event) => {
     const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-faq-action]') : null;
-    const row = button?.closest<HTMLElement>('.admin-faq-item');
+    const row = button?.closest<HTMLDetailsElement>('[data-faq-row]');
     if (!button || !row || busy) return;
     const action = button.dataset.faqAction;
     if (action === 'remove') {
-      const question = row.querySelector<HTMLInputElement>('[data-faq-question]')!.value;
-      const answer = row.querySelector<HTMLTextAreaElement>('[data-faq-answer]')!.value;
-      if ((question || answer) && !window.confirm('確定移除這個常見問題？發布後才會更新前台。')) return;
-      const next = row.nextElementSibling || row.previousElementSibling; row.remove(); renumber();
-      if (next) next.querySelector<HTMLInputElement>('input')!.focus(); else add.focus();
-      message($('#faq-status'), '已移除問題，發布後生效。');
+      const q = row.querySelector<HTMLInputElement>('[data-faq-question]')!.value;
+      const a = row.querySelector<HTMLTextAreaElement>('[data-faq-answer]')!.value;
+      if ((q || a) && !window.confirm('確定移除這個常見問題？發布後才會更新前台。')) return;
+      const next = row.nextElementSibling || row.previousElementSibling;
+      row.remove(); renumberFaqs();
+      if (next instanceof HTMLDetailsElement) { next.open = true; next.querySelector<HTMLInputElement>('[data-faq-question]')?.focus(); }
+      else $('#content-add-faq').focus();
+      message($('#faq-status'), '已移除問題，尚未發布。'); return;
+    }
+    if (action === 'up' && row.previousElementSibling) faqList.insertBefore(row, row.previousElementSibling);
+    if (action === 'down' && row.nextElementSibling) faqList.insertBefore(row.nextElementSibling, row);
+    row.open = true; renumberFaqs(); row.querySelector<HTMLInputElement>('[data-faq-question]')?.focus();
+    message($('#faq-status'), '已移到第 ' + (Array.from(faqList.children).indexOf(row) + 1) + ' 題，尚未發布。');
+  });
+  $('#content-add-faq').addEventListener('click', () => {
+    if (busy || readFaqs().length >= 12) return;
+    const row = createFaq({ question: '', answer: '' }); row.open = true; renumberFaqs();
+    row.querySelector<HTMLInputElement>('[data-faq-question]')!.focus();
+    message($('#faq-status'), '已新增第 ' + readFaqs().length + ' 題。');
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-content-tab]').forEach((tab) => {
+    tab.addEventListener('click', () => switchPanel(tab.dataset.contentTab || ''));
+    tab.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-content-tab]'));
+      const index = tabs.indexOf(tab);
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+        : (index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+      switchPanel(tabs[next].dataset.contentTab || '', true);
+    });
+  });
+
+  $('#content-reload').addEventListener('click', () => {
+    if (busy || uploading) return;
+    if (loaded && (contentHasChanges(loaded, readContent()) || hasIncompleteUploads(uploadQueue))) showDiscardConfirmation('reload');
+    else void loadContent();
+  });
+  $('#content-discard').addEventListener('click', () => { if (!busy && loaded) showDiscardConfirmation('reset'); });
+  $('#content-publish').addEventListener('click', openPublishConfirmation);
+  $('#content-publish-confirm').addEventListener('click', () => void publishContent());
+  $('#content-discard-confirm').addEventListener('click', confirmDiscard);
+  document.querySelectorAll<HTMLButtonElement>('[data-dialog-close]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const dialog = button.dataset.dialogClose === 'preview' ? previewDialog
+        : button.dataset.dialogClose === 'photo' ? photoDialog
+          : button.dataset.dialogClose === 'publish' ? publishDialog : discardDialog;
+      dialog.close();
+    });
+  });
+  $('#content-open-preview').addEventListener('click', () => {
+    previewMode = 'desktop'; renderPreview(); previewDialog.showModal(); $('[data-dialog-close="preview"]').focus();
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-preview-device]').forEach((button) => {
+    button.addEventListener('click', () => { previewMode = button.dataset.previewDevice === 'mobile' ? 'mobile' : 'desktop'; renderPreview(); });
+  });
+
+  $('#hero-image-choose').addEventListener('click', () => heroFile.click());
+  heroFile.addEventListener('change', () => addUploadFiles(Array.from(heroFile.files || [])));
+  $('#hero-image-upload').addEventListener('click', () => void uploadItems(uploadTaskIds(uploadQueue)));
+  $('#hero-upload-queue').addEventListener('click', (event) => {
+    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-upload-action]') : null;
+    if (!button || busy || uploading) return;
+    const item = uploadQueue.find((row) => row.id === button.dataset.uploadId);
+    if (!item) return;
+    if (button.dataset.uploadAction === 'retry') {
+      void uploadItems(uploadTaskIds(uploadQueue, { retryFailedIds: [item.id], includeQueued: false }));
     } else {
-      if (action === 'up' && row.previousElementSibling) faqList.insertBefore(row, row.previousElementSibling);
-      if (action === 'down' && row.nextElementSibling) faqList.insertBefore(row.nextElementSibling, row);
-      renumber();
-      const questionInput = row.querySelector<HTMLInputElement>('input'); questionInput?.focus();
-      const index = Array.from(faqList.children).indexOf(row) + 1;
-      message($('#faq-status'), `已移到第 ${index} 題，發布後生效。`);
+      uploadQueue = uploadQueue.filter((row) => row.id !== item.id); renderUploadQueue();
     }
   });
-  $('#content-reload').addEventListener('click', () => { if (!busy && !uploading && confirmDiscardChanges()) void loadContent(); });
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    if (busy || uploading || !loaded || !form.reportValidity()) return;
-    const value = readContent();
-    if ((value.announcement_enabled && !value.announcement.trim()) || value.faqs.some((faq) => !faq.question.trim() || !faq.answer.trim())) { message(saveStatus, '啟用的公告與每一題問答都需要填寫有效內容。', true); return; }
-    if (JSON.stringify(value) === original) { message(saveStatus, '內容尚未變更。'); return; }
-    if (!window.confirm(`確認發布首頁主視覺（${value.hero_image_paths.length} 張輪播照片）、公告與 ${value.faqs.length} 題常見問題？照片順序會依預覽中的排列保存。`)) return;
-    setBusy(true); message(saveStatus, '正在發布…');
-    try {
-      const result = await requestAdmin<{ content: Content }>('/api/admin/content', { method: 'PATCH', body: { ...value, version: loaded.version } });
-      if (JSON.stringify(result.content.hero_image_paths) !== JSON.stringify(value.hero_image_paths)) {
-        throw new Error('網站已收到更新，但讀回的照片順序與預覽不同。請重新載入確認後再發布。');
-      }
-      applyContent(result.content);
-      message(saveStatus, '已發布；首頁重新整理後會顯示最新照片順序。');
-    } catch (error) {
-      message(saveStatus, adminErrorMessage(error), true);
-      if (error instanceof AdminApiError && error.status === 401) message(saveStatus, '登入已逾時。請先複製尚未發布的內容，再重新登入。', true);
-    } finally { setBusy(false); }
+
+  const dropzone = $('#hero-image-dropzone');
+  dropzone.addEventListener('dragover', (event) => {
+    if (Array.from(event.dataTransfer?.types || []).includes('Files')) { event.preventDefault(); dropzone.classList.add('is-drag-over'); }
   });
+  dropzone.addEventListener('dragleave', (event) => {
+    if (!dropzone.contains(event.relatedTarget as Node | null)) dropzone.classList.remove('is-drag-over');
+  });
+  dropzone.addEventListener('drop', (event) => {
+    event.preventDefault(); dropzone.classList.remove('is-drag-over');
+    if (!hasHeroImageCapacity(heroImages.length)) { message(uploadStatus, '輪播已滿，請先移出照片。', true); return; }
+    if (event.dataTransfer?.files.length) addUploadFiles(event.dataTransfer.files);
+  });
+
+  heroGrid.addEventListener('dragstart', (event) => {
+    const handle = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-photo-drag-handle]') : null;
+    const card = handle?.closest<HTMLElement>('[data-photo-index]');
+    const index = Number(card?.dataset.photoIndex);
+    if (!handle || !card || busy || uploading || !Number.isInteger(index) || !heroImages[index]) { event.preventDefault(); return; }
+    draggingPhotoIndex = index; card.classList.add('is-dragging');
+    if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', String(index)); }
+  });
+  heroGrid.addEventListener('dragover', (event) => {
+    const card = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-photo-index]') : null;
+    if (draggingPhotoIndex === null || !card) return;
+    event.preventDefault();
+    heroGrid.querySelectorAll('.is-drop-target').forEach((item) => item.classList.remove('is-drop-target'));
+    const index = Number(card.dataset.photoIndex);
+    if (index !== draggingPhotoIndex) {
+      card.classList.add('is-drop-target');
+      $('#hero-drop-status').textContent = '放置提示：放開後會移到第 ' + (index + 1) + ' 張照片的位置。';
+    }
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  });
+  heroGrid.addEventListener('drop', (event) => {
+    const card = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-photo-index]') : null;
+    const target = Number(card?.dataset.photoIndex);
+    if (draggingPhotoIndex === null || !card || !Number.isInteger(target)) return;
+    event.preventDefault();
+    if (draggingPhotoIndex !== target) { heroImages = moveItem(heroImages, draggingPhotoIndex, target); renderPhotos(); message(uploadStatus, '照片順序已更新，發布後會套用。'); }
+    draggingPhotoIndex = null;
+    $('#hero-drop-status').textContent = '放置提示：拖曳照片把手到另一張照片的位置即可排序。';
+  });
+  heroGrid.addEventListener('dragend', () => {
+    draggingPhotoIndex = null;
+    heroGrid.querySelectorAll('.is-dragging, .is-drop-target').forEach((item) => item.classList.remove('is-dragging', 'is-drop-target'));
+    $('#hero-drop-status').textContent = '放置提示：拖曳照片把手到另一張照片的位置即可排序。';
+  });
+  heroGrid.addEventListener('click', (event) => {
+    const preview = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-photo-preview]') : null;
+    if (preview) {
+      const index = Number(preview.closest<HTMLElement>('[data-photo-index]')?.dataset.photoIndex);
+      if (Number.isInteger(index)) openPhotoPreview(index, preview);
+      return;
+    }
+    const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-photo-action]') : null;
+    const index = Number(button?.dataset.photoIndex);
+    if (!button || busy || uploading || !Number.isInteger(index) || !heroImages[index]) return;
+    if (button.dataset.photoAction === 'remove') {
+      undoPhoto = { image: heroImages[index], index };
+      heroImages = heroImages.filter((_, current) => current !== index);
+      renderPhotos(); message(uploadStatus, '照片已移出輪播，原始照片與 Storage 檔案保留。');
+    } else {
+      const target = button.dataset.photoAction === 'up' ? index - 1 : index + 1;
+      heroImages = moveItem(heroImages, index, target); renderPhotos();
+      message(uploadStatus, '照片已移到第 ' + (target + 1) + ' 張，尚未發布。');
+      heroGrid.querySelector<HTMLButtonElement>('[data-photo-index="' + target + '"] [data-photo-drag-handle]')?.focus();
+    }
+  });
+  $('#hero-image-undo-button').addEventListener('click', () => {
+    if (!undoPhoto || busy || uploading) return;
+    if (!hasHeroImageCapacity(heroImages.length)) {
+      message(uploadStatus, '輪播已滿，請先移出一張照片再復原。', true);
+      return;
+    }
+    heroImages = restoreItem(heroImages, undoPhoto.image, undoPhoto.index); undoPhoto = null;
+    renderPhotos(); message(uploadStatus, '已復原照片位置，尚未發布。');
+  });
+
+  publishDialog.addEventListener('cancel', () => message(saveStatus, '已取消發布確認；目前修改仍保留。'));
+  discardDialog.addEventListener('cancel', () => message(saveStatus, '已取消放棄修改；目前編輯內容仍保留。'));
   requireAdminSession().then(loadContent).catch(() => {});
 </script>
-
