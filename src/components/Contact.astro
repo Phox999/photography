@@ -16,17 +16,14 @@ interface Props {
 const { projectApplication = false, projectOptions = [] } = Astro.props;
 
 const shootStyles = [
-  { id: 'office-lady', title: 'OL 制服' },
-  { id: 'couple', title: '情侶寫真' },
-  { id: 'small-group', title: '2-4 人小團體' },
-  { id: 'baseball', title: '棒球' },
-  { id: 'muscle-men', title: '肌肉(男生優先)' },
-  { id: 'red-theme', title: '紅色' },
-  { id: 'fashion-lingerie', title: '時尚內衣' },
-  { id: 'home-portrait', title: '居家寫真' },
+  { id: 'jk-uniform', title: 'JK 制服' },
+  { id: 'baseball-girl', title: '棒球少女' },
+  { id: 'mcdonalds', title: '麥當勞' },
+  { id: 'pure-love', title: '純愛' },
+  { id: 'girls-love', title: '百合' },
+  { id: 'dreamcore', title: '奇幻夢核' },
   { id: 'school-swimsuit', title: '死庫水' },
-  { id: 'bondage', title: '束縛' },
-  { id: 'water', title: '水' },
+  { id: 'hatsune-miku', title: '初音未來' },
   { id: 'other', title: '我想拍其他主題' },
 ];
 const showThemeImages = false;
@@ -149,11 +146,7 @@ const showThemeImages = false;
             </div>
           </div>
 
-          <label class="checkbox-field">
-            <input name="consent" type="checkbox" required />
-            <span>我同意以上資料用於本次合作聯繫與檔期確認。</span>
-            <p class="field-help">本網站另會匿名量測公開頁瀏覽與表單流程，不記錄此表單填寫內容；可由頁尾「隱私設定」停用量測或清除識別碼。</p>
-          </label>
+          <input type="hidden" name="consent" value="on" />
 
           <div class="form-footer">
             <button class="button button--primary" type="submit">確認合作內容</button>
@@ -189,7 +182,7 @@ const showThemeImages = false;
         </div>
         <div class="contact-review__actions">
           <button class="button button--secondary" type="button" data-edit-inquiry>返回修改</button>
-          <button class="button button--primary" type="button" data-confirm-inquiry>確認送出合作意向</button>
+          <button class="button button--primary" type="button" data-confirm-inquiry>同意資料用於本次合作聯繫並送出</button>
         </div>
       </section>
       <p class="form-status" role="status" aria-live="polite" data-inquiry-status></p>

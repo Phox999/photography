@@ -1215,15 +1215,17 @@
   max-width: 100%;
 }
 .home-page .feedback-window {
-  margin: 0;
-  padding: 0;
+  /* Restore the original breathing room and drop shadow around the card. */
+  position: relative;
+  margin: -20px;
+  padding: 20px;
   overflow: visible;
-  filter: none;
+  filter: drop-shadow(0 12px 24px rgba(34, 58, 72, 0.1));
 }
 .home-page .feedback-track {
   display: block;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
   scroll-snap-type: none;
   scroll-behavior: auto;
   border-radius: var(--radius-xl);
@@ -1235,6 +1237,10 @@
   min-width: 0;
   box-sizing: border-box;
   overflow-wrap: anywhere;
+  background: #fff;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: clamp(24px, 3vw, 44px) clamp(28px, 3.5vw, 54px);
 }
 .home-page .feedback-slide[hidden] {
   display: none !important;
