@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import '../styles/admin.css';
-const { title = '管理後台', current = '', login = false } = Astro.props;
+const { title = '管理後台', current = '', login = false, wide = false } = Astro.props;
 const links = [
   { href: '/admin/', label: '合作管理', key: 'inquiries', number: '01' },
   { href: '/admin/content/', label: '網站內容', key: 'content', number: '02' },
@@ -25,7 +25,7 @@ const links = [
   </head>
   <body class:list={['admin-body', { 'admin-body--login': login }]}>
     <a class="admin-skip" href="#admin-main">跳到主要內容</a>
-    <div class="admin-shell" data-admin-shell={login ? 'login' : 'protected'}>
+    <div class:list={['admin-shell', { 'admin-shell--wide': wide }]} data-admin-shell={login ? 'login' : 'protected'}>
       <header class="admin-header">
         <a class="admin-brand" href={login ? '/' : '/admin/'} aria-label="Phox999 管理首頁">Phox999<span>photography</span></a>
         <div class="admin-header__actions">

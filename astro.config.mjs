@@ -27,6 +27,23 @@ const isPublicSitemapPage = (page) => {
 export default defineConfig({
   output: 'static',
   site: 'https://phox999.com',
+  vite: {
+    server: {
+      watch: {
+        // OneDrive can miss native file events; low-frequency polling keeps
+        // code updates discoverable without watching the source photo library.
+        usePolling: true,
+        interval: 500,
+        ignored: [
+          '**/public/assets/portfolio/**',
+          '**/dist/**',
+          '**/worker-dist/**',
+          '**/.astro/**',
+          '**/.portfolio-acceptance-*/**',
+        ],
+      },
+    },
+  },
   integrations: [
     sitemap({
       filter: isPublicSitemapPage,

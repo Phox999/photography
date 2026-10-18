@@ -51,6 +51,7 @@ test('變更 API 拒絕重複、衝突、非法項目與超出數量上限的內
   rejected(() => portfolioChanges({ upserts: [collection('a')], deleted_slugs: [], order: ['a', 'a'], version: 1 }));
   rejected(() => portfolioChanges({ upserts: [collection('bad', { images: ['https://example.test/photo.jpg'] })], deleted_slugs: [], order: ['bad'], version: 1 }));
   rejected(() => portfolioChanges({ upserts: [], deleted_slugs: [], order: [], version: 1, extra: true }));
+  rejected(() => portfolioUpdate({ collections: [collection('bad-cover', { cover: images[1], images: [images[0]] })], version: 1 }));
 
   const tooManyCollections = Array.from({ length: 81 }, (_, index) => collection(`work-${index}`));
   rejected(() => portfolioChanges({ upserts: tooManyCollections, deleted_slugs: [], order: tooManyCollections.map((item) => item.slug), version: 1 }));
