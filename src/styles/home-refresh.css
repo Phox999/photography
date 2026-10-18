@@ -1204,3 +1204,43 @@
     border-top: 0;
   }
 }
+
+/* Feedback is a page-switcher, not a horizontal scroller. Keep each card
+   inside its own column at all widths, including narrow desktops. */
+.home-page .feedback-column,
+.home-page .feedback-carousel,
+.home-page .feedback-window,
+.home-page .feedback-track {
+  min-width: 0;
+  max-width: 100%;
+}
+.home-page .feedback-window {
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  filter: none;
+}
+.home-page .feedback-track {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+  border-radius: var(--radius-xl);
+}
+.home-page .feedback-slide {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+.home-page .feedback-slide[hidden] {
+  display: none !important;
+}
+.home-page .feedback-nav {
+  z-index: 10;
+  cursor: pointer;
+  touch-action: manipulation;
+}

@@ -154,8 +154,8 @@ for (let i = 0; i < feedbacks.length; i += 3) {
         <div class="feedback-window">
           <div class="feedback-track" data-feedback-track tabindex="0">
             {
-              feedbackPages.map((page) => (
-                <article class="feedback-slide" data-feedback-card>
+              feedbackPages.map((page, index) => (
+                <article class="feedback-slide" data-feedback-card hidden={index !== 0} aria-hidden={index !== 0 ? 'true' : 'false'}>
                   <div class="feedback-page">
                     {page.map((feedback) => {
                       const previewText = toPreviewText(feedback);
@@ -342,19 +342,16 @@ const unlockFeedbackScroll = () => {
       if (!pages.length || !track) return;
 
       currentIndex = (index + pages.length) % pages.length;
-
-      const targetPage = pages[currentIndex];
-      // Offset parents may differ when the layout changes; use viewport-relative positions.
-      const targetLeft = track.scrollLeft
-        + targetPage.getBoundingClientRect().left
-        - track.getBoundingClientRect().left;
-
-      track.scrollTo({
-        left: targetLeft,
-        behavior: 'smooth',
+      // Switch whole pages instead of scrolling a flex track. This avoids
+      // layout-dependent scroll offsets and cards bleeding past the frame.
+      pages.forEach((page, pageIndex) => {
+        const active = pageIndex === currentIndex;
+        page.hidden = !active;
+        page.setAttribute('aria-hidden', String(!active));
       });
 
       updateDots();
+      updateMoreButtons();
     };
 
     const updateMoreButtons = () => {
@@ -494,8 +491,7 @@ const closeDialog = () => {
     window.addEventListener('resize', updateMoreButtons);
     window.addEventListener('load', updateMoreButtons);
     requestAnimationFrame(() => {
-      updateMoreButtons();
-      updateDots();
+      goTo(0);
     });
   }
 </script>

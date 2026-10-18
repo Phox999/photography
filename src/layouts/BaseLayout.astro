@@ -79,17 +79,18 @@ const structuredDataJson = structuredData
   <body id="top">
     {!noindex && <aside class="public-announcement" data-public-announcement role="status" hidden></aside>}
     <slot />
-    {!noindex && <aside class="site-analytics-preferences" aria-label="匿名瀏覽量測設定" data-site-analytics-preferences>
-      <div class="site-analytics-preferences__copy">
-        <strong>匿名瀏覽量測</strong>
-        <p>本站使用第一方隨機識別碼估計訪客，記錄公開頁瀏覽、合作入口點擊與表單流程；不記錄表單欄位內容、完整 IP 或完整 User-Agent。統計事件最長保留 90 天，你可以隨時停用量測或清除此瀏覽器的識別碼。</p>
-        <p class="site-analytics-preferences__status" role="status" aria-live="polite" data-site-analytics-status></p>
+    {!noindex && <dialog class="site-analytics-dialog" data-site-analytics-dialog aria-labelledby="site-analytics-dialog-title">
+      <div class="site-analytics-dialog__heading">
+        <h2 id="site-analytics-dialog-title">匿名瀏覽量測設定</h2>
+        <form method="dialog"><button type="submit" class="site-analytics-dialog__close" aria-label="關閉隱私設定">關閉</button></form>
       </div>
-      <div class="site-analytics-preferences__actions">
-        <button type="button" class="site-analytics-preferences__button" data-site-analytics-toggle aria-pressed="false">停用匿名量測</button>
-        <button type="button" class="site-analytics-preferences__button site-analytics-preferences__button--quiet" data-site-analytics-clear>清除識別碼</button>
+      <p>本站使用第一方隨機識別碼估計訪客，記錄公開頁瀏覽、合作入口點擊與表單流程；不記錄表單欄位內容、完整 IP 或完整 User-Agent。統計事件最長保留 90 天，可以在此停用量測或清除識別碼。</p>
+      <p class="site-analytics-dialog__status" role="status" aria-live="polite" data-site-analytics-status></p>
+      <div class="site-analytics-dialog__actions">
+        <button type="button" class="site-analytics-dialog__button" data-site-analytics-toggle aria-pressed="false">停用匿名量測</button>
+        <button type="button" class="site-analytics-dialog__button site-analytics-dialog__button--quiet" data-site-analytics-clear>清除識別碼</button>
       </div>
-    </aside>}
+    </dialog>}
     {!noindex && <FloatingActions />}
   </body>
 </html>
@@ -97,16 +98,16 @@ const structuredDataJson = structuredData
 <style>
   .public-announcement { position: fixed; z-index: 19; top: clamp(92px, 8vw, 112px); left: 50%; width: min(calc(100% - 36px), 760px); max-height: 112px; overflow: auto; padding: 12px 22px; transform: translateX(-50%); border: 1px solid rgb(255 255 255 / .9); border-radius: var(--radius-pill); background: rgb(255 255 255 / .94); color: var(--color-muted); box-shadow: var(--shadow-card); backdrop-filter: blur(16px); text-align: center; font-size: .92rem; font-weight: 600; line-height: 1.6; }
   @media (max-width: 760px) { .public-announcement { top: 92px; padding: 10px 16px; border-radius: var(--radius-lg); font-size: .84rem; } }
-  .site-analytics-preferences { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; width: min(calc(100% - 40px), 1120px); margin: 24px auto; padding: 16px 20px; border: 1px solid var(--color-border, #dce6eb); border-radius: var(--radius-lg, 16px); background: var(--color-surface, #fff); color: var(--color-muted, #52636b); font-size: .82rem; line-height: 1.6; }
-  .site-analytics-preferences__copy { max-width: 760px; }
-  .site-analytics-preferences__copy strong { color: var(--color-text, #1f3138); }
-  .site-analytics-preferences__copy p { margin: 4px 0 0; }
-  .site-analytics-preferences__status { min-height: 1.3em; color: var(--color-primary-dark, #176b8a); }
-  .site-analytics-preferences__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-  .site-analytics-preferences__button { min-height: 40px; padding: 8px 12px; border: 1px solid var(--color-primary-dark, #176b8a); border-radius: var(--radius-pill, 999px); background: var(--color-primary-dark, #176b8a); color: white; font: inherit; font-weight: 700; cursor: pointer; }
-  .site-analytics-preferences__button--quiet { background: transparent; color: var(--color-primary-dark, #176b8a); }
-  .site-analytics-preferences__button:focus-visible { outline: 3px solid var(--color-focus, #f4b542); outline-offset: 3px; }
-  @media (max-width: 640px) { .site-analytics-preferences { flex-direction: column; width: calc(100% - 32px); padding: 14px 16px; } .site-analytics-preferences__actions { width: 100%; } }
+  .site-analytics-dialog { width: min(calc(100% - 32px), 620px); max-height: calc(100dvh - 48px); overflow-y: auto; border: 1px solid var(--color-border, #dce6eb); border-radius: var(--radius-lg, 16px); background: var(--color-surface, #fff); padding: 24px; color: var(--color-muted, #52636b); font-size: .94rem; line-height: 1.7; box-shadow: 0 20px 60px rgb(0 0 0 / .2); }
+  .site-analytics-dialog::backdrop { background: rgb(0 0 0 / .45); }
+  .site-analytics-dialog__heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 12px; }
+  .site-analytics-dialog__heading h2 { color: var(--color-text, #1f3138); margin: 0; font-size: 1.3rem; }
+  .site-analytics-dialog__close { border: 0; background: none; color: var(--color-primary-dark, #176b8a); font: inherit; cursor: pointer; }
+  .site-analytics-dialog__status { min-height: 1.3em; color: var(--color-primary-dark, #176b8a); }
+  .site-analytics-dialog__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .site-analytics-dialog__button { min-height: 40px; padding: 8px 12px; border: 1px solid var(--color-primary-dark, #176b8a); border-radius: var(--radius-pill, 999px); background: var(--color-primary-dark, #176b8a); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+  .site-analytics-dialog__button--quiet { background: transparent; color: var(--color-primary-dark, #176b8a); }
+  .site-analytics-dialog button:focus-visible { outline: 3px solid var(--color-focus, #f4b542); outline-offset: 3px; }
 </style>
 
 <script>
@@ -115,6 +116,15 @@ const structuredDataJson = structuredData
 
   initInquiryAnalytics(import.meta.env.PUBLIC_GA4_MEASUREMENT_ID);
   initSiteAnalytics();
+  const analyticsDialog = document.querySelector<HTMLDialogElement>('[data-site-analytics-dialog]');
+  document.querySelectorAll<HTMLButtonElement>('[data-open-analytics-preferences]').forEach((button) => {
+    if (!analyticsDialog) return;
+    button.hidden = false;
+    button.addEventListener('click', () => analyticsDialog.showModal());
+  });
+  analyticsDialog?.addEventListener('click', (event) => {
+    if (event.target === analyticsDialog) analyticsDialog.close();
+  });
 </script>
 
 <script>
