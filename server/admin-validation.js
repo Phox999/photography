@@ -187,7 +187,7 @@ export function portfolioUpdate(body) {
     if (!Array.isArray(item.images) || item.images.length < 1 || item.images.length > 500
       || item.images.some((path) => !isValidPortfolioImagePath(path))
       || new Set(item.images).size !== item.images.length) invalid('每組作品需有 1 至 500 張有效照片。');
-    if (!isValidPortfolioImagePath(item.cover)) invalid('請選擇有效的封面照片。');
+    if (!isValidPortfolioImagePath(item.cover) || !item.images.includes(item.cover)) invalid('封面照片必須屬於目前作品。');
     if (!Number.isInteger(item.totalImages) || item.totalImages < item.images.length || item.totalImages > 10000) invalid('作品照片數量不正確。');
     return { slug, title, category: item.category, description, cover: item.cover, images: item.images, totalImages: item.totalImages };
   });
