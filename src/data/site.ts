@@ -3,7 +3,7 @@ const googleFormUrl = 'https://forms.gle/8V17E3gPVf3NdEaY8';
 export const siteConfig = {
   brandName: 'phox999 photography',
   googleFormUrl,
-  inquiryUrl: googleFormUrl,
+  inquiryUrl: '/#contact',
   adminUrl: '/admin/login/',
   portfolioUrl: '/portfolio/',
   aboutUrl: '/about/',

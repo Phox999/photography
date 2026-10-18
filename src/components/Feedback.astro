@@ -344,7 +344,10 @@ const unlockFeedbackScroll = () => {
       currentIndex = (index + pages.length) % pages.length;
 
       const targetPage = pages[currentIndex];
-      const targetLeft = targetPage.offsetLeft - track.offsetLeft;
+      // Offset parents may differ when the layout changes; use viewport-relative positions.
+      const targetLeft = track.scrollLeft
+        + targetPage.getBoundingClientRect().left
+        - track.getBoundingClientRect().left;
 
       track.scrollTo({
         left: targetLeft,

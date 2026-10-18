@@ -1,10 +1,11 @@
 ---
 import { portfolioCatalog, portfolioCategories } from '../data/portfolioCatalog';
+import { orderFeaturedPortfolio } from '../lib/featured-portfolio.js';
 import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
 import { getImageDimensions, getImageSrcset } from '../lib/image-variants';
 import { serializePortfolioRouteMap } from '../lib/portfolio-routes';
 
-const portfolioItems = portfolioCatalog.slice(0, 12);
+const portfolioItems = orderFeaturedPortfolio(portfolioCatalog).slice(0, 12);
 const imageDimensions = new Map<string, ImageDimensions>();
 await Promise.all(portfolioItems.map(async (item) => {
   const dimensions = await getPublicImageDimensions(item.cover);
@@ -77,8 +78,8 @@ const countFor = (category: string) =>
   .portfolio-filter__button { position: relative; display: inline-flex; width: auto; min-height: 48px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: var(--radius-pill); background: var(--color-surface); padding: 0 22px; color: var(--color-primary-dark); font-size: 18px; text-align: center; box-shadow: var(--shadow-soft); }
   .portfolio-filter__button.is-active { background: var(--color-primary); color: #fff; box-shadow: 0 10px 26px rgba(49, 129, 162, .2); }
   .portfolio-filter__count { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .portfolio-scroll-controls { display: flex; gap: 8px; }
-  .portfolio-scroll-controls button { display: grid; width: 52px; height: 52px; place-items: center; border: 1px solid rgba(123, 171, 192, .52); border-radius: 50%; background: #fff; color: var(--color-primary-dark); font: inherit; font-size: 28px; line-height: 1; cursor: pointer; }
+  .portfolio-scroll-controls { position: relative; z-index: 2; display: flex; gap: 8px; }
+  .portfolio-scroll-controls button { display: grid; width: 52px; height: 52px; place-items: center; border: 1px solid rgba(123, 171, 192, .52); border-radius: 50%; background: #fff; color: var(--color-primary-dark); font: inherit; font-size: 28px; line-height: 1; cursor: pointer; touch-action: manipulation; }
   .portfolio-scroll-controls button:hover:not(:disabled) { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
   .portfolio-scroll-controls button:disabled { opacity: .35; cursor: default; }
   .portfolio-more-link { display: inline-flex; min-height: 48px; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; }
@@ -129,6 +130,7 @@ const countFor = (category: string) =>
   import { loadPublishedPortfolio } from '../lib/portfolio-content';
   import { setPortfolioImageSource } from '../lib/image-variants';
   import { parsePortfolioRouteMap } from '../lib/portfolio-routes';
+  import { orderFeaturedPortfolio } from '../lib/featured-portfolio.js';
 
   const portfolioSection = document.querySelector<HTMLElement>('[data-portfolio-filter]');
 
@@ -146,11 +148,17 @@ const countFor = (category: string) =>
       if (prevButton) prevButton.disabled = strip.scrollLeft <= 2;
       if (nextButton) nextButton.disabled = strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 2;
     };
-    const getScrollDistance = () => {
-      const card = cards.find((item) => !item.hidden);
-      if (!strip || !card) return 320;
-      const gap = Number.parseFloat(getComputedStyle(strip).columnGap) || 0;
-      return card.getBoundingClientRect().width + gap;
+    const scrollOneCard = (direction: -1 | 1) => {
+      if (!strip) return;
+      const currentLeft = strip.scrollLeft;
+      const stripLeft = strip.getBoundingClientRect().left;
+      const positions = cards.filter((card) => !card.hidden).map((card) =>
+        currentLeft + card.getBoundingClientRect().left - stripLeft
+      );
+      const target = direction === 1
+        ? positions.find((left) => left > currentLeft + 6)
+        : positions.reverse().find((left) => left < currentLeft - 6);
+      if (target !== undefined) strip.scrollTo({ left: target, behavior: 'smooth' });
     };
     let activeFilter = '全部';
     const applyFilter = (filter: string) => {
@@ -172,8 +180,8 @@ const countFor = (category: string) =>
     };
 
     buttons.forEach((button) => button.addEventListener('click', () => applyFilter(button.dataset.filter || '全部')));
-    prevButton?.addEventListener('click', () => strip?.scrollBy({ left: -getScrollDistance(), behavior: 'smooth' }));
-    nextButton?.addEventListener('click', () => strip?.scrollBy({ left: getScrollDistance(), behavior: 'smooth' }));
+    prevButton?.addEventListener('click', () => scrollOneCard(-1));
+    nextButton?.addEventListener('click', () => scrollOneCard(1));
     strip?.addEventListener('scroll', updateControls, { passive: true });
     if (strip && typeof ResizeObserver !== 'undefined') new ResizeObserver(updateControls).observe(strip);
     updateControls();
@@ -182,7 +190,7 @@ const countFor = (category: string) =>
       const staticRoutes = parsePortfolioRouteMap(portfolioSection.dataset.staticRouteMap);
       const published = await loadPublishedPortfolio(staticRoutes);
       if (!published || !strip) return;
-      const featured = published.slice(0, 12);
+      const featured = orderFeaturedPortfolio(published).slice(0, 12);
       strip.replaceChildren(...featured.map((item) => {
         const article = document.createElement('article');
         article.className = 'portfolio-card';
