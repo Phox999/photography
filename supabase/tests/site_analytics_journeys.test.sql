@@ -7,7 +7,7 @@ select no_plan();
 
 select ok(has_function_privilege('service_role', 'public.record_site_analytics_events_v2(uuid,uuid,jsonb,text,text,text,text)', 'EXECUTE'), 'service role can ingest v2 events');
 select ok(not has_function_privilege('anon', 'public.record_site_analytics_events_v2(uuid,uuid,jsonb,text,text,text,text)', 'EXECUTE'), 'anon cannot ingest v2 events');
-select ok(has_function_privilege('service_role', 'public.get_site_analytics_sessions(timestamptz,timestamptz,text,text,text,text,text,timestamptz,uuid,integer,uuid)', 'EXECUTE'), 'service role can query journeys');
+select ok(has_function_privilege('service_role', 'public.get_site_analytics_sessions(timestamptz,timestamptz,text,text,text,text,text,timestamptz,uuid,integer,uuid,text,text)', 'EXECUTE'), 'service role can query journeys');
 select ok(not has_function_privilege('authenticated', 'public.get_site_analytics_session_detail(uuid)', 'EXECUTE'), 'authenticated cannot read journey details');
 
 create temporary table journey_times as
@@ -37,6 +37,8 @@ with t as (select * from journey_times), fixture(
   ('c7000000-0000-4000-8000-000000000005'::uuid, interval '4 minutes', 2, 'inquiry_cta_click', '/portfolio/', 'c3000000-0000-4000-8000-000000000001'::uuid, 5, 1, null::uuid, null::text, 'hero', 'google_form', null::text, null::smallint, null::integer, 'c2000000-0000-4000-8000-000000000001'::uuid),
   ('c7000000-0000-4000-8000-000000000017'::uuid, interval '4 minutes 30 seconds', 2, 'inquiry_cta_click', '/portfolio/', 'c3000000-0000-4000-8000-000000000001'::uuid, 6, 1, null::uuid, null::text, 'portfolio-index', 'google_form', null::text, null::smallint, null::integer, 'c2000000-0000-4000-8000-000000000001'::uuid),
   ('c7000000-0000-4000-8000-000000000006'::uuid, interval '5 minutes', 2, 'page_view', '/cooperation/', 'c3000000-0000-4000-8000-000000000002'::uuid, 7, 2, null::uuid, null::text, null::text, null::text, null::text, null::smallint, null::integer, 'c2000000-0000-4000-8000-000000000001'::uuid),
+  ('c7000000-0000-4000-8000-000000000022'::uuid, interval '7 minutes', 2, 'page_view', '/portfolio/', 'c3000000-0000-4000-8000-000000000006'::uuid, 1, 3, null::uuid, null::text, null::text, null::text, null::text, null::smallint, null::integer, 'c2000000-0000-4000-8000-000000000001'::uuid),
+  ('c7000000-0000-4000-8000-000000000023'::uuid, interval '8 minutes', 2, 'page_view', '/cooperation/', 'c3000000-0000-4000-8000-000000000007'::uuid, 1, 4, null::uuid, null::text, null::text, null::text, null::text, null::smallint, null::integer, 'c2000000-0000-4000-8000-000000000001'::uuid),
   ('c7000000-0000-4000-8000-000000000007'::uuid, interval '6 minutes', 1, 'inquiry_cta_click', '/portfolio/', null::uuid, null::integer, null::bigint, null::uuid, null::text, 'hero', 'google_form', null::text, null::smallint, null::integer, 'c2000000-0000-4000-8000-000000000001'::uuid),
   -- Exact period end is excluded. This makes the direct return context-only in the first range.
   ('c7000000-0000-4000-8000-000000000008'::uuid, interval '0 minutes', 2, 'page_view', '/cooperation/', 'c3000000-0000-4000-8000-000000000003'::uuid, 1, 1, null::uuid, null::text, null::text, null::text, null::text, null::smallint, null::integer, 'c2000000-0000-4000-8000-000000000002'::uuid),
@@ -69,7 +71,11 @@ select f.event_id, f.schema_version, case when f.session_id = 'c2000000-0000-400
        f.session_id, f.event_name, f.page_path,
        f.page_visit_id,
        case when f.schema_version = 2 then case when f.session_id = 'c2000000-0000-4000-8000-000000000002'::uuid then 'c4000000-0000-4000-8000-000000000002'::uuid else 'c4000000-0000-4000-8000-000000000001'::uuid end else null end,
-       case when f.schema_version = 2 then case when f.session_id = 'c2000000-0000-4000-8000-000000000002'::uuid then 'c5000000-0000-4000-8000-000000000002'::uuid else 'c5000000-0000-4000-8000-000000000001'::uuid end else null end,
+       case when f.schema_version = 2 then case
+         when f.event_id = 'c7000000-0000-4000-8000-000000000022'::uuid then 'c5000000-0000-4000-8000-000000000003'::uuid
+         when f.event_id = 'c7000000-0000-4000-8000-000000000023'::uuid then 'c5000000-0000-4000-8000-000000000004'::uuid
+         when f.session_id = 'c2000000-0000-4000-8000-000000000002'::uuid then 'c5000000-0000-4000-8000-000000000002'::uuid
+         else 'c5000000-0000-4000-8000-000000000001'::uuid end else null end,
        f.event_seq, f.tab_seq, f.form_instance_id, f.step_id,
        f.placement, f.destination, f.error_code, f.visible_percent, f.visible_ms
 from t cross join fixture f;
@@ -114,6 +120,15 @@ select ok((select exists (
     and item ->> 'everInquiryReceived' = 'true' and item ->> 'inquiryReceived' = 'false'
 ) from visitor_history), 'later direct success remains visible as context without entering the selected period');
 
+create temporary table transition_drill as
+select public.get_site_analytics_sessions(
+  p_start => first_start, p_end => next_start, p_page_path => '/cooperation/',
+  p_transition_from => '/portfolio/', p_transition_to => '/cooperation/', p_limit => 50
+) as response
+from journey_times;
+select is((select response ->> 'total' from transition_drill), '1', 'a transition drill returns each matching session once');
+select is((select response #>> '{items,0,sessionId}' from transition_drill), 'c2000000-0000-4000-8000-000000000001', 'a transition drill returns the session containing that exact adjacent path pair');
+
 create temporary table return_period as
 select public.get_site_analytics_sessions(
   p_start => next_start, p_end => now(), p_source => 'direct', p_result => 'error_then_success', p_limit => 50
@@ -149,7 +164,7 @@ select is((select (page ->> 'visibleProof')::integer from path_report, jsonb_arr
 select is((select (page ->> 'clickSupplement')::integer from path_report, jsonb_array_elements(response -> 'pages') page where page ->> 'path' = '/portfolio/'), 1, 'fast click without a visibility event supplies one denominator unit');
 select ok((select (page ->> 'ctaClickRate')::numeric <= 100 from path_report, jsonb_array_elements(response -> 'pages') page where page ->> 'path' = '/portfolio/'), 'paired CTA click rate cannot exceed 100 percent');
 select is((select response ->> 'legacyUnpairedClicks' from path_report), '1', 'v1 CTA clicks stay visible as unpaired and do not enter the v2 ratio');
-select ok((select response -> 'transitions' @> '[{"from":"/portfolio/","to":"/cooperation/","visits":1}]'::jsonb from path_report), 'adjacent same-tab v2 page visits form a historical observed transition');
+select ok((select response -> 'transitions' @> '[{"from":"/portfolio/","to":"/cooperation/","sessions":1,"visits":2}]'::jsonb from path_report), 'transition sessions are distinct while repeated adjacent page pairs remain available as context');
 
 select is((public.record_site_analytics_events_v2(
   'd1000000-0000-4000-8000-000000000001', 'd2000000-0000-4000-8000-000000000001',

@@ -11,13 +11,15 @@ export async function requireAnalyticsAdmin(request, env) {
   return { admin, config: getSecretConfig(env) };
 }
 
-export function analyticsAdminFilters(searchParams, { allowResult = true } = {}) {
+export function analyticsAdminFilters(searchParams, { allowResult = true, allowTransition = false } = {}) {
   const range = resolveAnalyticsRange(searchParams);
   const rawSource = searchParams.get('source');
   const rawDevice = searchParams.get('device');
   const rawPage = searchParams.get('page');
   const rawResult = searchParams.get('result');
   const rawVisitor = searchParams.get('visitor');
+  const rawTransitionFrom = searchParams.get('transition_from');
+  const rawTransitionTo = searchParams.get('transition_to');
   const limitRaw = searchParams.get('limit');
   const cursorAtRaw = searchParams.get('cursor_at');
   const cursorIdRaw = searchParams.get('cursor_id');
@@ -25,11 +27,25 @@ export function analyticsAdminFilters(searchParams, { allowResult = true } = {})
   if (rawDevice !== null && !DEVICES.has(rawDevice)) throw new HttpError(400, '裝置篩選不正確。', 'analytics_filter_invalid');
   if (!allowResult && rawResult !== null) throw new HttpError(400, '頁面查詢不支援這個結果篩選。', 'analytics_filter_invalid');
   if (rawResult !== null && !RESULTS.has(rawResult)) throw new HttpError(400, '結果篩選不正確。', 'analytics_filter_invalid');
+  if (!allowTransition && (rawTransitionFrom !== null || rawTransitionTo !== null)) {
+    throw new HttpError(400, '此查詢不支援頁面流向篩選。', 'analytics_filter_invalid');
+  }
+  if ((rawTransitionFrom === null) !== (rawTransitionTo === null)) {
+    throw new HttpError(400, '頁面流向篩選不完整。', 'analytics_filter_invalid');
+  }
 
   let pagePath = null;
   if (rawPage !== null) {
     pagePath = normalizePublicAnalyticsPath(rawPage);
     if (!pagePath) throw new HttpError(400, '公開頁面篩選不正確。', 'analytics_filter_invalid');
+  }
+
+  let transitionFrom = null;
+  let transitionTo = null;
+  if (rawTransitionFrom !== null) {
+    transitionFrom = normalizePublicAnalyticsPath(rawTransitionFrom);
+    transitionTo = normalizePublicAnalyticsPath(rawTransitionTo || '');
+    if (!transitionFrom || !transitionTo) throw new HttpError(400, '頁面流向篩選不正確。', 'analytics_filter_invalid');
   }
 
   let visitorPrefix = null;
@@ -61,6 +77,8 @@ export function analyticsAdminFilters(searchParams, { allowResult = true } = {})
     source: rawSource,
     device: rawDevice,
     pagePath,
+    transitionFrom,
+    transitionTo,
     result: allowResult ? rawResult : null,
     visitorPrefix,
     cursorAt,

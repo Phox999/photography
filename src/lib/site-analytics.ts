@@ -136,25 +136,64 @@ async function resolveTabId(targetWindow: Window, currentTabId: string | null): 
   if (!currentTabId || typeof BroadcastChannel === 'undefined') return currentTabId;
   const ownerToken = uuid(targetWindow);
   if (!ownerToken) return currentTabId;
-  let tabId = currentTabId;
-  let collided = false;
   const channel = new BroadcastChannel('phox999-analytics-tabs-v2');
+  (targetWindow as Window & { __phoxAnalyticsTabChannelV2?: BroadcastChannel }).__phoxAnalyticsTabChannelV2 = channel;
+  const claims: boolean[] = [];
+  let tabId = currentTabId;
+  let navigating = false;
+  let retiring = false;
+  const nodeChannel = channel as BroadcastChannel & { unref?: () => void };
+  nodeChannel.unref?.();
   channel.addEventListener('message', (event: MessageEvent) => {
     const data = event.data;
-    if (!data || data.type !== 'hello' || data.tabId !== tabId || data.ownerToken === ownerToken) return;
-    collided = true;
-    const replacement = uuid(targetWindow);
-    if (!replacement) return;
-    tabId = replacement;
+    if (!data) return;
+    if (data.type === 'hello' && data.tabId === tabId) {
+      if (data.ownerToken === ownerToken) return;
+      channel.postMessage({
+        type: 'claim',
+        ownerToken: data.ownerToken,
+        tabId,
+        handoff: navigating || retiring,
+      });
+    } else if (data.type === 'claim' && data.ownerToken === ownerToken && data.tabId === tabId) {
+      claims.push(data.handoff === true);
+    }
+  });
+  const markNavigation = (event: Event) => {
+    const mouseEvent = event as MouseEvent;
+    if (mouseEvent.defaultPrevented || mouseEvent.button > 0 || mouseEvent.metaKey || mouseEvent.ctrlKey || mouseEvent.shiftKey || mouseEvent.altKey) return;
+    const target = event.target;
+    const ElementConstructor = targetWindow.document.defaultView?.Element;
+    if (!ElementConstructor || !(target instanceof ElementConstructor)) return;
+    const link = target.closest<HTMLAnchorElement>('a[href]');
+    if (!link || (link.target && link.target.toLowerCase() !== '_self')) return;
     try {
-      targetWindow.sessionStorage.setItem(TAB_ID_KEY, tabId);
-      targetWindow.sessionStorage.removeItem(TAB_SEQ_KEY);
-    } catch { /* A per-document ID still prevents false event joins. */ }
+      const destination = new URL(link.href, targetWindow.location.href);
+      if (destination.origin === targetWindow.location.origin
+        && (destination.pathname !== targetWindow.location.pathname || destination.search !== targetWindow.location.search)) {
+        navigating = true;
+      }
+    } catch { /* Ignore malformed links. */ }
+  };
+  targetWindow.document.addEventListener('click', markNavigation, true);
+  targetWindow.addEventListener('pagehide', () => { retiring = true; });
+  targetWindow.addEventListener('pageshow', (event) => {
+    if ((event as PageTransitionEvent).persisted) {
+      retiring = false;
+      navigating = false;
+    }
   });
   channel.postMessage({ type: 'hello', tabId, ownerToken });
-  await new Promise<void>((resolve) => targetWindow.setTimeout(resolve, 60));
-  channel.close();
-  return collided ? tabId : currentTabId;
+  await new Promise<void>((resolve) => targetWindow.setTimeout(resolve, 80));
+  if (!claims.some((handoff) => !handoff)) return currentTabId;
+  const replacement = uuid(targetWindow);
+  if (!replacement) return currentTabId;
+  try {
+    targetWindow.sessionStorage.setItem(TAB_ID_KEY, replacement);
+    targetWindow.sessionStorage.removeItem(TAB_SEQ_KEY);
+  } catch { /* A per-document ID still prevents false event joins. */ }
+  tabId = replacement;
+  return replacement;
 }
 
 function withIdentityLock<T>(targetWindow: Window, callback: () => Promise<T>): Promise<T> {
@@ -391,6 +430,7 @@ export function initSiteAnalytics(targetWindow: Window = window, targetDocument:
     sending = true;
     const batch = queue.splice(0, 10);
     activeRequest = new AbortController();
+    let retryDelay: number | null = null;
     try {
       const responseResult = await withIdentityLock(targetWindow, async () => {
         if (!await ensureBootstrap()) return null;
@@ -405,8 +445,7 @@ export function initSiteAnalytics(targetWindow: Window = window, targetDocument:
       if (!responseResult) {
         if (!optedOut() && attempt < 2) {
           queue.unshift(...batch);
-          targetWindow.setTimeout(() => { sending = false; void flush(attempt + 1); }, attempt === 0 ? 400 : 1_400);
-          return;
+          retryDelay = attempt === 0 ? 400 : 1_400;
         }
         return;
       }
@@ -420,19 +459,30 @@ export function initSiteAnalytics(targetWindow: Window = window, targetDocument:
         queue = [];
       } else if (!response.ok && attempt < 2) {
         queue.unshift(...batch);
-        targetWindow.setTimeout(() => { sending = false; void flush(attempt + 1); }, attempt === 0 ? 400 : 1_400);
-        return;
+        retryDelay = attempt === 0 ? 400 : 1_400;
       }
     } catch {
       if (attempt < 2 && !optedOut()) {
         queue.unshift(...batch);
-        targetWindow.setTimeout(() => { sending = false; void flush(attempt + 1); }, attempt === 0 ? 400 : 1_400);
-        return;
+        retryDelay = attempt === 0 ? 400 : 1_400;
+      }
+    } finally {
+      activeRequest = null;
+      sending = false;
+      if (retryDelay !== null) {
+        if (timer) targetWindow.clearTimeout(timer);
+        timer = targetWindow.setTimeout(() => {
+          timer = 0;
+          void flush(attempt + 1);
+        }, retryDelay);
+      } else if (queue.length && !optedOut()) {
+        if (timer) targetWindow.clearTimeout(timer);
+        timer = targetWindow.setTimeout(() => {
+          timer = 0;
+          void flush();
+        }, 0);
       }
     }
-    activeRequest = null;
-    sending = false;
-    if (queue.length) void flush();
   };
 
   bindPreferences(targetWindow, targetDocument, newPageVisit);
@@ -463,41 +513,61 @@ export function initSiteAnalytics(targetWindow: Window = window, targetDocument:
     const candidates = targetDocument.querySelectorAll<HTMLAnchorElement>('a[data-analytics-event="inquiry_click"][data-analytics-placement]');
     const timers = new WeakMap<Element, number>();
     const visibility = new WeakMap<Element, { ratio: number; startedAt: number }>();
+    const ratios = new WeakMap<Element, number>();
+    const stopExposureTimer = (element: Element) => {
+      const timerId = timers.get(element);
+      if (timerId) targetWindow.clearTimeout(timerId);
+      timers.delete(element);
+      visibility.delete(element);
+    };
+    const startExposureTimer = (element: Element, ratio: number) => {
+      ratios.set(element, ratio);
+      if (ratio < 0.5 || targetDocument.visibilityState === 'hidden') {
+        stopExposureTimer(element);
+        return;
+      }
+      const current = visibility.get(element);
+      if (current) { current.ratio = ratio; return; }
+      const state = { ratio, startedAt: targetWindow.performance.now() };
+      visibility.set(element, state);
+      const timerId = targetWindow.setTimeout(() => {
+        const latest = visibility.get(element);
+        const placement = safePlacement((element as HTMLElement).dataset.analyticsPlacement);
+        if (latest && latest.ratio >= 0.5 && (element as HTMLElement).isConnected
+          && targetDocument.visibilityState !== 'hidden' && !visiblePlacements.has(placement)) {
+          visiblePlacements.add(placement);
+          enqueue({ name: 'cta_view', placement, visiblePercent: Math.floor(latest.ratio * 100), visibleMs: Math.max(1_000, Math.round(targetWindow.performance.now() - latest.startedAt)) });
+        }
+        timers.delete(element);
+      }, 1_000);
+      timers.set(element, timerId);
+    };
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.intersectionRatio < 0.5 || targetDocument.visibilityState === 'hidden') {
-          const timerId = timers.get(entry.target);
-          if (timerId) targetWindow.clearTimeout(timerId);
-          timers.delete(entry.target);
-          visibility.delete(entry.target);
-          return;
-        }
-        const current = visibility.get(entry.target);
-        if (current) { current.ratio = entry.intersectionRatio; return; }
-        const state = { ratio: entry.intersectionRatio, startedAt: targetWindow.performance.now() };
-        visibility.set(entry.target, state);
-        const timerId = targetWindow.setTimeout(() => {
-          const latest = visibility.get(entry.target);
-          const placement = safePlacement((entry.target as HTMLElement).dataset.analyticsPlacement);
-          if (latest && latest.ratio >= 0.5 && (entry.target as HTMLElement).isConnected && !visiblePlacements.has(placement)) {
-            visiblePlacements.add(placement);
-            enqueue({ name: 'cta_view', placement, visiblePercent: Math.floor(latest.ratio * 100), visibleMs: Math.max(1_000, Math.round(targetWindow.performance.now() - latest.startedAt)) });
-          }
-          timers.delete(entry.target);
-        }, 1_000);
-        timers.set(entry.target, timerId);
+        startExposureTimer(entry.target, entry.intersectionRatio);
       });
     }, { threshold: [0, 0.5, 1] });
     candidates.forEach((link) => observer.observe(link));
     targetDocument.addEventListener('visibilitychange', () => {
       if (targetDocument.visibilityState === 'hidden') {
-        candidates.forEach((link) => {
-          const timerId = timers.get(link);
-          if (timerId) targetWindow.clearTimeout(timerId);
-          timers.delete(link);
-          visibility.delete(link);
-        });
+        candidates.forEach(stopExposureTimer);
+        return;
       }
+      candidates.forEach((link) => {
+        const ratio = ratios.get(link);
+        if (ratio !== undefined) startExposureTimer(link, ratio);
+        observer.unobserve(link);
+        observer.observe(link);
+      });
+    });
+    targetWindow.addEventListener('pageshow', (event) => {
+      if (!(event as PageTransitionEvent).persisted || targetDocument.visibilityState === 'hidden') return;
+      candidates.forEach((link) => {
+        const ratio = ratios.get(link);
+        if (ratio !== undefined) startExposureTimer(link, ratio);
+        observer.unobserve(link);
+        observer.observe(link);
+      });
     });
   }
 

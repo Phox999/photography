@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
 
+async function waitFor(predicate, message, timeout = 2_000) {
+  const deadline = Date.now() + timeout;
+  while (!predicate() && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.ok(predicate(), message);
+}
+
 test('first loads in parallel, copied-tab isolation, reload and BFCache keep v2 visit identities separate', async (context) => {
   const previous = {
     window: globalThis.window,
@@ -77,7 +83,8 @@ test('first loads in parallel, copied-tab isolation, reload and BFCache keep v2 
   assert.equal(initialize(firstTab, firstDocument), true);
   assert.equal(initialize(copiedTab, copiedDocument), true);
 
-  await new Promise((resolve) => setTimeout(resolve, 30));
+  await waitFor(() => requests.filter((request) => request.bootstrap === true).length === 2,
+    'both parallel documents finish their bootstrap');
   const bootstrapRequests = requests.filter((request) => request.bootstrap === true);
   assert.equal(bootstrapRequests.length, 2, 'each document bootstraps before sending its first event batch');
   assert.ok(bootstrapRequests.every((request) => Object.keys(request).length === 1), 'bootstrap does not accept browser-supplied identity');
@@ -94,12 +101,14 @@ test('first loads in parallel, copied-tab isolation, reload and BFCache keep v2 
   const pageshow = new Event('pageshow');
   Object.defineProperty(pageshow, 'persisted', { value: true });
   firstTab.dispatchEvent(pageshow);
-  await new Promise((resolve) => setTimeout(resolve, 20));
+  await waitFor(() => requests.flatMap((request) => request.events || []).filter((event) => event.name === 'page_view').length === 3,
+    'BFCache restoration records its new page visit');
 
   const reloadTab = makeWindow();
   const reloadDocument = makeDocument();
   initialize(reloadTab, reloadDocument);
-  await new Promise((resolve) => setTimeout(resolve, 20));
+  await waitFor(() => requests.flatMap((request) => request.events || []).filter((event) => event.name === 'page_view').length === 4,
+    'reload records its new page visit');
 
   const allViews = requests.flatMap((request) => request.events || []).filter((event) => event.name === 'page_view');
   assert.equal(allViews.length, 4, 'BFCache restoration and a new document each record a page view');

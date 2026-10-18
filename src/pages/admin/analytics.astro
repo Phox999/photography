@@ -197,7 +197,7 @@ import '../../styles/admin-analytics.css';
     <article class="admin-card analytics-panel analytics-next-pages">
       <h3>下一個被觀測到的頁面</h3>
       <p class="analytics-panel__note">沒有轉移紀錄不代表訪客離開；歷史 v1 資料缺少分頁識別，不用來判定確定路徑。</p>
-      <div class="analytics-table-wrap"><table class="analytics-table"><caption>同一 session 同一分頁的相鄰 v2 頁面瀏覽</caption>
+      <div class="analytics-table-wrap"><table class="analytics-table"><caption>同一 session 同一分頁的相鄰 v2 頁面瀏覽；每組流向按造訪去重</caption>
         <thead><tr><th scope="col">本頁</th><th scope="col">下一個觀測頁</th><th scope="col">造訪</th><th scope="col">回查</th></tr></thead>
         <tbody data-transition-rows><tr><td colspan="4">尚無可判定的 v2 頁面轉移</td></tr></tbody>
       </table></div>
@@ -256,7 +256,7 @@ import '../../styles/admin-analytics.css';
     ctaDenominator: number; ctaClicks: number; ctaClickRate: number | null;
     visibleProof: number; clickSupplement: number; clickWithoutVisibleEvent: number; legacyUnpairedClicks: number;
   };
-  type TransitionRow = { from: string; to: string; visits: number };
+  type TransitionRow = { from: string; to: string; sessions: number; visits: number };
   type PathResponse = { pages: PathRow[]; transitions: TransitionRow[]; legacyUnpairedClicks: number; transitionBasis: string };
 
   const $ = <T extends Element>(selector: string) => document.querySelector<T>(selector)!;
@@ -539,6 +539,7 @@ import '../../styles/admin-analytics.css';
     result: $('[data-session-filter="result"]') as HTMLSelectElement,
     visitor: $('[data-session-filter="visitor"]') as HTMLInputElement,
   };
+  let transitionDrill: { from: string; to: string } | null = null;
   const resultLabels: Record<string, string> = {
     portfolio_no_form_start: '看作品未開始填表', cta_no_form_start: '點合作入口未開始填表',
     submit_error: '送出發生錯誤', error_then_success: '錯誤後成功收件',
@@ -577,6 +578,10 @@ import '../../styles/admin-analytics.css';
       const value = filterInputs[key].value.trim();
       if (value && (result || key !== 'result')) params.set(key, value);
     }
+    if (transitionDrill) {
+      params.set('transition_from', transitionDrill.from);
+      params.set('transition_to', transitionDrill.to);
+    }
     params.set('limit', '25');
     if (cursor && sessionNextCursor) {
       params.set('cursor_at', sessionNextCursor.startedAt);
@@ -600,7 +605,7 @@ import '../../styles/admin-analytics.css';
   function renderFilterChips() {
     const host = $('[data-global-active-filters]') as HTMLElement;
     host.replaceChildren();
-    const active: { key: keyof typeof filterInputs; label: string }[] = [];
+    const active: { key: keyof typeof filterInputs | 'transition'; label: string }[] = [];
     for (const key of ['source', 'device', 'page', 'result', 'visitor'] as const) {
       const value = filterInputs[key].value.trim();
       if (!value) continue;
@@ -611,6 +616,9 @@ import '../../styles/admin-analytics.css';
       if (key === 'result') label = resultLabels[value] || value;
       if (key === 'visitor') label = value.toUpperCase().startsWith('V-') ? value.toUpperCase() : 'V-' + value.toUpperCase();
       active.push({ key, label });
+    }
+    if (transitionDrill) {
+      active.push({ key: 'transition', label: pageLabel(transitionDrill.from) + ' → ' + pageLabel(transitionDrill.to) });
     }
     if (!active.length) return;
     host.append(textElement('span', '目前篩選：', 'analytics-filter-caption'));
@@ -949,11 +957,14 @@ import '../../styles/admin-analytics.css';
       const row = transitionsBody.insertRow();
       row.insertCell().textContent = pageLabel(transition.from) + ' · ' + transition.from;
       row.insertCell().textContent = pageLabel(transition.to) + ' · ' + transition.to;
-      row.insertCell().textContent = count(transition.visits);
+      const sessionCell = row.insertCell();
+      sessionCell.textContent = count(transition.sessions);
+      sessionCell.title = '此流向的相鄰頁面瀏覽共 ' + count(transition.visits) + ' 次；造訪數按 session 去重。';
       const cell = row.insertCell();
       const button = textElement('button', '回查造訪', 'analytics-drill-button'); button.type = 'button';
-      button.dataset.pageDrill = transition.from;
-      button.setAttribute('aria-label', '回查從 ' + pageLabel(transition.from) + ' 繼續瀏覽的造訪');
+      button.dataset.transitionFrom = transition.from;
+      button.dataset.transitionTo = transition.to;
+      button.setAttribute('aria-label', '回查從 ' + pageLabel(transition.from) + ' 到 ' + pageLabel(transition.to) + ' 的 ' + count(transition.sessions) + ' 次造訪');
       cell.append(button);
     });
     const warning = data.legacyUnpairedClicks
@@ -1051,9 +1062,11 @@ import '../../styles/admin-analytics.css';
     const target = event.target;
     if (!(target instanceof Element)) return;
     const button = target.closest<HTMLButtonElement>('[data-remove-filter]');
-    const key = button?.dataset.removeFilter as keyof typeof filterInputs | undefined;
-    if (!button || !key || !(key in filterInputs)) return;
-    filterInputs[key].value = '';
+    const key = button?.dataset.removeFilter;
+    if (!button || !key) return;
+    if (key === 'transition') transitionDrill = null;
+    else if (key in filterInputs) filterInputs[key as keyof typeof filterInputs].value = '';
+    else return;
     renderFilterChips();
     void refreshJourneyViews();
   });
@@ -1085,8 +1098,15 @@ import '../../styles/admin-analytics.css';
     const target = event.target;
     if (!(target instanceof Element)) return;
     const button = target.closest<HTMLButtonElement>('[data-page-drill]');
-    if (!button) return;
-    filterInputs.page.value = button.dataset.pageDrill || '';
+    const transitionButton = target.closest<HTMLButtonElement>('[data-transition-from][data-transition-to]');
+    if (!button && !transitionButton) return;
+    if (transitionButton?.dataset.transitionFrom && transitionButton.dataset.transitionTo) {
+      transitionDrill = { from: transitionButton.dataset.transitionFrom, to: transitionButton.dataset.transitionTo };
+      filterInputs.page.value = transitionDrill.to;
+    } else if (button) {
+      transitionDrill = null;
+      filterInputs.page.value = button.dataset.pageDrill || '';
+    }
     renderFilterChips();
     void selectPanel('sessions');
   };

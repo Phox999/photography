@@ -427,7 +427,9 @@ create or replace function public.get_site_analytics_sessions(
   p_cursor_at timestamptz default null,
   p_cursor_id uuid default null,
   p_limit integer default 25,
-  p_visitor_id uuid default null
+  p_visitor_id uuid default null,
+  p_transition_from text default null,
+  p_transition_to text default null
 )
 returns jsonb
 language plpgsql
@@ -439,16 +441,39 @@ declare
   v_items jsonb;
   v_next jsonb;
 begin
-  if p_limit not between 1 and 50 or ((p_cursor_at is null) <> (p_cursor_id is null)) then
+  if p_limit not between 1 and 50 or ((p_cursor_at is null) <> (p_cursor_id is null))
+    or ((p_transition_from is null) <> (p_transition_to is null))
+    or (p_transition_from is not null and (p_transition_from !~ '^/' or pg_catalog.length(p_transition_from) > 500 or p_transition_from ~ '[?#]'))
+    or (p_transition_to is not null and (p_transition_to !~ '^/' or pg_catalog.length(p_transition_to) > 500 or p_transition_to ~ '[?#]')) then
     raise exception using errcode = '22023', message = 'invalid_input';
   end if;
 
-  with filtered as materialized (
+  with eligible as materialized (
     select * from private.site_analytics_session_rows(p_start, p_end, p_source, p_device, p_page_path, p_result, p_visitor_prefix, p_visitor_id)
+  ), page_visits as materialized (
+    select e.session_id, e.tab_id, e.tab_seq, e.page_path,
+      count(*) over (partition by e.session_id, e.tab_id, e.tab_seq) as sequence_count
+    from private.site_analytics_events e
+    join eligible r on r.session_id = e.session_id and r.matches_filter
+    where p_transition_from is not null
+      and e.received_at >= p_start and e.received_at < p_end
+      and e.event_name = 'page_view' and e.schema_version = 2
+      and e.tab_id is not null and e.tab_seq is not null and e.page_visit_id is not null
+  ), transition_matches as materialized (
+    select distinct a.session_id
+    from page_visits a
+    join page_visits b on b.session_id = a.session_id and b.tab_id = a.tab_id and b.tab_seq = a.tab_seq + 1
+    where a.sequence_count = 1 and b.sequence_count = 1
+      and a.page_path = p_transition_from and b.page_path = p_transition_to
+  ), filtered as materialized (
+    select r.*, (p_transition_from is null or exists (
+      select 1 from transition_matches t where t.session_id = r.session_id
+    )) as matches_transition
+    from eligible r
   ),
   page as materialized (
     select * from filtered
-    where (p_visitor_id is not null or matches_filter)
+    where (p_visitor_id is not null or matches_filter) and matches_transition
       and (p_cursor_at is null or (started_at, session_id) < (p_cursor_at, p_cursor_id))
     order by started_at desc, session_id desc
     limit p_limit + 1
@@ -457,7 +482,7 @@ begin
     select * from page order by started_at desc, session_id desc limit p_limit
   )
   select
-    (select count(*) from filtered where p_visitor_id is not null or matches_filter),
+    (select count(*) from filtered where (p_visitor_id is not null or matches_filter) and matches_transition),
     coalesce((select jsonb_agg(jsonb_build_object(
       'sessionId', session_id, 'visitorId', visitor_id, 'startedAt', started_at,
       'source', source, 'medium', medium, 'campaign', campaign, 'device', device,
@@ -467,7 +492,7 @@ begin
       'formStarted', has_form_start, 'ctaClicked', has_cta_click, 'submitError', has_submit_error,
       'inquiryReceived', has_success, 'everInquiryReceived', ever_inquiry_received, 'errorThenSuccess', error_before_success,
       'errorAt', first_error_at, 'inquiryAt', first_success_at, 'everInquiryAt', first_inquiry_received_at, 'lastEventAt', last_event_at,
-      'matchesCurrentFilter', matches_filter
+      'matchesCurrentFilter', matches_filter and matches_transition
     ) order by started_at desc, session_id desc) from visible), '[]'::jsonb),
     case when (select count(*) from page) > p_limit then (
       select jsonb_build_object('startedAt', started_at, 'sessionId', session_id)
@@ -662,7 +687,8 @@ begin
       and e.tab_seq is not null and e.page_visit_id is not null
   ),
   transitions as (
-    select a.page_path as from_path, b.page_path as to_path, count(*)::bigint as visits
+    select a.page_path as from_path, b.page_path as to_path,
+      count(distinct a.session_id)::bigint as sessions, count(*)::bigint as visits
     from raw_page_visits a
     join raw_page_visits b on b.session_id = a.session_id and b.tab_id = a.tab_id and b.tab_seq = a.tab_seq + 1
     where a.sequence_count = 1 and b.sequence_count = 1
@@ -676,8 +702,8 @@ begin
       'visibleProof', visible_proof, 'clickSupplement', click_supplement,
       'clickWithoutVisibleEvent', click_without_visible_event, 'legacyUnpairedClicks', legacy_unpaired_clicks
     ) order by page_views desc, page_path), '[]'::jsonb),
-    (select coalesce(jsonb_agg(jsonb_build_object('from', from_path, 'to', to_path, 'visits', visits) order by visits desc, to_path), '[]'::jsonb)
-      from (select * from transitions order by visits desc, to_path limit p_limit) selected_transitions),
+    (select coalesce(jsonb_agg(jsonb_build_object('from', from_path, 'to', to_path, 'sessions', sessions, 'visits', visits) order by sessions desc, to_path), '[]'::jsonb)
+      from (select * from transitions order by sessions desc, to_path limit p_limit) selected_transitions),
     (select count(*)::bigint from period_events where event_name = 'inquiry_cta_click' and schema_version = 1)
   into v_pages, v_transitions, v_unpaired_clicks
   from (select * from paths order by page_views desc, page_path limit p_limit) selected_pages;
@@ -743,7 +769,7 @@ begin
       and coalesce(e.client_at, e.received_at) >= r.review_at
     group by r.session_id, r.schema_version, r.form_instance_id, r.start_at, r.review_at
   ), matched as (
-    select distinct i.id, i.session_id
+    select distinct i.id, a.session_id
     from public.collaboration_requests i
     join private.site_analytics_inquiry_attribution a on a.inquiry_id = i.id
     join private.site_analytics_sessions s on s.session_id = a.session_id and s.visitor_id = a.visitor_id
@@ -772,7 +798,7 @@ begin
       pg_catalog.jsonb_build_object('stage', 'form_submit_attempt', 'sessions', v_attempted),
       pg_catalog.jsonb_build_object('stage', 'inquiry_created', 'sessions', v_completed)
     ),
-    'unpairedInquiries', pg_catalog.greatest(v_inquiries - v_matched_inquiries, 0),
+    'unpairedInquiries', greatest(v_inquiries - v_matched_inquiries, 0),
     'matchedInquiries', v_matched_inquiries
   );
 end;
@@ -786,8 +812,8 @@ grant execute on function public.record_site_analytics_events_v2(uuid, uuid, jso
 revoke all on function public.record_site_analytics_inquiry_v2(uuid, uuid, uuid, uuid) from public, anon, authenticated, service_role;
 grant execute on function public.record_site_analytics_inquiry_v2(uuid, uuid, uuid, uuid) to service_role;
 
-revoke all on function public.get_site_analytics_sessions(timestamptz, timestamptz, text, text, text, text, text, timestamptz, uuid, integer, uuid) from public, anon, authenticated, service_role;
-grant execute on function public.get_site_analytics_sessions(timestamptz, timestamptz, text, text, text, text, text, timestamptz, uuid, integer, uuid) to service_role;
+revoke all on function public.get_site_analytics_sessions(timestamptz, timestamptz, text, text, text, text, text, timestamptz, uuid, integer, uuid, text, text) from public, anon, authenticated, service_role;
+grant execute on function public.get_site_analytics_sessions(timestamptz, timestamptz, text, text, text, text, text, timestamptz, uuid, integer, uuid, text, text) to service_role;
 
 revoke all on function public.get_site_analytics_session_detail(uuid) from public, anon, authenticated, service_role;
 grant execute on function public.get_site_analytics_session_detail(uuid) to service_role;
@@ -803,7 +829,7 @@ comment on column private.site_analytics_events.tab_id is 'A per-tab pseudonymou
 comment on column private.site_analytics_events.document_id is 'A per-document ID; event_seq is meaningful only inside this document.';
 comment on column private.site_analytics_events.form_instance_id is 'A random form instance ID; never contains form values or contact data.';
 comment on column private.site_analytics_inquiry_attribution.form_instance_id is 'Optional client-generated form instance ID attached only after a backend-committed inquiry receipt is verified.';
-comment on function public.get_site_analytics_sessions(timestamptz, timestamptz, text, text, text, text, text, timestamptz, uuid, integer, uuid) is 'Bounded, keyset-paginated administrator session list and visitor history. Range membership uses received_at events or backend inquiry created_at.';
+comment on function public.get_site_analytics_sessions(timestamptz, timestamptz, text, text, text, text, text, timestamptz, uuid, integer, uuid, text, text) is 'Bounded, keyset-paginated administrator session list and visitor history. Range membership uses received_at events or backend inquiry created_at. Optional transition filters return each matching session once.';
 comment on function public.get_site_analytics_paths(timestamptz, timestamptz, text, text, text, text, text, integer) is 'Page views and deduplicated CTA exposure/click pairs; transitions require adjacent v2 tab_seq page views in one session and tab.';
 
 notify pgrst, 'reload schema';

@@ -155,6 +155,53 @@ test('管理員篩選驗證拒絕私人路徑、錯誤代碼與不完整游標',
   assert.throws(() => analyticsAdminFilters(new URLSearchParams('range=today&cursor_at=2026-10-17T00%3A00%3A00.000Z')));
 });
 
+test('頁面流向篩選只允許成對公開路徑', () => {
+  const filters = analyticsAdminFilters(new URLSearchParams(
+    'range=today&page=%2Fcooperation%2F&transition_from=%2Fportfolio%2F&transition_to=%2Fcooperation%2F',
+  ), { allowTransition: true });
+  assert.equal(filters.transitionFrom, '/portfolio/');
+  assert.equal(filters.transitionTo, '/cooperation/');
+  assert.throws(() => analyticsAdminFilters(new URLSearchParams('range=today&transition_from=%2Fportfolio%2F'), { allowTransition: true }));
+  assert.throws(() => analyticsAdminFilters(new URLSearchParams('range=today&transition_from=%2Fadmin%2F&transition_to=%2Fcooperation%2F'), { allowTransition: true }));
+  assert.throws(() => analyticsAdminFilters(new URLSearchParams('range=today&transition_from=%2Fportfolio%2F&transition_to=%2Fcooperation%2F')));
+});
+
+test('造訪流向鑽取將 from/to 路徑傳入管理員 RPC 並回傳 no-store 清單', async (context) => {
+  const originalFetch = globalThis.fetch;
+  let rpcBody = null;
+  const userId = '20000000-0000-4000-8000-000000000099';
+  globalThis.fetch = async (url, options = {}) => {
+    const parsed = new URL(String(url));
+    if (parsed.pathname === '/auth/v1/user') {
+      return new Response(JSON.stringify({ id: userId, email: 'admin@example.invalid', email_confirmed_at: '2026-10-18T00:00:00Z' }), { status: 200 });
+    }
+    if (parsed.pathname === '/rest/v1/site_admins') {
+      return new Response(JSON.stringify([{ user_id: userId, active: true }]), { status: 200 });
+    }
+    if (parsed.pathname === '/rest/v1/rpc/get_site_analytics_sessions') {
+      rpcBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({ items: [], total: 0, nextCursor: null }), { status: 200 });
+    }
+    assert.fail('unexpected synthetic upstream request: ' + parsed.pathname);
+  };
+  context.after(() => { globalThis.fetch = originalFetch; });
+  const response = await analyticsSessions({
+    request: new Request('https://phox999.com/api/admin/analytics/sessions?range=today&page=%2Fcooperation%2F&transition_from=%2Fportfolio%2F&transition_to=%2Fcooperation%2F', {
+      headers: { cookie: '__Host-phox-access=synthetic-admin-session' },
+    }),
+    env: {
+      SUPABASE_URL: 'https://project.supabase.co',
+      SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_synthetic_test_key',
+      SUPABASE_SECRET_KEY: 'sb_secret_synthetic_test_key',
+    },
+  });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control') || '', /no-store/i);
+  assert.equal(rpcBody.p_transition_from, '/portfolio/');
+  assert.equal(rpcBody.p_transition_to, '/cooperation/');
+  assert.equal(rpcBody.p_page_path, '/cooperation/');
+});
+
 test('缺少旅程 RPC 以明確降級錯誤回報，保留舊報表路徑', async (context) => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify({ code: 'PGRST202', message: 'function not found' }), { status: 404 });
