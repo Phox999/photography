@@ -4,15 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "node scripts/generate-portfolio-thumbnails.mjs && astro dev",
+    "build": "node scripts/generate-portfolio-thumbnails.mjs && astro build",
     "build:worker": "npm run build && node scripts/prepare-worker-assets.mjs",
     "verify:worker": "node scripts/verify-seo.mjs --dist worker-dist --strict-dist",
     "verify:seo": "node scripts/verify-seo.mjs",
     "images:webp": "node scripts/convert-webp.mjs",
     "images:seo": "node scripts/generate-seo-image-variants.mjs",
+    "images:admin": "node scripts/generate-portfolio-thumbnails.mjs",
     "verify:routes": "node scripts/verify-portfolio-routes.mjs",
     "preview": "astro preview",
+    "pretest": "node scripts/generate-portfolio-thumbnails.mjs",
     "test": "node --test"
   },
   "dependencies": {

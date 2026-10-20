@@ -4,6 +4,7 @@ node_modules/
 .astro/
 dist/
 worker-dist/
+public/assets/portfolio-thumbnails/
 
 # Cloudflare local state
 .wrangler/
