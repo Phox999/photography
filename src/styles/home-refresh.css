@@ -198,8 +198,17 @@
 }
 
 .feedback-track {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   border-radius: var(--radius-xl);
+  cursor: grab;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  touch-action: pan-y;
+}
+
+.feedback-track::-webkit-scrollbar {
+  display: none;
 }
 
 .feedback-slide,
@@ -1223,15 +1232,24 @@
   filter: drop-shadow(0 12px 24px rgba(34, 58, 72, 0.1));
 }
 .home-page .feedback-track {
-  display: block;
+  display: flex;
   width: 100%;
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  border-radius: var(--radius-xl);
+}
+.home-page .feedback-track.is-dragging {
+  cursor: grabbing;
   scroll-snap-type: none;
   scroll-behavior: auto;
-  border-radius: var(--radius-xl);
+  user-select: none;
 }
 .home-page .feedback-slide {
   display: block;
+  flex: 0 0 100%;
+  scroll-snap-align: start;
   width: 100%;
   max-width: 100%;
   min-width: 0;

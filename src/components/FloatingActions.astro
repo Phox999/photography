@@ -3,26 +3,13 @@ import SupportAssistant from './SupportAssistant.astro';
 ---
 
 <div class="floating-actions" role="group" aria-label="快捷功能">
-  <SupportAssistant />
-  <a class="floating-actions__top" href="#top" aria-label="回到頁首" title="回到頁首" data-floating-top hidden>
+  <a class="floating-actions__top" href="#top" aria-label="回到頁首" title="回到頁首">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />
     </svg>
   </a>
+  <SupportAssistant />
 </div>
-
-<script>
-  const backToTop = document.querySelector<HTMLAnchorElement>('[data-floating-top]');
-
-  if (backToTop) {
-    const updateBackToTop = () => {
-      backToTop.hidden = window.scrollY < 360;
-    };
-
-    window.addEventListener('scroll', updateBackToTop, { passive: true });
-    updateBackToTop();
-  }
-</script>
 
 <style>
   .floating-actions {
@@ -70,9 +57,6 @@ import SupportAssistant from './SupportAssistant.astro';
     height: 24px;
   }
 
-  .floating-actions__top[hidden] {
-    display: none;
-  }
 
   @media (max-width: 520px) {
     .floating-actions {

@@ -154,8 +154,8 @@ for (let i = 0; i < feedbacks.length; i += 3) {
         <div class="feedback-window">
           <div class="feedback-track" data-feedback-track tabindex="0">
             {
-              feedbackPages.map((page, index) => (
-                <article class="feedback-slide" data-feedback-card hidden={index !== 0} aria-hidden={index !== 0 ? 'true' : 'false'}>
+              feedbackPages.map((page) => (
+                <article class="feedback-slide" data-feedback-card>
                   <div class="feedback-page">
                     {page.map((feedback) => {
                       const previewText = toPreviewText(feedback);
@@ -342,12 +342,13 @@ const unlockFeedbackScroll = () => {
       if (!pages.length || !track) return;
 
       currentIndex = (index + pages.length) % pages.length;
-      // Switch whole pages instead of scrolling a flex track. This avoids
-      // layout-dependent scroll offsets and cards bleeding past the frame.
-      pages.forEach((page, pageIndex) => {
-        const active = pageIndex === currentIndex;
-        page.hidden = !active;
-        page.setAttribute('aria-hidden', String(!active));
+      const targetPage = pages[currentIndex];
+      const targetLeft =
+        track.scrollLeft + targetPage.getBoundingClientRect().left - track.getBoundingClientRect().left;
+
+      track.scrollTo({
+        left: targetLeft,
+        behavior: 'smooth',
       });
 
       updateDots();
@@ -451,6 +452,91 @@ const closeDialog = () => {
         if (Number.isFinite(index)) goTo(index);
       });
     });
+
+    let activePointerId = null;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let scrollStartLeft = 0;
+    let isDragging = false;
+    let suppressClick = false;
+
+    track?.addEventListener('pointerdown', (event) => {
+      if (event.isPrimary === false || (event.pointerType === 'mouse' && event.button !== 0)) return;
+      if (event.target instanceof Element && event.target.closest('button, a, input, select, textarea')) return;
+
+      activePointerId = event.pointerId;
+      pointerStartX = event.clientX;
+      pointerStartY = event.clientY;
+      scrollStartLeft = track.scrollLeft;
+    });
+
+    track?.addEventListener('pointermove', (event) => {
+      if (event.pointerId !== activePointerId) return;
+
+      const deltaX = event.clientX - pointerStartX;
+      const deltaY = event.clientY - pointerStartY;
+
+      if (!isDragging) {
+        if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 8) return;
+        if (Math.abs(deltaX) <= Math.abs(deltaY)) {
+          activePointerId = null;
+          return;
+        }
+
+        isDragging = true;
+        track.classList.add('is-dragging');
+        track.setPointerCapture(event.pointerId);
+      }
+
+      event.preventDefault();
+      track.scrollLeft = scrollStartLeft - deltaX;
+    });
+
+    const finishPointerDrag = (event) => {
+      if (event.pointerId !== activePointerId) return;
+
+      if (isDragging) {
+        track?.classList.remove('is-dragging');
+        suppressClick = true;
+        window.setTimeout(() => {
+          suppressClick = false;
+        }, 0);
+      }
+
+      activePointerId = null;
+      isDragging = false;
+    };
+
+    track?.addEventListener('pointerup', finishPointerDrag);
+    track?.addEventListener('pointercancel', finishPointerDrag);
+    track?.addEventListener('dragstart', (event) => event.preventDefault());
+    track?.addEventListener(
+      'click',
+      (event) => {
+        if (!suppressClick) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      },
+      true,
+    );
+
+    track?.addEventListener(
+      'scroll',
+      () => {
+        if (!pages.length) return;
+
+        const trackLeft = track.getBoundingClientRect().left;
+        currentIndex = pages.reduce((nearestIndex, page, index) => {
+          const nearestPage = pages[nearestIndex];
+          const nearestDistance = Math.abs(nearestPage.getBoundingClientRect().left - trackLeft);
+          const distance = Math.abs(page.getBoundingClientRect().left - trackLeft);
+          return distance < nearestDistance ? index : nearestIndex;
+        }, 0);
+
+        updateDots();
+      },
+      { passive: true },
+    );
 
     closeButton?.addEventListener('click', closeDialog);
 
