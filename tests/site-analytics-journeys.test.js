@@ -5,6 +5,7 @@ import { onRequest as analyticsSessions } from '../functions/api/admin/analytics
 import { onRequest as analyticsSessionDetail } from '../functions/api/admin/analytics/sessions/[id].js';
 import { onRequest as analyticsVisitorSessions } from '../functions/api/admin/analytics/visitors/[id]/sessions.js';
 import { onRequest as analyticsPaths } from '../functions/api/admin/analytics/paths.js';
+import { onRequest as analyticsObservationCounts } from '../functions/api/admin/analytics/observation-counts.js';
 import worker from '../worker.js';
 import { HttpError } from '../server/auth.js';
 import { analyticsAdminFilters, callAnalyticsJourneyRpc } from '../server/site-analytics-admin.js';
@@ -115,12 +116,13 @@ test('v2 RPC 缺席時沿用 v1 可辨識事件，並略過 v2 專屬曝光／�
   assert.equal(requests[1].body.p_events[2].placement, 'other', 'new v2 placements map to a v1 allowlisted value');
 });
 
-test('新旅程 API 全部要求管理員 session 且回應不快取', async () => {
+test('新旅程與現象統計 API 全部要求管理員 session 且回應不快取', async () => {
   const routes = [
     [analyticsSessions, 'https://phox999.com/api/admin/analytics/sessions'],
     [analyticsSessionDetail, 'https://phox999.com/api/admin/analytics/sessions/20000000-0000-4000-8000-000000000001'],
     [analyticsVisitorSessions, 'https://phox999.com/api/admin/analytics/visitors/20000000-0000-4000-8000-000000000001/sessions'],
     [analyticsPaths, 'https://phox999.com/api/admin/analytics/paths'],
+    [analyticsObservationCounts, 'https://phox999.com/api/admin/analytics/observation-counts'],
   ];
   for (const [handler, url] of routes) {
     const response = await handler({ request: new Request(url), env: {} , params: { id: '20000000-0000-4000-8000-000000000001' } });
@@ -129,12 +131,13 @@ test('新旅程 API 全部要求管理員 session 且回應不快取', async () 
   }
 });
 
-test('Worker 明確路由註冊四個新旅程端點，未登入請求均被拒絕', async () => {
+test('Worker 明確路由註冊新旅程與現象統計端點，未登入請求均被拒絕', async () => {
   const urls = [
     'https://phox999.com/api/admin/analytics/sessions',
     'https://phox999.com/api/admin/analytics/sessions/20000000-0000-4000-8000-000000000001',
     'https://phox999.com/api/admin/analytics/visitors/20000000-0000-4000-8000-000000000001/sessions',
     'https://phox999.com/api/admin/analytics/paths',
+    'https://phox999.com/api/admin/analytics/observation-counts',
   ];
   for (const url of urls) {
     const response = await worker.fetch(new Request(url), {}, { waitUntil() {}, passThroughOnException() {} });
@@ -200,6 +203,54 @@ test('造訪流向鑽取將 from/to 路徑傳入管理員 RPC 並回傳 no-store
   assert.equal(rpcBody.p_transition_from, '/portfolio/');
   assert.equal(rpcBody.p_transition_to, '/cooperation/');
   assert.equal(rpcBody.p_page_path, '/cooperation/');
+});
+
+test('現象統計只呼叫一次聚合 RPC，並回傳分段管理員時序', async (context) => {
+  const originalFetch = globalThis.fetch;
+  let rpcCount = 0;
+  let rpcBody = null;
+  const userId = '20000000-0000-4000-8000-000000000099';
+  globalThis.fetch = async (url, options = {}) => {
+    const parsed = new URL(String(url));
+    if (parsed.pathname === '/auth/v1/user') {
+      return new Response(JSON.stringify({ id: userId, email: 'admin@example.invalid', email_confirmed_at: '2026-10-18T00:00:00Z' }), { status: 200 });
+    }
+    if (parsed.pathname === '/rest/v1/site_admins') {
+      return new Response(JSON.stringify([{ user_id: userId, active: true }]), { status: 200 });
+    }
+    if (parsed.pathname === '/rest/v1/rpc/get_site_analytics_observation_counts') {
+      rpcCount += 1;
+      rpcBody = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        total: 12,
+        counts: { portfolio_no_form_start: 5, cta_no_form_start: 3, submit_error: 2, error_then_success: 1 },
+      }), { status: 200 });
+    }
+    assert.fail('unexpected synthetic upstream request: ' + parsed.pathname);
+  };
+  context.after(() => { globalThis.fetch = originalFetch; });
+  const response = await analyticsObservationCounts({
+    request: new Request('https://phox999.com/api/admin/analytics/observation-counts?range=today&source=instagram&page=%2Fcooperation%2F&transition_from=%2Fportfolio%2F&transition_to=%2Fcooperation%2F', {
+      headers: { cookie: '__Host-phox-access=synthetic-admin-session' },
+    }),
+    env: {
+      SUPABASE_URL: 'https://project.supabase.co',
+      SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_synthetic_test_key',
+      SUPABASE_SECRET_KEY: 'sb_secret_synthetic_test_key',
+    },
+  });
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(rpcCount, 1);
+  assert.equal(rpcBody.p_source, 'instagram');
+  assert.equal(rpcBody.p_page_path, '/cooperation/');
+  assert.equal(rpcBody.p_transition_from, '/portfolio/');
+  assert.equal(rpcBody.p_transition_to, '/cooperation/');
+  assert.equal(result.total, 12);
+  assert.equal(result.counts.submit_error, 2);
+  assert.match(response.headers.get('server-timing') || '', /user_check;dur=/);
+  assert.match(response.headers.get('server-timing') || '', /admin_allowlist;dur=/);
+  assert.match(response.headers.get('server-timing') || '', /business_rpc;dur=/);
 });
 
 test('缺少旅程 RPC 以明確降級錯誤回報，保留舊報表路徑', async (context) => {

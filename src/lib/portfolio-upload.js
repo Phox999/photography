@@ -2,7 +2,143 @@ export const PORTFOLIO_WEBP_QUALITY = 0.88;
 export const PORTFOLIO_UPLOAD_MAX_BYTES = 8 * 1024 * 1024;
 export const PORTFOLIO_SOURCE_MAX_BYTES = 40 * 1024 * 1024;
 export const PORTFOLIO_MAX_PIXELS = 40_000_000;
+export const PORTFOLIO_THUMBNAIL_SIZE = 384;
+export const PORTFOLIO_THUMBNAIL_TARGET_BYTES = 80 * 1024;
 const HEADER_LIMIT = 512 * 1024;
+
+let imageWorker = null;
+let imageWorkerUnavailable = false;
+let workerJobId = 0;
+const workerJobs = new Map();
+
+function getImageWorker() {
+  if (imageWorkerUnavailable || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') return null;
+  if (imageWorker) return imageWorker;
+  try {
+    imageWorker = new Worker(new URL('./portfolio-image-worker.js', import.meta.url), { type: 'module' });
+  } catch { imageWorkerUnavailable = true; return null; }
+  imageWorker.addEventListener('message', (event) => {
+    const job = workerJobs.get(event.data?.id);
+    if (!job) return;
+    workerJobs.delete(event.data.id);
+    if (event.data.unsupported) {
+      imageWorkerUnavailable = true;
+      imageWorker?.terminate(); imageWorker = null;
+      job.reject(new Error('WORKER_UNSUPPORTED'));
+    }
+    else if (event.data.error) job.reject(new Error(event.data.error));
+    else job.resolve({ file: event.data.output, thumbnail: event.data.thumbnail });
+  });
+  imageWorker.addEventListener('error', () => {
+    const worker = imageWorker;
+    imageWorkerUnavailable = true;
+    imageWorker = null;
+    worker?.terminate();
+    for (const job of workerJobs.values()) job.reject(new Error('WORKER_UNAVAILABLE'));
+    workerJobs.clear();
+  });
+  return imageWorker;
+}
+
+function processInWorker(file, convertJpeg) {
+  const worker = getImageWorker();
+  if (!worker) return Promise.reject(new Error('WORKER_UNAVAILABLE'));
+  const id = ++workerJobId;
+  return new Promise((resolve, reject) => {
+    workerJobs.set(id, { resolve, reject });
+    try {
+      worker.postMessage({
+        id,
+        file,
+        convertJpeg: convertJpeg && file.type === 'image/jpeg',
+        thumbnailSize: PORTFOLIO_THUMBNAIL_SIZE,
+        quality: PORTFOLIO_WEBP_QUALITY,
+      });
+    } catch {
+      workerJobs.delete(id);
+      imageWorkerUnavailable = true;
+      imageWorker?.terminate(); imageWorker = null;
+      reject(new Error('WORKER_UNAVAILABLE'));
+    }
+  });
+}
+
+function nextFrame() {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve());
+    else setTimeout(resolve, 16);
+  });
+}
+
+function canvasBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error(`${type} 轉檔失敗，原始照片已保留。`)), type, quality);
+  });
+}
+
+async function processOnMainThread(file, convertJpeg) {
+  if (typeof createImageBitmap !== 'function') throw new Error('此瀏覽器不支援安全的圖片解碼，請改用較新的瀏覽器。');
+  await nextFrame();
+  let bitmap;
+  let mainCanvas;
+  let thumbnailCanvas;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > PORTFOLIO_MAX_PIXELS) {
+      throw new Error('照片尺寸超過 4000 萬像素解碼上限，請先縮小照片。');
+    }
+    let output = file;
+    if (file.type === 'image/jpeg' && convertJpeg) {
+      mainCanvas = document.createElement('canvas');
+      mainCanvas.width = bitmap.width; mainCanvas.height = bitmap.height;
+      const context = mainCanvas.getContext('2d');
+      if (!context) throw new Error('瀏覽器無法建立圖片轉檔畫布。');
+      context.drawImage(bitmap, 0, 0);
+      const blob = await canvasBlob(mainCanvas, 'image/webp', PORTFOLIO_WEBP_QUALITY);
+      output = new File([blob], file.name.replace(/\.jpe?g$/i, '.webp'), { type: 'image/webp', lastModified: file.lastModified });
+      if (output.size > PORTFOLIO_UPLOAD_MAX_BYTES) throw new Error('轉檔後照片超過 8 MiB 上傳上限。');
+    }
+    await nextFrame();
+    const scale = Math.min(1, PORTFOLIO_THUMBNAIL_SIZE / Math.max(bitmap.width, bitmap.height));
+    thumbnailCanvas = document.createElement('canvas');
+    thumbnailCanvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    thumbnailCanvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const thumbnailContext = thumbnailCanvas.getContext('2d');
+    if (!thumbnailContext) throw new Error('瀏覽器無法建立縮圖畫布。');
+    thumbnailContext.drawImage(bitmap, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+    const thumbnail = await canvasBlob(thumbnailCanvas, 'image/webp', 0.82);
+    return { file: output, thumbnail };
+  } finally {
+    bitmap?.close();
+    if (mainCanvas) { mainCanvas.width = 0; mainCanvas.height = 0; }
+    if (thumbnailCanvas) { thumbnailCanvas.width = 0; thumbnailCanvas.height = 0; }
+    await nextFrame();
+  }
+}
+
+export async function preparePortfolioImage(file, { convertJpeg = true } = {}) {
+  await inspectPortfolioUpload(file);
+  let prepared;
+  try {
+    prepared = await processInWorker(file, convertJpeg);
+  } catch (error) {
+    if (error instanceof Error && ['WORKER_UNAVAILABLE', 'WORKER_UNSUPPORTED'].includes(error.message)) {
+      prepared = await processOnMainThread(file, convertJpeg);
+    } else throw error;
+  }
+  if (convertJpeg && prepared.file.type !== 'image/webp' && file.type === 'image/jpeg') {
+    throw new Error('此瀏覽器無法輸出 WebP；原始 JPG 已保留，沒有改用 JPG 上傳。');
+  }
+  if (convertJpeg && file.type === 'image/jpeg' && !(prepared.file instanceof File)) {
+    prepared.file = new File([prepared.file], file.name.replace(/\.jpe?g$/i, '.webp'), { type: 'image/webp', lastModified: file.lastModified });
+  }
+  if (prepared.file.size > PORTFOLIO_UPLOAD_MAX_BYTES) throw new Error('轉檔後照片超過 8 MiB 上傳上限。');
+  if (file.type === 'image/jpeg' && prepared.file === file) {
+    prepared.file = new File([prepared.file], file.name.replace(/\.jpe?g$/i, '.webp'), { type: 'image/webp', lastModified: file.lastModified });
+  }
+  if (convertJpeg || file.type !== 'image/jpeg') await inspectPortfolioUpload(prepared.file);
+  return prepared;
+}
 
 function dimensions(bytes, type) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);

@@ -123,15 +123,17 @@ import '../../styles/admin-content.css';
     contentChangeSummary, contentHasChanges, hasHeroImageCapacity, hasIncompleteUploads, moveItem,
     restoreItem, uploadTaskIds, validateHeroUpload,
   } from '../../lib/admin-content-state.js';
+  import { preparePortfolioImage } from '../../lib/portfolio-upload.js';
+  import { setPortfolioThumbnailSource } from '../../lib/portfolio-thumbnails';
 
   type Faq = { question: string; answer: string };
-  type HeroImage = { path: string; url: string };
+  type HeroImage = { path: string; url: string; thumbnail_url?: string | null };
   type Content = {
     id: number; announcement: string; announcement_enabled: boolean; faqs: Faq[];
-    hero_title: string; hero_copy: string; hero_image_paths: string[]; hero_image_urls: string[];
+    hero_title: string; hero_copy: string; hero_image_paths: string[]; hero_image_urls: string[]; hero_image_thumbnail_urls?: Array<string | null>;
     version: number; updated_at: string;
   };
-  type UploadRow = { id: string; file: File; status: 'queued' | 'uploading' | 'uploaded' | 'failed'; error: string; image?: HeroImage };
+  type UploadRow = { id: string; file: File | null; fileName: string; fileSize: number; thumbnail?: Blob; status: 'queued' | 'uploading' | 'uploaded' | 'failed'; error: string; image?: HeroImage };
   type ValidationError = { tab: string; field: HTMLInputElement | HTMLTextAreaElement; message: string; row?: HTMLDetailsElement };
 
   const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -158,7 +160,6 @@ import '../../styles/admin-content.css';
   let uploading = false;
   let draggingPhotoIndex: number | null = null;
   let faqSerial = 0;
-  let uploadSerial = 0;
   let discardAction: 'reset' | 'reload' = 'reset';
   let previewMode: 'desktop' | 'mobile' = 'desktop';
 
@@ -287,46 +288,52 @@ import '../../styles/admin-content.css';
   }
 
   function renderPhotos() {
-    heroGrid.replaceChildren();
+    const rows = new Map(Array.from(heroGrid.querySelectorAll<HTMLElement>('[data-photo-path]'), (card) => [card.dataset.photoPath || '', card]));
+    const paths = new Set(heroImages.map((image) => image.path));
+    rows.forEach((card, path) => { if (!paths.has(path)) card.remove(); });
     heroImages.forEach((image, index) => {
-      const card = document.createElement('article');
-      card.className = 'content-photo';
+      let card = rows.get(image.path);
+      if (!card) {
+        card = document.createElement('article');
+        card.className = 'content-photo';
+        const top = document.createElement('div'); top.className = 'content-photo__top';
+        const number = document.createElement('strong'); number.className = 'content-photo__number';
+        const handle = document.createElement('button'); handle.type = 'button'; handle.className = 'content-photo__drag-handle'; handle.dataset.photoDragHandle = '';
+        handle.title = '抓住後拖曳以排序'; handle.textContent = '⠿ 拖曳'; top.append(number, handle);
+        const preview = document.createElement('button'); preview.type = 'button'; preview.className = 'content-photo__preview'; preview.dataset.photoPreview = '';
+        const img = document.createElement('img'); img.loading = 'lazy'; img.decoding = 'async'; preview.append(img);
+        const actions = document.createElement('div'); actions.className = 'content-photo__actions';
+        for (const [action, label] of [['up', '↑ 上移'], ['down', '↓ 下移'], ['remove', '移出輪播']]) {
+          const button = document.createElement('button'); button.type = 'button'; button.dataset.photoAction = action;
+          button.className = 'admin-button admin-button--quiet'; if (action === 'remove') button.classList.add('admin-button--danger');
+          button.textContent = label; actions.append(button);
+        }
+        card.append(top, preview, actions);
+      }
       card.dataset.photoIndex = String(index);
+      card.dataset.photoPath = image.path;
       card.setAttribute('aria-label', '輪播第 ' + (index + 1) + ' 張');
-      const top = document.createElement('div');
-      top.className = 'content-photo__top';
-      const number = document.createElement('strong');
-      number.className = 'content-photo__number';
+      const number = card.querySelector<HTMLElement>('.content-photo__number')!;
       number.textContent = String(index + 1).padStart(2, '0');
-      const handle = document.createElement('button');
-      handle.type = 'button'; handle.className = 'content-photo__drag-handle';
+      const handle = card.querySelector<HTMLButtonElement>('[data-photo-drag-handle]')!;
       handle.draggable = !busy && !uploading; handle.dataset.photoDragHandle = '';
       handle.setAttribute('aria-label', '拖曳第 ' + (index + 1) + ' 張照片以排序');
-      handle.title = '抓住後拖曳以排序'; handle.textContent = '⠿ 拖曳';
-      top.append(number, handle);
-      const preview = document.createElement('button');
-      preview.type = 'button'; preview.className = 'content-photo__preview'; preview.dataset.photoPreview = '';
+      const preview = card.querySelector<HTMLButtonElement>('[data-photo-preview]')!;
       preview.disabled = busy;
       preview.setAttribute('aria-label', '放大檢視輪播第 ' + (index + 1) + ' 張照片');
-      const img = document.createElement('img');
-      img.src = image.url; img.alt = '輪播第 ' + (index + 1) + ' 張照片'; img.loading = index < 4 ? 'eager' : 'lazy';
-      preview.append(img);
-      const actions = document.createElement('div');
-      actions.className = 'content-photo__actions';
-      for (const [action, label] of [['up', '↑ 上移'], ['down', '↓ 下移'], ['remove', '移出輪播']]) {
-        const button = document.createElement('button');
-        button.type = 'button'; button.dataset.photoAction = action; button.dataset.photoIndex = String(index);
-        button.className = 'admin-button admin-button--quiet';
-        if (action === 'remove') button.classList.add('admin-button--danger');
-        button.textContent = label;
-        button.disabled = busy || uploading || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1);
-        button.setAttribute('aria-label', action === 'remove'
-          ? '將第 ' + (index + 1) + ' 張照片移出輪播'
-          : '將第 ' + (index + 1) + ' 張照片' + (action === 'up' ? '上移' : '下移'));
-        actions.append(button);
+      const img = preview.querySelector<HTMLImageElement>('img')!;
+      img.alt = '輪播第 ' + (index + 1) + ' 張照片'; img.loading = index < 4 ? 'eager' : 'lazy';
+      if (img.dataset.originalSrc !== image.url || img.dataset.thumbnailSrc !== (image.thumbnail_url || '')) {
+        setPortfolioThumbnailSource(img, image.url, image.thumbnail_url || '');
       }
-      card.append(top, preview, actions);
-      heroGrid.append(card);
+      for (const button of card.querySelectorAll<HTMLButtonElement>('[data-photo-action]')) {
+        const action = button.dataset.photoAction;
+        const label = action === 'up' ? '將第 ' + (index + 1) + ' 張照片上移' : action === 'down' ? '將第 ' + (index + 1) + ' 張照片下移' : '將第 ' + (index + 1) + ' 張照片移出輪播';
+        button.dataset.photoIndex = String(index);
+        button.disabled = busy || uploading || (action === 'up' && index === 0) || (action === 'down' && index === heroImages.length - 1);
+        button.setAttribute('aria-label', label);
+      }
+      if (heroGrid.children[index] !== card) heroGrid.insertBefore(card, heroGrid.children[index] || null);
     });
     $('#hero-image-undo').toggleAttribute('hidden', !undoPhoto);
     if (undoPhoto) $('#hero-image-undo-message').textContent = '已將照片移出輪播；原始檔案仍保留。';
@@ -338,48 +345,63 @@ import '../../styles/admin-content.css';
     return (bytes / (1024 * 1024)).toFixed(2) + ' MiB';
   }
 
-  function renderUploadQueue() {
-    const list = $('#hero-upload-queue');
-    list.replaceChildren();
+  function createUploadQueueRow(item: UploadRow): HTMLLIElement {
+    const row = document.createElement('li'); row.className = 'content-upload-item'; row.dataset.uploadId = item.id;
+    const file = document.createElement('div'); file.className = 'content-upload-item__file';
+    const name = document.createElement('strong'); name.dataset.uploadName = '';
+    const size = document.createElement('span'); size.dataset.uploadSize = '';
+    file.append(name, size);
+    const status = document.createElement('div'); status.className = 'content-upload-item__status'; status.dataset.uploadStatus = '';
+    const actions = document.createElement('div'); actions.className = 'content-upload-item__actions';
+    const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'admin-button admin-button--quiet';
+    retry.dataset.uploadAction = 'retry'; retry.dataset.uploadId = item.id; retry.textContent = '重試上傳';
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'admin-button admin-button--quiet';
+    remove.dataset.uploadAction = 'remove'; remove.dataset.uploadId = item.id; remove.textContent = '移除項目';
+    actions.append(retry, remove); row.append(file, status, actions);
+    return row;
+  }
+
+  function updateUploadQueueRow(row: HTMLLIElement, item: UploadRow) {
     const labels: Record<UploadRow['status'], string> = {
       queued: '待上傳', uploading: '上傳中', uploaded: '上傳成功，尚未發布', failed: '上傳失敗',
     };
-    uploadQueue.forEach((item) => {
-      const row = document.createElement('li');
-      row.className = 'content-upload-item';
-      row.dataset.uploadState = item.status;
-      const file = document.createElement('div');
-      file.className = 'content-upload-item__file';
-      const name = document.createElement('strong');
-      name.textContent = item.file.name; name.title = item.file.name;
-      const size = document.createElement('span');
-      size.textContent = formatFileSize(item.file.size);
-      file.append(name, size);
-      const status = document.createElement('div');
-      status.className = 'content-upload-item__status';
-      status.setAttribute('aria-live', item.status === 'uploading' ? 'polite' : 'off');
-      status.textContent = labels[item.status];
-      if (item.error) { const reason = document.createElement('small'); reason.textContent = item.error; status.append(reason); }
-      const actions = document.createElement('div');
-      actions.className = 'content-upload-item__actions';
-      if (item.status === 'failed' && !validateHeroUpload(item.file)) {
-        const retry = document.createElement('button');
-        retry.type = 'button'; retry.className = 'admin-button admin-button--quiet';
-        retry.dataset.uploadAction = 'retry'; retry.dataset.uploadId = item.id; retry.textContent = '重試上傳';
-        retry.disabled = busy || uploading;
-        actions.append(retry);
+    row.dataset.uploadState = item.status;
+    const name = row.querySelector<HTMLElement>('[data-upload-name]')!;
+    name.textContent = item.fileName; name.title = item.fileName;
+    row.querySelector<HTMLElement>('[data-upload-size]')!.textContent = formatFileSize(item.fileSize);
+    const status = row.querySelector<HTMLElement>('[data-upload-status]')!;
+    status.replaceChildren(); status.setAttribute('aria-live', item.status === 'uploading' ? 'polite' : 'off');
+    status.append(document.createTextNode(labels[item.status]));
+    if (item.error) { const reason = document.createElement('small'); reason.textContent = item.error; status.append(reason); }
+    const retry = row.querySelector<HTMLButtonElement>('[data-upload-action="retry"]')!;
+    retry.hidden = item.status !== 'failed' || !item.file || Boolean(validateHeroUpload(item.file)); retry.disabled = busy || uploading;
+    row.querySelector<HTMLButtonElement>('[data-upload-action="remove"]')!.disabled = busy || uploading;
+  }
+
+  function renderUploadQueue(changedId?: string) {
+    const list = $('#hero-upload-queue');
+    if (changedId) {
+      const item = uploadQueue.find((entry) => entry.id === changedId);
+      if (item) {
+        let row = list.querySelector<HTMLLIElement>(`[data-upload-id="${CSS.escape(item.id)}"]`);
+        if (!row) row = createUploadQueueRow(item);
+        updateUploadQueueRow(row, item);
+        const index = uploadQueue.indexOf(item);
+        if (list.children[index] !== row) list.insertBefore(row, list.children[index] || null);
       }
-      const remove = document.createElement('button');
-      remove.type = 'button'; remove.className = 'admin-button admin-button--quiet';
-      remove.dataset.uploadAction = 'remove'; remove.dataset.uploadId = item.id;
-      remove.textContent = '移除項目'; remove.disabled = busy || uploading;
-      actions.append(remove);
-      row.append(file, status, actions);
-      list.append(row);
-    });
-    if (!uploadQueue.length) {
-      const empty = document.createElement('li');
-      empty.className = 'content-upload-empty'; empty.textContent = '尚未選取照片。'; list.append(empty);
+    } else {
+      const rows = new Map(Array.from(list.querySelectorAll<HTMLLIElement>('[data-upload-id]'), (row) => [row.dataset.uploadId || '', row]));
+      uploadQueue.forEach((item, index) => {
+        const row = rows.get(item.id) || createUploadQueueRow(item);
+        updateUploadQueueRow(row, item);
+        if (list.children[index] !== row) list.insertBefore(row, list.children[index] || null);
+        rows.delete(item.id);
+      });
+      rows.forEach((row) => row.remove());
+      let empty = list.querySelector<HTMLLIElement>('[data-upload-empty]');
+      if (!uploadQueue.length) {
+        if (!empty) { empty = document.createElement('li'); empty.className = 'content-upload-empty'; empty.dataset.uploadEmpty = ''; empty.textContent = '尚未選取照片。'; list.append(empty); }
+      } else empty?.remove();
     }
     const pending = uploadTaskIds(uploadQueue).length;
     $('#hero-image-upload').textContent = pending ? '上傳待處理照片（' + pending + '）' : '上傳待處理照片';
@@ -391,7 +413,7 @@ import '../../styles/admin-content.css';
     announcement.value = content.announcement || '';
     heroTitle.value = content.hero_title;
     heroCopy.value = content.hero_copy;
-    heroImages = content.hero_image_paths.map((path, index) => ({ path, url: content.hero_image_urls[index] }));
+    heroImages = content.hero_image_paths.map((path, index) => ({ path, url: content.hero_image_urls[index], thumbnail_url: content.hero_image_thumbnail_urls?.[index] || null }));
     enabled.checked = content.announcement_enabled;
     uploadQueue = []; undoPhoto = null; heroFile.value = '';
     faqList.replaceChildren();
@@ -478,8 +500,9 @@ import '../../styles/admin-content.css';
     return error instanceof Error && error.message ? error.message : '上傳失敗，請稍後重試。';
   }
 
-  async function uploadHeroFile(file: File, retryAuth = true): Promise<HeroImage> {
-    const body = new FormData(); body.append('file', file);
+  async function uploadHeroFile(file: File, uploadId: string, thumbnail: Blob, retryAuth = true): Promise<HeroImage> {
+    const body = new FormData(); body.append('file', file); body.append('upload_id', uploadId);
+    body.append('thumbnail', new File([thumbnail], 'thumbnail.webp', { type: 'image/webp' }));
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 30000);
     let response: Response;
@@ -491,40 +514,55 @@ import '../../styles/admin-content.css';
     } finally { window.clearTimeout(timeout); }
     if (response.status === 401 && retryAuth) {
       await requestAdmin('/api/auth/refresh', { method: 'POST', body: {}, retryAuth: false });
-      return uploadHeroFile(file, false);
+      return uploadHeroFile(file, uploadId, thumbnail, false);
     }
     const result = await response.json().catch(() => null);
     if (response.status === 401) throw new Error('登入已逾時，請重新登入後再重試。');
-    if (!response.ok || !result?.image?.path || !result?.image?.url) throw new Error(result?.message || '照片上傳失敗，請檢查檔案後重試。');
+    const image = result?.image;
+    const expectedPath = `${uploadId}.${file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp'}`;
+    let validUrls = false;
+    try {
+      const originalUrl = new URL(image?.url || '', window.location.origin);
+      const thumbnailUrl = new URL(image?.thumbnail_url || '', window.location.origin);
+      validUrls = [originalUrl, thumbnailUrl].every((url) => (url.protocol === 'https:' || url.origin === window.location.origin) && !url.search && !url.hash)
+        && originalUrl.pathname.endsWith('/' + expectedPath)
+        && thumbnailUrl.pathname.endsWith('/' + uploadId + '.thumb.webp');
+    } catch { validUrls = false; }
+    if (!response.ok || result?.image?.path !== `${uploadId}.${file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp'}`
+        || result?.image?.thumbnail_path !== `${uploadId}.thumb.webp` || !validUrls) {
+      throw new Error(result?.message || '照片上傳回傳資料無效，請檢查檔案後重試。');
+    }
     return result.image as HeroImage;
   }
 
   async function uploadItems(ids: string[]) {
     if (busy || uploading || !ids.length) return;
-    uploading = true; refreshActionState(); renderPhotos();
+    uploading = true; refreshActionState(); renderPhotos(); renderUploadQueue();
     for (const id of ids) {
       const item = uploadQueue.find((entry) => entry.id === id);
       if (!item || !['queued', 'failed'].includes(item.status)) continue;
       if (!hasHeroImageCapacity(heroImages.length)) {
         item.status = 'failed'; item.error = '輪播已滿，請先移出照片後重試。';
-        renderUploadQueue(); continue;
+        renderUploadQueue(item.id); continue;
       }
+      if (!item.file) { item.status = 'failed'; item.error = '原始照片不存在，請重新加入佇列。'; renderUploadQueue(item.id); continue; }
       const validationMessage = validateHeroUpload(item.file);
       if (validationMessage) {
         item.status = 'failed'; item.error = validationMessage;
-        renderUploadQueue(); continue;
+        renderUploadQueue(item.id); continue;
       }
       item.status = 'uploading'; item.error = '';
-      message(uploadStatus, '正在上傳「' + item.file.name + '」…'); renderUploadQueue();
+      message(uploadStatus, '正在處理「' + item.fileName + '」…'); renderUploadQueue(item.id);
       try {
-        const image = await uploadHeroFile(item.file);
-        item.status = 'uploaded'; item.image = image; heroImages.push(image);
-        renderPhotos(); message(uploadStatus, '「' + item.file.name + '」已上傳成功，尚未發布。');
+        if (!item.thumbnail) item.thumbnail = (await preparePortfolioImage(item.file, { convertJpeg: false })).thumbnail;
+        const image = await uploadHeroFile(item.file, item.id, item.thumbnail);
+        item.status = 'uploaded'; item.image = image; heroImages.push(image); item.file = null; item.thumbnail = undefined;
+        renderPhotos(); message(uploadStatus, '「' + item.fileName + '」已上傳成功，尚未發布。');
       } catch (error) {
         item.status = 'failed'; item.error = formatUploadError(error);
-        message(uploadStatus, '「' + item.file.name + '」上傳失敗：' + item.error, true);
+        message(uploadStatus, '「' + item.fileName + '」上傳失敗：' + item.error, true);
       }
-      renderUploadQueue();
+      renderUploadQueue(item.id);
     }
     uploading = false; renderPhotos(); renderUploadQueue(); refreshActionState();
   }
@@ -533,7 +571,7 @@ import '../../styles/admin-content.css';
     if (busy || uploading) return;
     Array.from(files).forEach((file) => {
       const error = validateHeroUpload(file);
-      uploadQueue.push({ id: 'upload-' + (++uploadSerial), file, status: error ? 'failed' : 'queued', error });
+      uploadQueue.push({ id: crypto.randomUUID(), file, fileName: file.name, fileSize: file.size, status: error ? 'failed' : 'queued', error });
     });
     heroFile.value = '';
     if (!hasHeroImageCapacity(heroImages.length)) message(uploadStatus, '輪播已滿，請先移出照片。', true);

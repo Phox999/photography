@@ -6,9 +6,9 @@ const SOURCES = new Set(['direct', 'instagram', 'threads', 'facebook', 'google',
 const DEVICES = new Set(['mobile', 'tablet', 'desktop', 'unknown']);
 const RESULTS = new Set(['portfolio_no_form_start', 'cta_no_form_start', 'submit_error', 'error_then_success']);
 
-export async function requireAnalyticsAdmin(request, env) {
-  const admin = await requireAdmin({ request, env });
-  return { admin, config: getSecretConfig(env) };
+export async function requireAnalyticsAdmin(request, env, performanceTimings = null) {
+  const admin = await requireAdmin({ request, env, performanceTimings });
+  return { admin, config: getSecretConfig(env, performanceTimings) };
 }
 
 export function analyticsAdminFilters(searchParams, { allowResult = true, allowTransition = false } = {}) {

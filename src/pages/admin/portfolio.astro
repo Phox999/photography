@@ -79,7 +79,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
           </label>
           <div class="portfolio-upload-queue" id="portfolio-upload-queue" hidden>
             <div class="portfolio-upload-queue__heading"><div><h3>上傳佇列</h3><p id="portfolio-upload-status" class="admin-meta" role="status" aria-live="polite"></p></div>
-              <div class="portfolio-upload-queue__actions"><button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-retry-failed" hidden>重試失敗項目</button><button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-clear-uploaded">清除已加入項目</button></div>
+              <div class="portfolio-upload-queue__actions"><button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-stop-upload" hidden>停止後續上傳</button><button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-retry-failed" hidden>重試失敗項目</button><button class="admin-button admin-button--quiet admin-button--small" type="button" id="portfolio-clear-uploaded">清除已加入項目</button></div>
             </div>
             <ul class="portfolio-upload-queue__list" id="portfolio-upload-queue-list"></ul>
           </div>
@@ -151,8 +151,8 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   import { AdminApiError, adminErrorMessage, requestAdmin, requireAdminSession, setUnsavedChanges } from '../../lib/admin-client';
   import { portfolioChangeSet } from '../../lib/portfolio-changes.js';
   import { portfolioDraftIssues } from '../../lib/portfolio-validation.js';
-  import { setPortfolioThumbnailSource } from '../../lib/portfolio-thumbnails';
-  import { inspectPortfolioUpload, PORTFOLIO_WEBP_QUALITY } from '../../lib/portfolio-upload.js';
+  import { portfolioThumbnailSource, setPortfolioThumbnailSource } from '../../lib/portfolio-thumbnails';
+  import { PORTFOLIO_THUMBNAIL_TARGET_BYTES, preparePortfolioImage } from '../../lib/portfolio-upload.js';
   import {
     movePhotosBetweenCollections,
     PORTFOLIO_PHOTO_LIMIT,
@@ -162,16 +162,18 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     restoreMovedPhotos,
   } from '../../lib/portfolio-workbench.js';
 
-  type PortfolioPhoto = { path: string; url: string };
-  type Collection = { slug: string; title: string; category: '外拍' | '棚拍'; description: string; cover: string; coverUrl: string; images: PortfolioPhoto[]; totalImages: number };
-  type PortfolioResponse = { version: number; collections: Array<Omit<Collection, 'coverUrl'> & { cover_url: string; images: PortfolioPhoto[] }> };
+  type PortfolioPhoto = { path: string; url: string; thumbnail_url?: string | null };
+  type Collection = { slug: string; title: string; category: '外拍' | '棚拍'; description: string; cover: string; coverUrl: string; coverThumbnailUrl?: string | null; images: PortfolioPhoto[]; totalImages: number };
+  type PortfolioPayloadItem = { slug: string; title: string; category: Collection['category']; description: string; cover: string; images: string[]; totalImages: number };
+  type PortfolioResponse = { version: number; collections: Array<Omit<Collection, 'coverUrl' | 'coverThumbnailUrl'> & { cover_url: string; cover_thumbnail_url?: string | null; images: PortfolioPhoto[] }> };
   type UploadStatus = 'waiting' | 'converting' | 'uploading' | 'added' | 'failed';
-  type UploadItem = { id: string; file: File; targetSlug: string; status: UploadStatus; outputBytes?: number; outputName?: string; message?: string };
+  type UploadItem = { id: string; file: File | null; targetSlug: string; status: UploadStatus; originalName: string; originalBytes: number; prepared?: { file: File; thumbnail: Blob }; thumbnailBytes?: number; outputBytes?: number; outputName?: string; message?: string };
 
   const $ = <T extends Element = HTMLElement>(id: string) => document.getElementById(id) as T;
   const editor = $<HTMLElement>('portfolio-editor');
   const list = $<HTMLElement>('portfolio-list');
   const photoGrid = $<HTMLElement>('portfolio-photos');
+  const photoIndexByPath = new Map<string, number>();
   let renderedPhotoSlug = '';
   const photoObserver = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver((entries) => {
     for (const entry of entries) {
@@ -179,8 +181,9 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const image = entry.target as HTMLImageElement;
       photoObserver?.unobserve(image);
       if (!image.isConnected || !image.dataset.pendingSrc) continue;
-      setPortfolioThumbnailSource(image, image.dataset.pendingSrc!);
+      setPortfolioThumbnailSource(image, image.dataset.pendingSrc!, image.dataset.pendingThumbnail || '');
       delete image.dataset.pendingSrc;
+      delete image.dataset.pendingThumbnail;
     }
   }, { root: photoGrid.parentElement, rootMargin: '200px 0px' });
   const detailForm = $<HTMLFormElement>('portfolio-detail-form');
@@ -198,10 +201,17 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   let collections: Collection[] = [];
   let selectedSlug = '';
   let version = 1;
-  let original = '[]';
+  let originalCollections: PortfolioPayloadItem[] = [];
+  let baselineBySlug = new Map<string, PortfolioPayloadItem>();
+  let baselineOrder: string[] = [];
+  let orderDirty = false;
+  const dirtySlugs = new Set<string>();
+  const deletedSlugs = new Set<string>();
+  const draftIssuesBySlug = new Map<string, ReturnType<typeof portfolioDraftIssues>>();
   let busy = false;
   let publishing = false;
   let uploading = false;
+  let stopUploadRequested = false;
   let saveFailed = false;
   let selectionMode = false;
   let collectionSortMode = false;
@@ -217,8 +227,11 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   let dragScrollFrame = 0;
   let dragScrollContainer: HTMLElement | null = null;
   let dragScrollVelocity = 0;
+  let detailUpdateTimer = 0;
+  let detailComposing = false;
   const selectedPaths = new Set<string>();
   const uploadItems: UploadItem[] = [];
+  const uploadQueueList = $('portfolio-upload-queue-list');
 
   function requestConfirmation(message: string, acceptLabel: string): Promise<boolean> {
     if (confirmDialogActive) return Promise.resolve(false);
@@ -264,19 +277,52 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     }));
   }
   function collectionFromResponse(item: PortfolioResponse['collections'][number]): Collection {
-    return { ...item, coverUrl: item.cover_url, images: item.images };
+    return { ...item, coverUrl: item.cover_url, coverThumbnailUrl: item.cover_thumbnail_url, images: item.images };
   }
   function selectedCollection() { return collections.find((collection) => collection.slug === selectedSlug) ?? null; }
+  function collectionPayload(collection: Collection): PortfolioPayloadItem {
+    return {
+      slug: collection.slug, title: collection.title, category: collection.category,
+      description: collection.description, cover: collection.cover,
+      images: collection.images.map((image) => image.path), totalImages: collection.totalImages,
+    };
+  }
   function payload() {
-    return collections.map(({ slug, title, category, description, cover, images, totalImages }) => ({
-      slug, title, category, description, cover, images: images.map((image) => image.path), totalImages,
-    }));
+    return collections.map(collectionPayload);
   }
   function currentChanges() {
-    return portfolioChangeSet(JSON.parse(original) as ReturnType<typeof payload>, payload());
+    return portfolioChangeSet(originalCollections, payload());
   }
   function hasPendingChanges() {
-    return JSON.stringify(payload()) !== original;
+    return dirtySlugs.size > 0 || deletedSlugs.size > 0 || orderDirty;
+  }
+  function captureBaseline() {
+    originalCollections = payload();
+    baselineBySlug = new Map(originalCollections.map((item) => [item.slug, item]));
+    baselineOrder = originalCollections.map((item) => item.slug);
+    dirtySlugs.clear(); deletedSlugs.clear(); draftIssuesBySlug.clear(); orderDirty = false;
+    for (const item of originalCollections) draftIssuesBySlug.set(item.slug, portfolioDraftIssues([item]));
+  }
+  function syncDraft(slugs: string[] = [], checkOrder = true) {
+    for (const slug of new Set(slugs)) {
+      const current = collections.find((item) => item.slug === slug);
+      const baseline = baselineBySlug.get(slug);
+      if (!current) {
+        dirtySlugs.delete(slug); draftIssuesBySlug.delete(slug);
+        if (baseline) deletedSlugs.add(slug); else deletedSlugs.delete(slug);
+      } else {
+        deletedSlugs.delete(slug);
+        const next = collectionPayload(current);
+        if (!baseline || JSON.stringify(next) !== JSON.stringify(baseline)) dirtySlugs.add(slug);
+        else dirtySlugs.delete(slug);
+        draftIssuesBySlug.set(slug, portfolioDraftIssues([next]));
+      }
+    }
+    if (checkOrder) {
+      const currentOrder = collections.map((item) => item.slug);
+      orderDirty = currentOrder.length !== baselineOrder.length || currentOrder.some((slug, index) => slug !== baselineOrder[index]);
+    }
+    updateDraftStatus();
   }
   function filteredCollections() {
     const query = $<HTMLInputElement>('portfolio-search').value.trim().toLocaleLowerCase('zh-Hant');
@@ -289,20 +335,17 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       || $<HTMLSelectElement>('portfolio-category-filter').value !== 'all';
   }
   function changeCount() {
-    const changes = currentChanges();
-    const previousOrder = (JSON.parse(original) as ReturnType<typeof payload>).map((item) => item.slug);
-    return changes.upserts.length + changes.deleted_slugs.length
-      + (JSON.stringify(changes.order) !== JSON.stringify(previousOrder) ? 1 : 0);
+    return dirtySlugs.size + deletedSlugs.size + Number(orderDirty);
   }
   function validCollections() {
     return portfolioDraftIssues(payload()).length === 0;
   }
-  function updateState() {
+  function updateDraftStatus() {
     const changed = hasPendingChanges();
-    const locked = busy || uploading;
     const count = changeCount();
     const unfinishedUploads = uploadItems.filter((item) => item.status !== 'added').length;
     const failedUploads = uploadItems.filter((item) => item.status === 'failed').length;
+    const issues = [...draftIssuesBySlug.values()].flat();
     const badge = $('portfolio-publish-state');
     badge.classList.toggle('is-dirty', changed);
     badge.classList.toggle('is-error', saveFailed && changed);
@@ -314,33 +357,43 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     else if (unfinishedUploads) badge.textContent = `待上傳 · ${unfinishedUploads} 項`;
     else badge.textContent = collections.length ? '已發布' : '待載入';
     setUnsavedChanges(changed || unfinishedUploads > 0);
-    const issues = portfolioDraftIssues(payload());
     const validationStatus = $('portfolio-validation-status');
     validationStatus.hidden = !changed || !issues.length;
     validationStatus.textContent = issues.length
       ? `尚無法發布：${issues.slice(0, 3).map((issue) => `「${issue.title}」${issue.message}`).join(' ')}${issues.length > 3 ? ` 另有 ${issues.length - 3} 組需修正。` : ''}` : '';
-    $<HTMLButtonElement>('portfolio-publish').disabled = locked || !changed || issues.length > 0;
+    $<HTMLButtonElement>('portfolio-publish').disabled = busy || uploading || !changed || issues.length > 0;
     $('portfolio-publish').setAttribute('aria-describedby', 'portfolio-validation-status');
     $<HTMLButtonElement>('portfolio-publish').textContent = publishing ? '發布中…' : '發布作品集';
+  }
+  function updateState() {
+    const locked = busy || uploading;
+    updateDraftStatus();
     $<HTMLButtonElement>('portfolio-reload').disabled = locked;
     $<HTMLButtonElement>('portfolio-add').disabled = locked || collections.length >= 80;
     $<HTMLButtonElement>('portfolio-upload').disabled = locked || !uploadItems.some((item) => item.status === 'waiting') || !selectedCollection();
     photoInput.disabled = locked || !selectedCollection();
     titleInput.disabled = locked; categoryInput.disabled = locked; descriptionInput.disabled = locked;
-    for (const id of ['portfolio-search', 'portfolio-category-filter', 'portfolio-sort-toggle', 'portfolio-position', 'portfolio-retry-failed', 'portfolio-clear-uploaded', 'portfolio-select-all', 'portfolio-clear-selection']) {
+    for (const id of ['portfolio-search', 'portfolio-category-filter', 'portfolio-selection-toggle', 'portfolio-select-all', 'portfolio-clear-selection', 'portfolio-info-toggle', 'portfolio-sidebar-toggle', 'portfolio-mobile-sidebar-toggle']) {
+      $<HTMLInputElement | HTMLButtonElement | HTMLSelectElement>(id).disabled = busy;
+    }
+    for (const id of ['portfolio-sort-toggle', 'portfolio-position', 'portfolio-retry-failed', 'portfolio-clear-uploaded']) {
       $<HTMLInputElement | HTMLButtonElement | HTMLSelectElement>(id).disabled = locked;
     }
     $<HTMLButtonElement>('portfolio-undo-move').disabled = locked;
     $<HTMLButtonElement>('portfolio-move-to-position').disabled = locked || isListFiltered() || !selectedCollection();
-    $<HTMLButtonElement>('portfolio-selection-toggle').disabled = locked || !selectedCollection();
+    $<HTMLButtonElement>('portfolio-selection-toggle').disabled = busy || !selectedCollection();
     $<HTMLButtonElement>('portfolio-photo-sort-toggle').disabled = locked || !selectedCollection();
-    $<HTMLButtonElement>('portfolio-info-toggle').disabled = locked || !selectedCollection();
-    $<HTMLButtonElement>('portfolio-sidebar-toggle').disabled = locked;
-    $<HTMLButtonElement>('portfolio-mobile-sidebar-toggle').disabled = locked;
-    list.querySelectorAll<HTMLButtonElement>('[data-collection-select], [data-collection-action], [data-collection-reorder]').forEach((button) => {
+    $<HTMLButtonElement>('portfolio-info-toggle').disabled = busy || !selectedCollection();
+    $<HTMLButtonElement>('portfolio-sidebar-toggle').disabled = busy;
+    $<HTMLButtonElement>('portfolio-mobile-sidebar-toggle').disabled = busy;
+    list.querySelectorAll<HTMLButtonElement>('[data-collection-select]').forEach((button) => { button.disabled = busy; });
+    list.querySelectorAll<HTMLButtonElement>('[data-collection-action], [data-collection-reorder], [data-collection-drag-handle]').forEach((button) => {
       button.disabled = locked || button.dataset.sortDisabled === 'true';
     });
-    photoGrid.querySelectorAll<HTMLButtonElement | HTMLInputElement>('[data-photo-action], [data-photo-select], [data-photo-preview], [data-photo-retry]').forEach((button) => { button.disabled = locked || button.dataset.actionDisabled === 'true'; });
+    photoGrid.querySelectorAll<HTMLButtonElement | HTMLInputElement>('[data-photo-action], [data-photo-select], [data-photo-preview], [data-photo-retry]').forEach((button) => {
+      const readOnly = button.matches('[data-photo-select], [data-photo-preview], [data-photo-retry]');
+      button.disabled = (readOnly ? busy : locked) || button.dataset.actionDisabled === 'true';
+    });
     $('portfolio-sort-toggle').setAttribute('aria-pressed', String(collectionSortMode));
     $('portfolio-photo-sort-toggle').setAttribute('aria-pressed', String(photoSortMode));
     $('portfolio-selection-toggle').setAttribute('aria-pressed', String(selectionMode));
@@ -348,24 +401,22 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     $<HTMLElement>('portfolio-sort-hint').hidden = !collectionSortMode;
     const restoreOrder = $<HTMLButtonElement>('portfolio-restore-order');
     restoreOrder.hidden = !collectionSortMode;
-    const originalOrder = (JSON.parse(original) as ReturnType<typeof payload>).map((item) => item.slug);
-    restoreOrder.disabled = locked || isListFiltered() || JSON.stringify(originalOrder) === JSON.stringify(collections.map((item) => item.slug));
+    restoreOrder.disabled = locked || isListFiltered() || !orderDirty;
     $<HTMLButtonElement>('portfolio-confirm-move').disabled = locked || !$<HTMLSelectElement>('portfolio-destination').value || !moveIsValid();
-    $<HTMLButtonElement>('portfolio-retry-failed').hidden = !uploadItems.some((item) => item.status === 'failed');
-    $<HTMLButtonElement>('portfolio-clear-uploaded').hidden = !uploadItems.some((item) => item.status === 'added');
+    updateUploadControls();
     setBatchToolbar();
   }
   function setBatchToolbar() {
     const collection = selectedCollection();
     const bar = $('portfolio-batch-toolbar');
-    const paths = collection ? collection.images.map((photo) => photo.path) : [];
-    const selectedCount = paths.filter((path) => selectedPaths.has(path)).length;
+    const selectedCount = selectedPaths.size;
     bar.hidden = !selectionMode;
     $('portfolio-selected-count').textContent = `已選取 ${selectedCount} 張`;
     $('portfolio-selection-help').textContent = collection
-      ? `全選範圍：目前作品「${collection.title || '未命名作品'}」的 ${paths.length} 張可管理照片；移動後仍需發布。`
+      ? `全選範圍：目前作品「${collection.title || '未命名作品'}」的 ${collection.images.length} 張可管理照片；移動後仍需發布。`
       : '請先選擇作品系列。';
-    $<HTMLButtonElement>('portfolio-select-all').textContent = paths.length && selectedCount === paths.length ? '取消全選' : `全選此作品（${paths.length}）`;
+    $<HTMLButtonElement>('portfolio-select-all').textContent = collection?.images.length && selectedCount === collection.images.length
+      ? '取消全選' : `全選此作品（${collection?.images.length || 0}）`;
     $<HTMLButtonElement>('portfolio-move-selected').disabled = !selectedCount || busy || uploading;
     $<HTMLButtonElement>('portfolio-remove-selected').disabled = !selectedCount || busy || uploading;
   }
@@ -414,6 +465,19 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     renderCollectionPosition();
     updateState();
   }
+  function updateCollectionRow(collection: Collection) {
+    const row = list.querySelector<HTMLElement>(`[data-collection-row="${CSS.escape(collection.slug)}"]`);
+    const select = row?.querySelector<HTMLButtonElement>('[data-collection-select]');
+    if (!row || !select) return;
+    const title = select.querySelector('strong');
+    const meta = select.querySelector('small');
+    const label = collection.title.trim() || '未命名作品';
+    select.title = label;
+    if (title) { title.textContent = label; title.dataset.shortTitle = label.slice(0, 1); }
+    if (meta) meta.textContent = `${collection.category} · ${collection.images.length} 張可管理`;
+    row.querySelector<HTMLButtonElement>('[data-collection-drag-handle]')?.setAttribute('aria-label', `拖曳調整「${label}」順序`);
+    row.querySelector<HTMLButtonElement>('[data-collection-action="remove"]')?.setAttribute('aria-label', `移除「${label}」系列`);
+  }
   function renderCollectionPosition() {
     const panel = $('portfolio-position-control');
     if (!panel) return;
@@ -435,11 +499,14 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     if (renderedPhotoSlug !== (collection?.slug || '')) {
       photoObserver?.disconnect(); photoGrid.replaceChildren();
       renderedPhotoSlug = collection?.slug || '';
+      photoIndexByPath.clear();
       photoGrid.parentElement!.scrollTop = 0;
     }
-    if (!collection) { empty.hidden = false; return; }
+    if (!collection) { empty.hidden = false; updateState(); return; }
     empty.hidden = collection.images.length > 0;
     $('portfolio-detail-count').textContent = `${collection.images.length} 張可管理 · 資料總數 ${collection.totalImages} 張`;
+    photoIndexByPath.clear();
+    collection.images.forEach((photo, index) => photoIndexByPath.set(photo.path, index));
     const cards = new Map(Array.from(photoGrid.children, (node) => [(node as HTMLElement).dataset.photoPath!, node as HTMLElement]));
     const paths = new Set(collection.images.map((photo) => photo.path));
     for (const [path, card] of cards) {
@@ -469,8 +536,12 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
         }
         const badge = document.createElement('span'); badge.className = 'portfolio-photo-cover'; badge.textContent = '封面';
         card.append(selection, order, preview, retry, controls, badge);
-        if (index < 12 || !photoObserver) setPortfolioThumbnailSource(image, photo.url);
-        else { image.dataset.pendingSrc = photo.url; photoObserver.observe(image); }
+        if (index < 12 || !photoObserver) setPortfolioThumbnailSource(image, photo.url, photo.thumbnail_url || '');
+        else {
+          image.dataset.pendingSrc = photo.url;
+          image.dataset.pendingThumbnail = photo.thumbnail_url || '';
+          photoObserver.observe(image);
+        }
       }
       card.draggable = photoSortMode && !selectionMode && !busy && !uploading;
       card.classList.toggle('is-selected', selectedPaths.has(photo.path));
@@ -508,8 +579,11 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const cover = collection.images.find((image) => image.path === collection.cover);
       const preview = $<HTMLImageElement>('portfolio-cover-preview');
       const coverUrl = cover?.url || collection.coverUrl;
+      const coverThumbnailUrl = cover?.thumbnail_url || collection.coverThumbnailUrl || '';
       preview.hidden = !coverUrl;
-      if (coverUrl && preview.dataset.originalSrc !== coverUrl) setPortfolioThumbnailSource(preview, coverUrl);
+      if (coverUrl && (preview.dataset.originalSrc !== coverUrl || preview.dataset.thumbnailSrc !== (coverThumbnailUrl || portfolioThumbnailSource(coverUrl)))) {
+        setPortfolioThumbnailSource(preview, coverUrl, coverThumbnailUrl);
+      }
       $('portfolio-cover-label').textContent = cover ? '點擊封面可回到照片位置' : coverUrl ? '目前使用獨立封面；可從照片中另選封面' : '請從照片中選擇封面';
       $<HTMLButtonElement>('portfolio-cover-jump').disabled = !cover;
     }
@@ -547,7 +621,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       collections = result.collections.length ? result.collections.map(collectionFromResponse) : seedCollections();
       selectedSlug = collections[0]?.slug || '';
       selectedPaths.clear(); lastMoveUndo = null; saveFailed = false;
-      original = JSON.stringify(payload());
+      captureBaseline();
       editor.hidden = false; $('portfolio-load-status').textContent = '';
       renderEditor(); renderList();
     } catch (error) { $('portfolio-load-status').textContent = adminErrorMessage(error); }
@@ -557,34 +631,23 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KiB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MiB`;
   }
-  async function prepareUpload(file: File, item: UploadItem): Promise<{ file: File; bytes: number }> {
-    if (file.type === 'image/jpeg') { item.status = 'converting'; renderUploadQueue(); }
-    await inspectPortfolioUpload(file);
-    const bitmap = await createImageBitmap(file);
-    try {
-      if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > 40_000_000) {
-        throw new Error('照片尺寸超過 4000 萬像素解碼上限，請先縮小照片。');
-      }
-      if (file.type !== 'image/jpeg') return { file, bytes: file.size };
-      item.status = 'converting'; item.message = '正在以瀏覽器轉成 WebP…'; renderUploadQueue();
-      const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height;
-      const context = canvas.getContext('2d');
-      if (!context) throw new Error('瀏覽器無法建立圖片轉檔畫布。');
-      context.drawImage(bitmap, 0, 0);
-      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error('WebP 轉檔失敗，原始 JPG 已保留。')), 'image/webp', PORTFOLIO_WEBP_QUALITY));
-      canvas.width = 0; canvas.height = 0;
-      if (blob.type !== 'image/webp') throw new Error('此瀏覽器無法輸出 WebP；原始 JPG 已保留，沒有改用 JPG 上傳。');
-      const name = file.name.replace(/\.jpe?g$/i, '.webp');
-      item.outputName = name;
-      const converted = new File([blob], name, { type: 'image/webp', lastModified: file.lastModified });
-      item.outputBytes = converted.size;
-      if (converted.size > 8 * 1024 * 1024) throw new Error(`轉檔後為 ${formatBytes(converted.size)}，超過 8 MiB 上傳上限。`);
-      await inspectPortfolioUpload(converted);
-      return { file: converted, bytes: converted.size };
-    } finally { bitmap.close(); }
+  async function prepareUpload(item: UploadItem): Promise<{ file: File; thumbnail: Blob }> {
+    if (item.prepared) return item.prepared;
+    if (!item.file) throw new Error('原始照片不存在，請重新加入這筆失敗項目。');
+    item.status = 'converting'; item.message = '單張處理中；原圖尺寸與品質政策不變。'; renderUploadQueueItem(item);
+    const prepared = await preparePortfolioImage(item.file);
+    const outputName = prepared.file.name || (item.originalName.replace(/\.jpe?g$/i, '.webp'));
+    item.prepared = { file: prepared.file, thumbnail: prepared.thumbnail };
+    item.outputName = outputName;
+    item.outputBytes = prepared.file.size;
+    item.thumbnailBytes = prepared.thumbnail.size;
+    return item.prepared;
   }
-  async function uploadPhoto(file: File, retryAuth = true): Promise<PortfolioPhoto> {
-    const body = new FormData(); body.append('file', file);
+  async function uploadPhoto(prepared: { file: File; thumbnail: Blob }, uploadId: string, retryAuth = true): Promise<PortfolioPhoto> {
+    const body = new FormData();
+    body.append('file', prepared.file);
+    body.append('thumbnail', new File([prepared.thumbnail], 'thumbnail.webp', { type: 'image/webp' }));
+    body.append('upload_id', uploadId);
     const controller = new AbortController(); const timer = window.setTimeout(() => controller.abort(), 30000);
     let response: Response;
     try {
@@ -595,18 +658,23 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     } finally { window.clearTimeout(timer); }
     if (response.status === 401 && retryAuth) {
       await requestAdmin('/api/auth/refresh', { method: 'POST', body: {}, retryAuth: false });
-      return uploadPhoto(file, false);
+      return uploadPhoto(prepared, uploadId, false);
     }
     const result = await response.json().catch(() => null);
     const image = result?.image as PortfolioPhoto | undefined;
-    const validPath = typeof image?.path === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/.test(image.path);
+    const validPath = typeof image?.path === 'string' && image.path === `${uploadId}.${prepared.file.type === 'image/png' ? 'png' : prepared.file.type === 'image/webp' ? 'webp' : 'jpg'}`;
+    const validThumbnailPath = image?.thumbnail_path === `${uploadId}.thumb.webp`;
     let validUrl = false;
+    let validThumbnailUrl = false;
     try {
       const url = new URL(image?.url || '', window.location.origin);
-      validUrl = (url.protocol === 'https:' || url.origin === window.location.origin) && url.pathname.endsWith(image?.path || '') && !url.search && !url.hash;
+      validUrl = (url.protocol === 'https:' || url.origin === window.location.origin) && url.pathname.endsWith('/' + (image?.path || '')) && !url.search && !url.hash;
+      const thumbnailUrl = new URL(image?.thumbnail_url || '', window.location.origin);
+      validThumbnailUrl = (thumbnailUrl.protocol === 'https:' || thumbnailUrl.origin === window.location.origin)
+        && thumbnailUrl.pathname.endsWith('/' + (image?.thumbnail_path || '')) && !thumbnailUrl.search && !thumbnailUrl.hash;
     } catch { validUrl = false; }
-    if (!response.ok || !validPath || !validUrl) throw new Error(result?.message || '照片上傳回傳資料無效，請重試。');
-    if ((file.type === 'image/webp' && !image.path.endsWith('.webp')) || (file.type === 'image/png' && !image.path.endsWith('.png')) || (file.type === 'image/jpeg' && !image.path.endsWith('.jpg'))) {
+    if (!response.ok || !validPath || !validUrl || !validThumbnailPath || !validThumbnailUrl) throw new Error(result?.message || '照片上傳回傳資料無效，請重試。');
+    if ((prepared.file.type === 'image/webp' && !image.path.endsWith('.webp')) || (prepared.file.type === 'image/png' && !image.path.endsWith('.png')) || (prepared.file.type === 'image/jpeg' && !image.path.endsWith('.jpg'))) {
       throw new Error('上傳服務回傳的照片格式與檔案不一致。');
     }
     return image;
@@ -616,35 +684,33 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const collection = collections.find((entry) => entry.slug === item.targetSlug);
       if (!collection) throw new Error('原作品系列已移除，請先移除這筆失敗佇列。');
       if (collection.images.length >= PORTFOLIO_PHOTO_LIMIT) throw new Error('每組作品最多 500 張照片。');
-      const prepared = await prepareUpload(item.file, item);
-      item.status = 'uploading'; item.message = item.outputName ? `正在上傳 ${item.outputName}` : '正在上傳原始格式…';
-      item.outputBytes = prepared.bytes; renderUploadQueue();
-      const photo = await uploadPhoto(prepared.file);
+      const prepared = await prepareUpload(item);
+      item.status = 'uploading'; item.message = `正在上傳 ${item.outputName || item.originalName}`;
+      renderUploadQueueItem(item);
+      const photo = await uploadPhoto(prepared, item.id);
       collection.images.push(photo);
       collection.totalImages = Math.max(collection.images.length, collection.totalImages + 1);
-      if (!collection.cover) { collection.cover = photo.path; collection.coverUrl = photo.url; }
+      if (!collection.cover) { collection.cover = photo.path; collection.coverUrl = photo.url; collection.coverThumbnailUrl = photo.thumbnail_url || null; }
       item.status = 'added'; item.message = '已加入本頁草稿，尚未發布';
-      if (selectedSlug === collection.slug) { renderPhotos(); renderList(); }
+      item.file = null; item.prepared = undefined;
+      syncDraft([collection.slug]);
     } catch (error) {
       item.status = 'failed'; item.message = error instanceof Error ? error.message : '照片處理失敗，請重試。';
     }
-    renderUploadQueue(); updateState();
+    renderUploadQueueItem(item);
   }
   async function runUploadQueue(items: UploadItem[]) {
     if (uploading || busy || !items.length) return;
-    uploading = true; saveFailed = false; updateState();
-    let cursor = 0;
-    const worker = async () => {
-      while (cursor < items.length) {
-        const item = items[cursor++];
-        await processUploadItem(item);
-      }
-    };
-    await Promise.all([worker(), worker()]);
+    uploading = true; stopUploadRequested = false; saveFailed = false; updateState(); renderUploadQueue();
+    for (const item of items) {
+      if (stopUploadRequested) break;
+      await processUploadItem(item);
+    }
     uploading = false;
     const added = items.filter((item) => item.status === 'added').length;
     const failed = items.filter((item) => item.status === 'failed').length;
-    $('portfolio-upload-status').textContent = `${added} 張已加入草稿${failed ? `，${failed} 張失敗，可個別重試` : ''}。刷新頁面前請先發布；未發布的 Storage 檔案不會自動刪除。`;
+    const waiting = items.filter((item) => item.status === 'waiting').length;
+    $('portfolio-upload-status').textContent = `${added} 張已加入草稿${failed ? `，${failed} 張失敗，可個別重試` : ''}${waiting ? `，${waiting} 張保留待處理` : ''}${stopUploadRequested ? '；已停止後續工作' : ''}。刷新頁面前請先發布；未發布的 Storage 檔案不會自動刪除。`;
     renderUploadQueue(); renderEditor(); updateState();
   }
   function enqueueFiles(files: FileList | File[]) {
@@ -656,42 +722,80 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       renderToast(`「${collection.title}」最多可放 500 張；這批檔案超出剩餘容量。`); return;
     }
     for (const file of filesToAdd) {
-      uploadItems.push({ id: crypto.randomUUID(), file, targetSlug: collection.slug, status: 'waiting' });
+      uploadItems.push({ id: crypto.randomUUID(), file, targetSlug: collection.slug, status: 'waiting', originalName: file.name, originalBytes: file.size });
     }
     photoInput.value = '';
-    $('portfolio-upload-status').textContent = `${filesToAdd.length} 張待處理；JPG 轉檔與上傳各最多同時處理 2 張。`;
-    renderUploadQueue(); updateState();
+    $('portfolio-upload-status').textContent = `${filesToAdd.length} 張待處理；轉檔單併發、網路請求單併發，待上傳縮圖與 WebP Blob 有界。`;
+    renderUploadQueue();
+  }
+  function createUploadQueueRow(item: UploadItem): HTMLLIElement {
+    const row = document.createElement('li'); row.dataset.uploadRow = item.id;
+    const name = document.createElement('strong'); name.dataset.uploadName = '';
+    const detail = document.createElement('span'); detail.dataset.uploadDetail = '';
+    const status = document.createElement('span'); status.className = 'portfolio-upload-item__status'; status.dataset.uploadStatus = '';
+    const actions = document.createElement('div'); actions.className = 'portfolio-upload-item__actions';
+    const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'admin-button admin-button--quiet admin-button--small'; retry.dataset.uploadRetry = item.id; retry.textContent = '重試';
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'admin-button admin-button--quiet admin-button--small'; remove.dataset.uploadRemove = item.id;
+    actions.append(retry, remove); row.append(name, detail, status, actions);
+    return row;
+  }
+  function updateUploadControls() {
+    const failed = uploadItems.some((item) => item.status === 'failed');
+    const added = uploadItems.some((item) => item.status === 'added');
+    const waiting = uploadItems.some((item) => item.status === 'waiting');
+    const upload = $<HTMLButtonElement>('portfolio-upload');
+    upload.disabled = busy || uploading || !waiting || !selectedCollection();
+    upload.textContent = uploading ? '上傳處理中…' : '開始上傳';
+    const stop = $<HTMLButtonElement>('portfolio-stop-upload');
+    stop.hidden = !uploading; stop.disabled = !uploading || stopUploadRequested;
+    stop.textContent = stopUploadRequested ? '正在完成目前項目…' : '停止後續上傳';
+    $<HTMLButtonElement>('portfolio-retry-failed').hidden = !failed;
+    $<HTMLButtonElement>('portfolio-clear-uploaded').hidden = !added;
   }
   function renderUploadQueue() {
     const panel = $('portfolio-upload-queue');
-    const queue = $('portfolio-upload-queue-list');
-    queue.replaceChildren(); panel.hidden = uploadItems.length === 0;
-    uploadItems.forEach((item) => {
-      const row = document.createElement('li'); row.className = `portfolio-upload-item is-${item.status}`;
-      const name = document.createElement('strong'); name.textContent = item.file.name;
-      const destination = collections.find((collection) => collection.slug === item.targetSlug);
-      const detail = document.createElement('span');
-      const size = item.outputBytes ? `${formatBytes(item.file.size)} → ${formatBytes(item.outputBytes)}` : formatBytes(item.file.size);
-      detail.textContent = `${destination?.title || '原作品已移除'} · ${size}${item.outputName ? ` · ${item.outputName}` : ''}`;
-      const status = document.createElement('span'); status.className = 'portfolio-upload-item__status';
-      const statusLabels: Record<UploadStatus, string> = { waiting: '等待中', converting: '轉換中', uploading: '上傳中', added: '已加入草稿', failed: `失敗：${item.message || '請重試'}` };
-      status.textContent = statusLabels[item.status]; status.setAttribute('aria-live', item.status === 'failed' ? 'polite' : 'off');
-      const actions = document.createElement('div'); actions.className = 'portfolio-upload-item__actions';
-      if (item.status === 'failed') {
-        const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'admin-button admin-button--quiet admin-button--small';
-        retry.dataset.uploadRetry = item.id; retry.textContent = '重試'; retry.disabled = uploading || busy; actions.append(retry);
-      }
-      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'admin-button admin-button--quiet admin-button--small';
-      remove.dataset.uploadRemove = item.id; remove.textContent = item.status === 'added' ? '隱藏' : '移除'; remove.disabled = uploading || busy;
-      remove.setAttribute('aria-label', item.status === 'added' ? `隱藏已加入項目 ${item.file.name}` : `移除佇列項目 ${item.file.name}`); actions.append(remove);
-      row.append(name, detail, status, actions); queue.append(row);
+    const queue = uploadQueueList;
+    panel.hidden = uploadItems.length === 0;
+    const rows = new Map(Array.from(queue.querySelectorAll<HTMLLIElement>('[data-upload-row]'), (row) => [row.dataset.uploadRow || '', row]));
+    uploadItems.forEach((item, index) => {
+      const row = rows.get(item.id) || createUploadQueueRow(item);
+      updateUploadQueueItem(item, row);
+      if (queue.children[index] !== row) queue.insertBefore(row, queue.children[index] || null);
+      rows.delete(item.id);
     });
-    updateState();
+    rows.forEach((row) => row.remove());
+    updateUploadControls(); updateDraftStatus();
+  }
+  function renderUploadQueueItem(item: UploadItem) {
+    const queue = uploadQueueList;
+    const row = queue.querySelector<HTMLLIElement>(`[data-upload-row="${CSS.escape(item.id)}"]`) || createUploadQueueRow(item);
+    updateUploadQueueItem(item, row);
+    const index = uploadItems.indexOf(item);
+    if (index >= 0 && queue.children[index] !== row) queue.insertBefore(row, queue.children[index] || null);
+    updateUploadControls();
+  }
+  function updateUploadQueueItem(item: UploadItem, row: HTMLLIElement) {
+    const statusLabels: Record<UploadStatus, string> = { waiting: '等待中', converting: '轉換中', uploading: '上傳中', added: '已加入草稿', failed: `失敗：請重試` };
+    row.className = `portfolio-upload-item is-${item.status}`;
+    row.querySelector<HTMLElement>('[data-upload-name]')!.textContent = item.originalName;
+    const destination = collections.find((collection) => collection.slug === item.targetSlug);
+    const sizes = item.outputBytes ? `${formatBytes(item.originalBytes)} → ${formatBytes(item.outputBytes)}` : formatBytes(item.originalBytes);
+    const thumbnailNote = item.thumbnailBytes ? ` · 縮圖 ${formatBytes(item.thumbnailBytes)}${item.thumbnailBytes > PORTFOLIO_THUMBNAIL_TARGET_BYTES ? '（超過 80 KiB 目標）' : ''}` : '';
+    row.querySelector<HTMLElement>('[data-upload-detail]')!.textContent = `${destination?.title || '原作品已移除'} · ${sizes}${item.outputName ? ` · ${item.outputName}` : ''}${thumbnailNote}`;
+    const status = row.querySelector<HTMLElement>('[data-upload-status]')!;
+    status.textContent = item.status === 'failed' ? `失敗：${item.message || '請重試'}` : item.message || statusLabels[item.status];
+    status.setAttribute('aria-live', item.status === 'failed' ? 'polite' : 'off');
+    const retry = row.querySelector<HTMLButtonElement>('[data-upload-retry]')!;
+    retry.hidden = item.status !== 'failed'; retry.disabled = uploading || busy;
+    const remove = row.querySelector<HTMLButtonElement>('[data-upload-remove]')!;
+    remove.textContent = item.status === 'added' ? '隱藏' : '移除'; remove.disabled = uploading || busy;
+    remove.setAttribute('aria-label', item.status === 'added' ? `隱藏已加入項目 ${item.originalName}` : `移除佇列項目 ${item.originalName}`);
   }
   function applyCollectionOrder(slug: string, position: number) {
     if (busy || uploading || isListFiltered()) return;
     try {
       collections = reorderCollection(collections, slug, position);
+      syncDraft([], true);
       renderList(); renderEditor();
       announce(`作品順序已調整；「${collections[position].title || '未命名作品'}」位於第 ${position + 1} 位，尚未發布。`);
     } catch (error) { renderToast(error instanceof Error ? error.message : '作品排序失敗。'); }
@@ -700,6 +804,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     if (busy || uploading || collections.length >= 80) return;
     const slug = `new-${crypto.randomUUID().slice(0, 8)}`;
     collections.push({ slug, title: '', category: '外拍', description: '', cover: '', coverUrl: '', images: [], totalImages: 0 });
+    syncDraft([slug], true);
     selectedSlug = slug; selectedPaths.clear(); renderEditor(); renderList(); openInfoDrawer($<HTMLButtonElement>('portfolio-info-toggle')); titleInput.focus();
   }
   async function removeCollection(slug: string) {
@@ -713,6 +818,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     const confirmedIndex = collections.findIndex((item) => item.slug === slug);
     if (confirmedIndex < 0 || collections.length <= 1) return;
     collections.splice(confirmedIndex, 1);
+    syncDraft([slug], true);
     if (selectedSlug === slug) selectedSlug = collections[Math.min(confirmedIndex, collections.length - 1)]?.slug || '';
     selectedPaths.clear(); renderEditor(); renderList();
     requestAnimationFrame(() => list.querySelector<HTMLButtonElement>(`[data-collection-select="${CSS.escape(selectedSlug)}"]`)?.focus());
@@ -758,20 +864,35 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     button.setAttribute('aria-expanded', String(expanded));
     button.setAttribute('aria-label', expanded ? '關閉作品系列清單' : '開啟作品系列清單');
   }
-  function clearSelection() { selectedPaths.clear(); rangeAnchorPath = ''; renderPhotos(); setBatchToolbar(); }
+  function clearSelection() {
+    const previous = Array.from(selectedPaths);
+    selectedPaths.clear(); rangeAnchorPath = '';
+    previous.forEach((path) => updatePhotoSelection(path, false));
+    setBatchToolbar();
+  }
+  function updatePhotoSelection(path: string, selected: boolean) {
+    const card = photoGrid.querySelector<HTMLElement>(`[data-photo-path="${CSS.escape(path)}"]`);
+    if (!card) return;
+    card.classList.toggle('is-selected', selected);
+    const checkbox = card.querySelector<HTMLInputElement>('[data-photo-select]');
+    if (checkbox) checkbox.checked = selected;
+  }
   function togglePhotoSelection(path: string, shiftKey = false) {
     const collection = selectedCollection();
-    if (!collection || !collection.images.some((photo) => photo.path === path)) return;
+    const to = photoIndexByPath.get(path);
+    if (!collection || to === undefined) return;
     if (shiftKey && rangeAnchorPath) {
-      const from = collection.images.findIndex((photo) => photo.path === rangeAnchorPath);
-      const to = collection.images.findIndex((photo) => photo.path === path);
-      if (from >= 0 && to >= 0) {
+      const from = photoIndexByPath.get(rangeAnchorPath);
+      if (from !== undefined) {
         const [start, end] = [Math.min(from, to), Math.max(from, to)];
-        collection.images.slice(start, end + 1).forEach((photo) => selectedPaths.add(photo.path));
+        for (let index = start; index <= end; index += 1) {
+          const selectedPath = collection.images[index].path;
+          selectedPaths.add(selectedPath); updatePhotoSelection(selectedPath, true);
+        }
       }
-    } else if (selectedPaths.has(path)) selectedPaths.delete(path);
-    else selectedPaths.add(path);
-    rangeAnchorPath = path; renderPhotos(); setBatchToolbar();
+    } else if (selectedPaths.has(path)) { selectedPaths.delete(path); updatePhotoSelection(path, false); }
+    else { selectedPaths.add(path); updatePhotoSelection(path, true); }
+    rangeAnchorPath = path; setBatchToolbar();
     photoGrid.querySelector<HTMLInputElement>(`[data-photo-select="${CSS.escape(path)}"]`)?.focus({ preventScroll: true });
   }
   function openMoveDialog() {
@@ -834,6 +955,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const result = movePhotosBetweenCollections(collections, selectedSlug, targetSlug, Array.from(selectedPaths));
       const target = collections.find((collection) => collection.slug === targetSlug)!;
       collections = result.collections; lastMoveUndo = result.undo; selectedPaths.clear(); rangeAnchorPath = '';
+      syncDraft([result.undo.sourceSlug, result.undo.targetSlug]);
       moveDialog.close(); renderEditor(); renderList(); setBatchToolbar();
       renderToast(`${result.movedPhotos.length} 張照片已移至「${target.title}」，尚未發布至網站。`, true);
     } catch (error) { $('portfolio-move-summary').textContent = error instanceof Error ? error.message : '照片移動失敗。'; }
@@ -841,7 +963,9 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   function undoLastMove() {
     if (!lastMoveUndo || busy || uploading) return;
     try {
+      const affected = [lastMoveUndo.sourceSlug, lastMoveUndo.targetSlug];
       collections = restoreMovedPhotos(collections, lastMoveUndo);
+      syncDraft(affected);
       lastMoveUndo = null; renderEditor(); renderList(); clearToast(); announce('上一步照片移動已復原；變更仍未發布。');
     } catch (error) { renderToast(error instanceof Error ? error.message : '目前無法復原照片移動。'); }
   }
@@ -855,6 +979,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     try {
       const updated = removePhotosFromCollection(collection, paths);
       collections = collections.map((item) => item.slug === collection.slug ? updated : item);
+      syncDraft([collection.slug]);
       selectedPaths.clear(); rangeAnchorPath = ''; renderEditor(); renderList();
       renderToast(`${paths.length} 張照片已從本作品移除；實體檔案保留，尚未發布。`);
       $<HTMLButtonElement>('portfolio-selection-toggle').focus();
@@ -870,6 +995,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     try {
       const updated = removePhotosFromCollection(current, [path]);
       collections = collections.map((item) => item.slug === current.slug ? updated : item);
+      syncDraft([current.slug]);
       selectedPaths.delete(path);
       if (rangeAnchorPath === path) rangeAnchorPath = '';
       renderEditor(); renderList();
@@ -907,7 +1033,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const result = await requestAdmin<PortfolioResponse>('/api/admin/portfolio-changes', { method: 'PATCH', body: { ...changes, version } });
       version = result.version; collections = result.collections.map(collectionFromResponse);
       if (!collections.some((collection) => collection.slug === selectedSlug)) selectedSlug = collections[0]?.slug || '';
-      selectedPaths.clear(); lastMoveUndo = null; original = JSON.stringify(payload()); saveFailed = false;
+      selectedPaths.clear(); lastMoveUndo = null; captureBaseline(); saveFailed = false;
       $('portfolio-load-status').textContent = '';
       renderEditor(); renderList();
       renderToast('已發布作品集。前台順序、照片與封面會於公開 API 快取更新後顯示。');
@@ -931,7 +1057,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       applyCollectionOrder(reorder.dataset.collectionSlug || '', position); return;
     }
     if (remove) { void removeCollection(remove.dataset.collectionSlug || ''); return; }
-    if (select && !busy && !uploading) {
+    if (select && !busy) {
       const closeMobileSidebar = window.matchMedia('(max-width: 1199px)').matches && editor.classList.contains('is-sidebar-open');
       selectedSlug = select.dataset.collectionSelect || ''; selectedPaths.clear(); rangeAnchorPath = '';
       editor.classList.remove('is-sidebar-open'); $<HTMLButtonElement>('portfolio-mobile-sidebar-toggle').setAttribute('aria-expanded', 'false');
@@ -977,7 +1103,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   });
 
   photoGrid.addEventListener('click', (event) => {
-    if (busy || uploading) return;
+    if (busy) return;
     const target = event.target instanceof Element ? event.target : null;
     const checkbox = target?.closest<HTMLInputElement>('[data-photo-select]');
     const preview = target?.closest<HTMLButtonElement>('[data-photo-preview]');
@@ -995,8 +1121,12 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     if (retry) {
       const image = retry.parentElement?.querySelector<HTMLImageElement>('img');
       if (image) {
-        const source = image.dataset.originalFallback === 'true' ? image.dataset.originalSrc : image.dataset.thumbnailSrc || image.dataset.originalSrc;
-        image.src = `${source}?retry=${Date.now()}`; retry.hidden = true; retry.parentElement?.classList.remove('is-image-error');
+        const source = image.dataset.thumbnailSrc;
+        if (source) {
+          const retryUrl = new URL(source, window.location.origin);
+          retryUrl.searchParams.set('retry', String(Date.now()));
+          image.src = retryUrl.toString(); retry.hidden = true; retry.parentElement?.classList.remove('is-image-error');
+        }
       }
       return;
     }
@@ -1007,10 +1137,12 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     const verb = action.dataset.photoAction;
     if (verb === 'up' && index > 0 || verb === 'down' && index < collection.images.length - 1) {
       const position = index + (verb === 'up' ? -1 : 1);
-      collection.images = reorderPhoto(collection.images, path, position); renderPhotos();
+      collection.images = reorderPhoto(collection.images, path, position); syncDraft([collection.slug]); renderPhotos();
       requestAnimationFrame(() => photoGrid.querySelector<HTMLButtonElement>(`[data-photo-path="${CSS.escape(path)}"][data-photo-action="${verb}"]`)?.focus());
     } else if (verb === 'cover') {
-      collection.cover = path; collection.coverUrl = collection.images[index].url; renderEditor();
+      collection.cover = path; collection.coverUrl = collection.images[index].url;
+      collection.coverThumbnailUrl = collection.images[index].thumbnail_url || null;
+      syncDraft([collection.slug]); renderEditor();
       announce(`已將第 ${index + 1} 張照片設為封面，尚未發布。`);
     } else if (verb === 'remove' && collection.images.length > 1) void removeSinglePhoto(path);
   });
@@ -1041,7 +1173,10 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     const position = slot > sourceIndex ? slot - 1 : slot;
     const sourcePath = draggedPhotoPath;
     draggedPhotoPath = '';
-    if (sourceIndex >= 0 && targetIndex >= 0) { collection.images = reorderPhoto(collection.images, sourcePath, Math.max(0, Math.min(collection.images.length - 1, position))); renderPhotos(); }
+    if (sourceIndex >= 0 && targetIndex >= 0) {
+      collection.images = reorderPhoto(collection.images, sourcePath, Math.max(0, Math.min(collection.images.length - 1, position)));
+      syncDraft([collection.slug]); renderPhotos();
+    }
   });
   photoGrid.addEventListener('dragend', () => {
     stopDragScroll();
@@ -1062,35 +1197,67 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     const retry = card?.querySelector<HTMLButtonElement>('[data-photo-retry]'); if (retry) retry.hidden = true;
   }, true);
 
+  function scheduleDetailDraftSync(slug: string) {
+    window.clearTimeout(detailUpdateTimer);
+    detailUpdateTimer = window.setTimeout(() => {
+      detailUpdateTimer = 0;
+      if (!detailComposing) syncDraft([slug], false);
+    }, 150);
+  }
+  detailForm.addEventListener('compositionstart', () => { detailComposing = true; window.clearTimeout(detailUpdateTimer); });
+  detailForm.addEventListener('compositionend', () => {
+    detailComposing = false;
+    const collection = selectedCollection();
+    if (collection) scheduleDetailDraftSync(collection.slug);
+  });
   detailForm.addEventListener('input', () => {
     const collection = selectedCollection(); if (!collection || busy || uploading) return;
     collection.title = titleInput.value; collection.description = descriptionInput.value;
-    $('portfolio-detail-heading').textContent = collection.title.trim() || '新增作品'; renderList(); updateState();
+    $('portfolio-detail-heading').textContent = collection.title.trim() || '新增作品';
+    updateCollectionRow(collection);
+    if (!detailComposing) scheduleDetailDraftSync(collection.slug);
   });
   categoryInput.addEventListener('change', () => {
     const collection = selectedCollection(); if (!collection || busy || uploading) return;
-    collection.category = categoryInput.value as Collection['category']; renderList(); updateState();
+    collection.category = categoryInput.value as Collection['category']; updateCollectionRow(collection); syncDraft([collection.slug], false);
   });
-  $<HTMLInputElement>('portfolio-search').addEventListener('input', () => { renderList(); updateState(); });
-  $<HTMLSelectElement>('portfolio-category-filter').addEventListener('change', () => { renderList(); updateState(); });
+  $<HTMLInputElement>('portfolio-search').addEventListener('input', renderList);
+  $<HTMLSelectElement>('portfolio-category-filter').addEventListener('change', renderList);
   $<HTMLButtonElement>('portfolio-sort-toggle').addEventListener('click', () => { collectionSortMode = !collectionSortMode; renderList(); });
   $<HTMLButtonElement>('portfolio-restore-order').addEventListener('click', () => {
     if (busy || uploading || isListFiltered()) return;
-    const previousOrder = (JSON.parse(original) as ReturnType<typeof payload>).map((item) => item.slug);
+    const previousOrder = baselineOrder;
     const bySlug = new Map(collections.map((item) => [item.slug, item]));
     collections = [...previousOrder.filter((slug) => bySlug.has(slug)).map((slug) => bySlug.get(slug)!), ...collections.filter((item) => !previousOrder.includes(item.slug))];
+    syncDraft([], true);
     renderEditor(); announce('已還原載入時的系列順序，其他草稿修改保留。');
   });
   $<HTMLButtonElement>('portfolio-photo-sort-toggle').addEventListener('click', () => { photoSortMode = !photoSortMode; renderPhotos(); updateState(); });
   $<HTMLButtonElement>('portfolio-selection-toggle').addEventListener('click', () => {
-    selectionMode = !selectionMode; selectedPaths.clear(); rangeAnchorPath = ''; renderPhotos(); updateState();
+    clearSelection(); selectionMode = !selectionMode;
+    photoGrid.querySelectorAll<HTMLElement>('[data-photo-card]').forEach((card) => {
+      const index = photoIndexByPath.get(card.dataset.photoPath || '') || 0;
+      card.querySelector<HTMLElement>('.portfolio-photo-select')!.hidden = !selectionMode;
+      card.querySelector<HTMLButtonElement>('[data-photo-preview]')?.setAttribute('aria-label', selectionMode
+        ? `選取第 ${index + 1} 張照片` : `預覽${selectedCollection()?.title || '作品'}第 ${index + 1} 張照片`);
+    });
+    updateState();
   });
   $<HTMLButtonElement>('portfolio-select-all').addEventListener('click', () => {
     const collection = selectedCollection(); if (!collection) return;
-    if (selectedPaths.size === collection.images.length) selectedPaths.clear(); else collection.images.forEach((photo) => selectedPaths.add(photo.path));
-    rangeAnchorPath = collection.images[0]?.path || ''; renderPhotos(); setBatchToolbar();
+    const clear = selectedPaths.size === collection.images.length;
+    collection.images.forEach((photo) => { if (clear) selectedPaths.delete(photo.path); else selectedPaths.add(photo.path); updatePhotoSelection(photo.path, !clear); });
+    rangeAnchorPath = clear ? '' : collection.images[0]?.path || ''; setBatchToolbar();
   });
-  $<HTMLButtonElement>('portfolio-clear-selection').addEventListener('click', () => { selectionMode = false; clearSelection(); updateState(); });
+  $<HTMLButtonElement>('portfolio-clear-selection').addEventListener('click', () => {
+    selectionMode = false; clearSelection();
+    photoGrid.querySelectorAll<HTMLElement>('[data-photo-card]').forEach((card) => {
+      const index = photoIndexByPath.get(card.dataset.photoPath || '') || 0;
+      card.querySelector<HTMLElement>('.portfolio-photo-select')!.hidden = true;
+      card.querySelector<HTMLButtonElement>('[data-photo-preview]')?.setAttribute('aria-label', `預覽${selectedCollection()?.title || '作品'}第 ${index + 1} 張照片`);
+    });
+    updateState();
+  });
   $<HTMLButtonElement>('portfolio-move-selected').addEventListener('click', openMoveDialog);
   $<HTMLButtonElement>('portfolio-remove-selected').addEventListener('click', () => void removeSelectedPhotos());
   $<HTMLInputElement>('portfolio-destination-search').addEventListener('input', () => { renderDestinationOptions(); updateMoveDialog(); });
@@ -1129,6 +1296,12 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   });
   photoInput.addEventListener('change', () => { if (photoInput.files) enqueueFiles(photoInput.files); });
   $<HTMLButtonElement>('portfolio-upload').addEventListener('click', () => void runUploadQueue(uploadItems.filter((item) => item.status === 'waiting')));
+  $<HTMLButtonElement>('portfolio-stop-upload').addEventListener('click', () => {
+    if (!uploading) return;
+    stopUploadRequested = true;
+    $('portfolio-upload-status').textContent = '目前照片完成或回報結果後，佇列會停止；待處理項目會保留。';
+    updateUploadControls();
+  });
   $<HTMLButtonElement>('portfolio-retry-failed').addEventListener('click', () => {
     const failed = uploadItems.filter((item) => item.status === 'failed'); failed.forEach((item) => { item.status = 'waiting'; item.message = ''; });
     renderUploadQueue(); void runUploadQueue(failed);

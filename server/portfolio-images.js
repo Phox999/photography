@@ -4,6 +4,9 @@ import { isValidPortfolioImagePath } from './admin-validation.js';
 const imageUrl = (path, config) => path.startsWith('static:')
   ? path.slice('static:'.length)
   : `${config.url}/storage/v1/object/public/site-portfolio/${path}`;
+const thumbnailUrl = (path, config, bucket = 'site-portfolio') => path.startsWith('static:')
+  ? null
+  : `${config.url}/storage/v1/object/public/${bucket}/${path.replace(/\.(jpg|png|webp)$/i, '.thumb.webp')}`;
 
 function checkedCollections(data) {
   const collections = data?.collections;
@@ -33,7 +36,8 @@ export function adminPortfolioResult(data, config) {
     collections: collections.map((item) => ({
       ...item,
       cover_url: imageUrl(item.cover, config),
-      images: item.images.map((path) => ({ path, url: imageUrl(path, config) })),
+      cover_thumbnail_url: thumbnailUrl(item.cover, config),
+      images: item.images.map((path) => ({ path, url: imageUrl(path, config), thumbnail_url: thumbnailUrl(path, config) })),
     })),
   };
 }

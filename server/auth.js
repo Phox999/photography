@@ -24,12 +24,23 @@ export function json(data, status = 200, extraHeaders = {}) {
 
 export function endpoint(handler) {
   return async (context) => {
-    try { return await handler(context); }
+    const timings = {};
+    context.performanceTimings = timings;
+    const startedAt = Date.now();
+    let response;
+    try { response = await handler(context); }
     catch (error) {
       // Do not log passwords, cookies, user data or provider error messages.
-      if (error instanceof HttpError) return json({ success: false, message: error.message, code: error.code }, error.status, error.headers);
-      return json({ success: false, message: '服務暫時無法使用，請稍後再試。', code: 'service_unavailable' }, 503);
+      response = error instanceof HttpError
+        ? json({ success: false, message: error.message, code: error.code }, error.status, error.headers)
+        : json({ success: false, message: '服務暫時無法使用，請稍後再試。', code: 'service_unavailable' }, 503);
     }
+    timings.total = Date.now() - startedAt;
+    if (response instanceof Response && Object.keys(timings).length > 1) {
+      response.headers.set('Server-Timing', Object.entries(timings)
+        .map(([name, duration]) => `${name};dur=${Math.max(0, Number(duration) || 0).toFixed(1)}`).join(', '));
+    }
+    return response;
   };
 }
 
@@ -62,20 +73,20 @@ function getSupabaseUrl(env) {
   return url.origin;
 }
 
-export function getSupabaseConfig(env) {
+export function getSupabaseConfig(env, performanceTimings = null) {
   const key = String(env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || '').trim();
   const url = getSupabaseUrl(env);
   // Decoding is only a guard against configuring the wrong API key, never authentication.
   if (!/^sb_publishable_[A-Za-z0-9_-]+$/.test(key) && legacyRole(key) !== 'anon') throw configError();
-  return { url, key };
+  return { url, key, performanceTimings };
 }
 
-export function getSecretConfig(env) {
+export function getSecretConfig(env, performanceTimings = null) {
   const url = getSupabaseUrl(env);
   const key = String(env.SUPABASE_SECRET_KEY || '').trim();
   if (!key) throw configError('missing_secret_key');
   if (!/^sb_secret_[A-Za-z0-9_-]+$/.test(key) && legacyRole(key) !== 'service_role') throw configError('invalid_secret_key');
-  return { url, key };
+  return { url, key, performanceTimings };
 }
 
 export function assertMutation(request) {
@@ -131,6 +142,11 @@ export async function supabaseRequest(config, path, options = {}) {
   if (options.body !== undefined) headers.set('Content-Type', 'application/json');
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
+  const metric = path.startsWith('/auth/v1/user') ? 'user_check'
+    : path.startsWith('/rest/v1/site_admins') ? 'admin_allowlist'
+      : path.startsWith('/rest/v1/rpc/') ? 'business_rpc'
+        : path.startsWith('/storage/v1/') ? 'storage' : '';
+  const startedAt = Date.now();
   let response;
   let data = null;
   try {
@@ -156,7 +172,12 @@ export async function supabaseRequest(config, path, options = {}) {
     if (error instanceof HttpError) throw error;
     throw new HttpError(503, '連線暫時無法完成，請稍後再試。', 'upstream_unavailable');
   }
-  finally { clearTimeout(timeout); }
+  finally {
+    clearTimeout(timeout);
+    if (metric && config.performanceTimings) {
+      config.performanceTimings[metric] = (config.performanceTimings[metric] || 0) + (Date.now() - startedAt);
+    }
+  }
   if (!response.ok) {
     if (data?.code === 'P0001' && data.message === 'conflict') throw new HttpError(409, '這筆資料已被更新。請重新載入後再編輯，避免覆蓋他人的變更。', 'conflict');
     if (data?.code === 'P0002' && data.message === 'not_found') throw new HttpError(404, '找不到這筆資料。', 'not_found');
@@ -229,9 +250,9 @@ export function withSessionCookies(response, context, session = null) {
   return response;
 }
 
-export async function verifyAdminToken(env, accessToken) {
+export async function verifyAdminToken(env, accessToken, performanceTimings = null) {
   if (!accessToken) throw new HttpError(401, '請先登入後台。', 'unauthenticated');
-  const config = getSupabaseConfig(env);
+  const config = getSupabaseConfig(env, performanceTimings);
   const { data: user } = await withUpstreamCode(
     () => supabaseRequest(config, '/auth/v1/user', { accessToken }), 'admin_user_check_unavailable',
   );
@@ -252,7 +273,7 @@ export async function requireAdmin(context) {
     throw new HttpError(403, '請從本站頁面操作。', 'invalid_origin');
   }
   const { accessToken } = readSessionCookies(context);
-  return verifyAdminToken(context.env, accessToken);
+  return verifyAdminToken(context.env, accessToken, context.performanceTimings || null);
 }
 
 export async function checkLoginLimit(context, email) {

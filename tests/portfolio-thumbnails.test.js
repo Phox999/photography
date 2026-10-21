@@ -18,7 +18,7 @@ test('所有靜態後臺照片與獨立封面都有實際可讀的小圖，且�
   }
 });
 
-test('小圖失敗只退回原圖一次，重用封面元素不會退回前一作品', () => {
+test('小圖失敗不自動載入原圖，重用封面元素不會退回前一作品', () => {
   const events = new Map();
   const image = { dataset: {}, addEventListener(type, listener) { events.set(type, listener); } };
   const [first, second] = portfolioAdminCatalog;
@@ -26,7 +26,7 @@ test('小圖失敗只退回原圖一次，重用封面元素不會退回前一�
   assert.equal(image.src, portfolioThumbnailSource(first.cover));
   setPortfolioThumbnailSource(image, second.cover);
   events.get('error')();
-  assert.equal(image.src, second.cover);
+  assert.equal(image.src, portfolioThumbnailSource(second.cover));
   image.src = 'sentinel';
   events.get('error')();
   assert.equal(image.src, 'sentinel');

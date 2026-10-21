@@ -11,6 +11,7 @@ import { onRequest as adminAnalyticsSessions } from './functions/api/admin/analy
 import { onRequest as adminAnalyticsSessionDetail } from './functions/api/admin/analytics/sessions/[id].js';
 import { onRequest as adminAnalyticsVisitorSessions } from './functions/api/admin/analytics/visitors/[id]/sessions.js';
 import { onRequest as adminAnalyticsPaths } from './functions/api/admin/analytics/paths.js';
+import { onRequest as adminAnalyticsObservationCounts } from './functions/api/admin/analytics/observation-counts.js';
 import { runAnalyticsRetention } from './server/site-analytics.js';
 import { onRequest as adminInquiries } from './functions/api/admin/inquiries.js';
 import { onRequest as adminInquiry } from './functions/api/admin/inquiries/[id].js';
@@ -56,6 +57,7 @@ const apiRoutes = [
   [/^\/api\/admin\/analytics\/sessions\/([^/]+)$/, adminAnalyticsSessionDetail, ['id']],
   [/^\/api\/admin\/analytics\/visitors\/([^/]+)\/sessions$/, adminAnalyticsVisitorSessions, ['id']],
   [/^\/api\/admin\/analytics\/paths$/, adminAnalyticsPaths],
+  [/^\/api\/admin\/analytics\/observation-counts$/, adminAnalyticsObservationCounts],
   [/^\/api\/admin\/inquiries$/, adminInquiries],
   [/^\/api\/admin\/inquiries\/([^/]+)\/references$/, adminInquiryReferences, ['id']],
   [/^\/api\/admin\/inquiries\/([^/]+)\/confirmation$/, adminInquiryConfirmation, ['id']],

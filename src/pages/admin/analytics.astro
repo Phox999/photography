@@ -234,6 +234,7 @@ import '../../styles/admin-analytics.css';
     lastEventAt: string | null; matchesCurrentFilter: boolean;
   };
   type SessionPage = { items: AnalyticsSession[]; total: number; nextCursor: JourneyCursor | null; range: AnalyticsResponse['range'] };
+  type ObservationCounts = { total: number; counts: Record<(typeof observationResults)[number], number> };
   type AnalyticsEvent = {
     eventId: string; schemaVersion: number; eventName: string; pagePath: string;
     clientAt: string | null; receivedAt: string; pageVisitId: string | null; tabId: string | null;
@@ -272,6 +273,9 @@ import '../../styles/admin-analytics.css';
   let metric = 'pageViews';
   let loading = false;
   let journeyAvailable: boolean | null = null;
+  let observationController: AbortController | null = null;
+  let observationGeneration = 0;
+  const observationCache = new Map<string, { value: ObservationCounts; loadedAt: number }>();
   let sessionRows: AnalyticsSession[] = [];
   let sessionNextCursor: JourneyCursor | null = null;
   let sessionTotal = 0;
@@ -635,37 +639,28 @@ import '../../styles/admin-analytics.css';
     return requestAdmin<SessionPage>('/api/admin/analytics/sessions?' + params.toString());
   }
 
-  async function loadObservationCounts() {
+  async function loadObservationCounts(force = false) {
     const note = $('[data-journey-capability]') as HTMLElement;
+    const params = buildJourneyParams({ result: false });
+    params.delete('limit');
+    const key = params.toString();
+    observationController?.abort();
+    observationController = null;
+    const generation = ++observationGeneration;
+    const cached = observationCache.get(key);
+    if (!force && cached && Date.now() - cached.loadedAt < 30_000) {
+      renderObservationCounts(cached.value);
+      return;
+    }
+    const controller = new AbortController();
+    observationController = controller;
     try {
-      const base = buildJourneyParams({ result: false });
-      base.set('limit', '1');
-      const [total, ...observations] = await Promise.all([
-        fetchSessionPage(new URLSearchParams(base)),
-        ...observationResults.map((result) => {
-          const params = new URLSearchParams(base);
-          params.set('result', result);
-          return fetchSessionPage(params);
-        }),
-      ]);
-      journeyAvailable = true;
-      observationResults.forEach((result, index) => {
-        const numerator = observations[index].total;
-        const countNode = document.querySelector<HTMLElement>('[data-observation-count="' + result + '"]');
-        const ratioNode = document.querySelector<HTMLElement>('[data-observation-ratio="' + result + '"]');
-        if (countNode) countNode.textContent = count(numerator);
-        if (ratioNode) {
-          const denominator = total.total;
-          const ratio = denominator ? ((numerator / denominator) * 100).toFixed(1) + '%' : '—';
-          ratioNode.textContent = '符合條件造訪／期間造訪：' + count(numerator) + '／' + count(denominator) + '（' + ratio + '）。' + (result === 'cta_no_form_start'
-            ? '點擊只表示前往意圖，不代表外站表單已開啟。'
-            : result === 'error_then_success' ? '此類可同時屬於錯誤與成功，不互斥。'
-              : result === 'submit_error' ? '錯誤分類需與前後端收到時間一併查看。'
-                : '可能原因需回查該次頁面與後續歷程。');
-        }
-      });
-      note.textContent = '現象以同一造訪為單位。n/N 是目前其他篩選下的造訪比例；不同現象可能重疊。';
+      const result = await requestAdmin<ObservationCounts>('/api/admin/analytics/observation-counts?' + params.toString(), { signal: controller.signal });
+      if (generation !== observationGeneration) return;
+      observationCache.set(key, { value: result, loadedAt: Date.now() });
+      renderObservationCounts(result);
     } catch (error) {
+      if (controller.signal.aborted || generation !== observationGeneration) return;
       journeyAvailable = false;
       const unavailable = typeof error === 'object' && error !== null && 'code' in error
         && (error as { code?: unknown }).code === 'analytics_journeys_unavailable';
@@ -676,7 +671,29 @@ import '../../styles/admin-analytics.css';
         if (countNode) countNode.textContent = '—';
         if (ratioNode) ratioNode.textContent = '未量測或新查詢暫不可用。';
       });
+    } finally {
+      if (observationController === controller) observationController = null;
     }
+  }
+
+  function renderObservationCounts(data: ObservationCounts) {
+      const note = $('[data-journey-capability]') as HTMLElement;
+      journeyAvailable = true;
+      observationResults.forEach((result) => {
+        const numerator = data.counts[result];
+        const countNode = document.querySelector<HTMLElement>('[data-observation-count="' + result + '"]');
+        const ratioNode = document.querySelector<HTMLElement>('[data-observation-ratio="' + result + '"]');
+        if (countNode) countNode.textContent = count(numerator);
+        if (ratioNode) {
+          const ratio = data.total ? ((numerator / data.total) * 100).toFixed(1) + '%' : '—';
+          ratioNode.textContent = '符合條件造訪／期間造訪：' + count(numerator) + '／' + count(data.total) + '（' + ratio + '）。' + (result === 'cta_no_form_start'
+            ? '點擊只表示前往意圖，不代表外站表單已開啟。'
+            : result === 'error_then_success' ? '此類可同時屬於錯誤與成功，不互斥。'
+              : result === 'submit_error' ? '錯誤分類需與前後端收到時間一併查看。'
+                : '可能原因需回查該次頁面與後續歷程。');
+        }
+      });
+      note.textContent = '現象以同一造訪為單位。n/N 是目前其他篩選下的造訪比例；不同現象可能重疊。';
   }
 
   function renderSessionRows() {
@@ -1001,18 +1018,19 @@ import '../../styles/admin-analytics.css';
       button.setAttribute('aria-pressed', String(active));
       button.classList.toggle('admin-button--quiet', !active);
     });
+    if (name !== 'sessions') { observationController?.abort(); observationGeneration += 1; }
     if (name === 'sessions') await Promise.all([loadObservationCounts(), loadSessions()]);
     if (name === 'pages') await loadPaths();
   }
 
-  async function refreshJourneyViews() {
-    await loadObservationCounts();
-    if (activePanel() === 'sessions') await loadSessions();
+  async function refreshJourneyViews(force = false) {
+    if (activePanel() === 'sessions') await Promise.all([loadObservationCounts(force), loadSessions()]);
     if (activePanel() === 'pages') await loadPaths();
   }
 
   async function load() {
     if (loading) return;
+    observationCache.clear();
     loading = true; status.textContent = '正在載入流量與轉換資料…';
     reloadButton.disabled = true;
     const params = new URLSearchParams({ range: rangeSelect.value });
@@ -1028,7 +1046,7 @@ import '../../styles/admin-analytics.css';
       status.textContent = result.current.totals.visitors
         ? '報表已更新。訪客與轉換數是基於可量測事件的估計。'
         : '目前尚無可量測的公開頁瀏覽；請確認追蹤已啟用。成功意向仍會依資料庫顯示。';
-      await refreshJourneyViews();
+      void refreshJourneyViews(true);
     } catch (error) {
       status.textContent = adminErrorMessage(error);
       if (report) status.textContent += ' · 上次成功載入的資料仍顯示於下方。';

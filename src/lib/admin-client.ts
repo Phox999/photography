@@ -26,7 +26,7 @@ export class AdminApiError extends Error {
   }
 }
 
-type RequestOptions = { method?: 'GET' | 'POST' | 'PATCH'; body?: unknown; retryAuth?: boolean };
+type RequestOptions = { method?: 'GET' | 'POST' | 'PATCH'; body?: unknown; retryAuth?: boolean; signal?: AbortSignal };
 let refreshPromise: Promise<AdminSession> | null = null;
 let sessionPromise: Promise<AdminSession> | null = null;
 let dirty = false;
@@ -36,6 +36,9 @@ async function requestOnce<T>(path: string, options: RequestOptions): Promise<T>
   if (!path.startsWith('/api/') || path.startsWith('//') || path.includes('\\')) throw new AdminApiError(400);
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 20_000);
+  const abortFromCaller = () => controller.abort();
+  if (options.signal?.aborted) controller.abort();
+  else options.signal?.addEventListener('abort', abortFromCaller, { once: true });
   try {
     const response = await fetch(path, {
       method: options.method || 'GET',
@@ -55,8 +58,12 @@ async function requestOnce<T>(path: string, options: RequestOptions): Promise<T>
     return data as T;
   } catch (error) {
     if (error instanceof AdminApiError) throw error;
+    if (options.signal?.aborted && error instanceof Error && error.name === 'AbortError') throw error;
     throw new AdminApiError(0);
-  } finally { window.clearTimeout(timeout); }
+  } finally {
+    window.clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', abortFromCaller);
+  }
 }
 
 export async function requestAdmin<T>(path: string, options: RequestOptions = {}): Promise<T> {
