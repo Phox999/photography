@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import '../styles/shell-refresh.css';
 import '../styles/inner-refresh.css';
+import '../styles/motion.css';
 import FloatingActions from '../components/FloatingActions.astro';
 
 interface Props {
@@ -109,6 +110,11 @@ const structuredDataJson = structuredData
   .site-analytics-dialog__button--quiet { background: transparent; color: var(--color-primary-dark, #176b8a); }
   .site-analytics-dialog button:focus-visible { outline: 3px solid var(--color-focus, #f4b542); outline-offset: 3px; }
 </style>
+
+<script>
+  import { initSiteMotion } from '../scripts/site-motion.js';
+  initSiteMotion();
+</script>
 
 <script>
   import { initInquiryAnalytics } from '../lib/inquiry-analytics';

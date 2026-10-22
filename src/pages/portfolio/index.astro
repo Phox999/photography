@@ -344,12 +344,14 @@ const getShootDate = (slug: string) => {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 420ms ease;
+    transition: transform var(--motion-image) var(--motion-ease-out);
   }
 
-  :global(.portfolio-index-card:hover .portfolio-index-card__media img),
+  @media (hover: hover) and (pointer: fine) {
+    :global(.portfolio-index-card:hover .portfolio-index-card__media img) { transform: scale(1.04); }
+  }
   :global(.portfolio-index-card:focus-within .portfolio-index-card__media img) {
-    transform: scale(1.025);
+    transform: none;
   }
 
   :global(.portfolio-index-card__title) {
@@ -469,8 +471,9 @@ const getShootDate = (slug: string) => {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .portfolio-index-card__media img {
+    :global(.portfolio-index-card__media img) {
       transition: none;
+      transform: none !important;
     }
   }
 </style>
@@ -479,6 +482,7 @@ const getShootDate = (slug: string) => {
   import { loadPublishedPortfolio } from '../../lib/portfolio-content';
   import { setPortfolioImageSource } from '../../lib/image-variants';
   import { parsePortfolioRouteMap } from '../../lib/portfolio-routes';
+  import { animatePortfolioFilter, refreshMotion } from '../../scripts/site-motion.js';
 
   const getShootDate = (slug: string) => {
     const date = slug.match(/^(\d{2})(\d{2})(\d{2})/);
@@ -501,72 +505,8 @@ const getShootDate = (slug: string) => {
     const detailCategory = archive.querySelector<HTMLElement>('[data-portfolio-detail-category]');
     const detailDescription = archive.querySelector<HTMLElement>('[data-portfolio-detail-description]');
     const detailImages = archive.querySelector<HTMLElement>('[data-portfolio-detail-images]');
-    const lightbox = archive.querySelector<HTMLDialogElement>('[data-lightbox-dialog]');
-    const lightboxImage = archive.querySelector<HTMLImageElement>('[data-lightbox-image]');
-    const lightboxCount = archive.querySelector<HTMLElement>('[data-lightbox-count]');
-    let lightboxImages: HTMLImageElement[] = [];
-    let currentLightboxIndex = 0;
     let publishedCollections: Awaited<ReturnType<typeof loadPublishedPortfolio>> = null;
     let category = '全部';
-
-    const updateLightbox = (index: number) => {
-      if (!lightboxImage || !lightboxImages.length) return;
-      currentLightboxIndex = (index + lightboxImages.length) % lightboxImages.length;
-      const currentImage = lightboxImages[currentLightboxIndex];
-      lightboxImage.src = currentImage.currentSrc || currentImage.src;
-      lightboxImage.alt = currentImage.alt || '';
-      if (lightboxCount) {
-        lightboxCount.textContent = String(currentLightboxIndex + 1) + ' / ' + String(lightboxImages.length);
-      }
-    };
-
-    const openLightbox = (index: number) => {
-      if (!lightbox || !detailImages || !lightboxImage) return;
-      lightboxImages = Array.from(detailImages.querySelectorAll<HTMLImageElement>('.portfolio-justified__button img'));
-      if (!lightboxImages.length) return;
-      updateLightbox(index);
-      if (typeof lightbox.showModal === 'function') lightbox.showModal();
-      else lightbox.setAttribute('open', '');
-    };
-
-    const closeLightbox = () => {
-      if (!lightbox) return;
-      if (lightbox.open && typeof lightbox.close === 'function') lightbox.close();
-      else lightbox.removeAttribute('open');
-    };
-
-    detailImages?.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const button = target.closest<HTMLButtonElement>('[data-lightbox-open]');
-      if (button) openLightbox(Number(button.dataset.lightboxIndex || 0));
-    });
-
-    archive.querySelector<HTMLButtonElement>('[data-lightbox-close]')?.addEventListener('click', closeLightbox);
-    archive.querySelector<HTMLButtonElement>('[data-lightbox-prev]')?.addEventListener('click', () => updateLightbox(currentLightboxIndex - 1));
-    archive.querySelector<HTMLButtonElement>('[data-lightbox-next]')?.addEventListener('click', () => updateLightbox(currentLightboxIndex + 1));
-
-    lightbox?.addEventListener('click', (event) => {
-      if (event.target === lightbox) closeLightbox();
-    });
-
-    lightbox?.addEventListener('close', () => {
-      if (!lightboxImage) return;
-      lightboxImage.src = '';
-      lightboxImage.alt = '';
-    });
-
-    window.addEventListener('keydown', (event) => {
-      if (!lightbox?.open) return;
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        updateLightbox(currentLightboxIndex - 1);
-      }
-      if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        updateLightbox(currentLightboxIndex + 1);
-      }
-    });
 
     const showCollection = (slug: string | null) => {
       const collection = publishedCollections?.find((item) => item.slug === slug);
@@ -604,6 +544,7 @@ const getShootDate = (slug: string) => {
         }));
       }
       detail.hidden = false;
+      refreshMotion(detail);
       grid.hidden = true;
       controls.hidden = true;
       if (empty) empty.hidden = true;
@@ -651,6 +592,7 @@ const getShootDate = (slug: string) => {
 
       if (empty) empty.hidden = visibleCount > 0;
       if (result) result.textContent = `${category}${query ? ` · 搜尋「${query}」` : ''} · ${visibleCount} 組作品`;
+      if (grid) animatePortfolioFilter(grid);
     };
 
     buttons.forEach((button) => {

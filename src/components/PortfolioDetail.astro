@@ -168,76 +168,16 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
 
   <Footer />
 
-  <dialog class="portfolio-lightbox" data-lightbox-dialog>
+  <dialog class="portfolio-lightbox" data-lightbox-dialog aria-label="照片放大檢視">
     <div class="portfolio-lightbox__inner">
       <button class="portfolio-lightbox__close" type="button" aria-label="關閉照片" data-lightbox-close>×</button>
       <button class="portfolio-lightbox__nav portfolio-lightbox__nav--prev" type="button" aria-label="上一張照片" data-lightbox-prev>‹</button>
       <img class="portfolio-lightbox__image" src="" alt="" data-lightbox-image />
       <button class="portfolio-lightbox__nav portfolio-lightbox__nav--next" type="button" aria-label="下一張照片" data-lightbox-next>›</button>
-      <p class="portfolio-lightbox__count" data-lightbox-count></p>
+      <p class="portfolio-lightbox__count" aria-live="polite" data-lightbox-count></p>
     </div>
   </dialog>
 
-  <script>
-    const setupPortfolioLightbox = () => {
-      const gallery = document.querySelector('[data-justified-gallery]');
-      const dialog = document.querySelector('[data-lightbox-dialog]');
-      const lightboxImage = document.querySelector('[data-lightbox-image]');
-      const count = document.querySelector('[data-lightbox-count]');
-      const closeButton = document.querySelector('[data-lightbox-close]');
-      const prevButton = document.querySelector('[data-lightbox-prev]');
-      const nextButton = document.querySelector('[data-lightbox-next]');
-
-      if (!gallery || !dialog || !lightboxImage) return;
-
-      const images = Array.from(gallery.querySelectorAll('img'));
-      let currentIndex = 0;
-
-      const updateLightbox = (index) => {
-        if (!images.length) return;
-        currentIndex = (index + images.length) % images.length;
-        const currentImage = images[currentIndex];
-        const trigger = gallery.querySelector(`[data-lightbox-index="${currentIndex}"]`);
-        lightboxImage.src = trigger?.dataset.fullSrc || currentImage.currentSrc || currentImage.src;
-        lightboxImage.alt = currentImage.alt || '';
-        if (count) count.textContent = `${currentIndex + 1} / ${images.length}`;
-      };
-
-      const openLightbox = (index) => {
-        updateLightbox(index);
-        if (typeof dialog.showModal === 'function') dialog.showModal();
-        else dialog.setAttribute('open', '');
-      };
-
-      const closeLightbox = () => {
-        dialog.close();
-        lightboxImage.src = '';
-        lightboxImage.alt = '';
-      };
-
-      gallery.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        const button = target.closest('[data-lightbox-open]');
-        if (!button) return;
-        openLightbox(Number.parseInt(button.dataset.lightboxIndex || '0', 10));
-      });
-
-      closeButton?.addEventListener('click', closeLightbox);
-      prevButton?.addEventListener('click', () => updateLightbox(currentIndex - 1));
-      nextButton?.addEventListener('click', () => updateLightbox(currentIndex + 1));
-      dialog.addEventListener('click', (event) => {
-        if (event.target === dialog) closeLightbox();
-      });
-      window.addEventListener('keydown', (event) => {
-        if (!dialog.open) return;
-        if (event.key === 'ArrowLeft') updateLightbox(currentIndex - 1);
-        if (event.key === 'ArrowRight') updateLightbox(currentIndex + 1);
-      });
-    };
-
-    setupPortfolioLightbox();
-  </script>
 </Layout>
 
 <style>
