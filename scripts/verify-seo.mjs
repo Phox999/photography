@@ -106,16 +106,19 @@ let sitemapUrls = [];
 
 for (const page of htmlPages) {
   const route = pageUrl(page.relative);
+  const robotsTag = page.html.match(/<meta\b(?=[^>]*\bname=["']robots["'])[^>]*>/i)?.[0];
+  const robotsValue = (robotsTag ? attribute(robotsTag, 'content') : '')?.toLowerCase() ?? '';
+  const noindexPage = robotsValue.includes('noindex');
   const title = page.html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim();
   const description = page.html.match(/<meta\b(?=[^>]*\bname=["']description["'])[^>]*>/i)?.[0];
   const canonicalTag = page.html.match(/<link\b(?=[^>]*\brel=["']canonical["'])[^>]*>/i)?.[0];
   if (!title) failures.push(`${route}: missing <title>`);
   if (!/<html\b[^>]*\blang=["']zh-Hant-TW["']/i.test(page.html)) failures.push(`${route}: missing zh-Hant-TW document language`);
-  if (!privatePath.test(route) && (description === undefined || attribute(description, 'content')?.trim() === '')) failures.push(`${route}: missing meta description`);
+  if (!privatePath.test(route) && !noindexPage && (description === undefined || attribute(description, 'content')?.trim() === '')) failures.push(`${route}: missing meta description`);
   const canonical = canonicalTag ? attribute(canonicalTag, 'href') : undefined;
-  if (!privatePath.test(route) && !errorPage.test(route) && !canonical) failures.push(`${route}: missing canonical`);
+  if (!privatePath.test(route) && !noindexPage && !errorPage.test(route) && !canonical) failures.push(`${route}: missing canonical`);
   else if (canonical && !errorPage.test(route) && new URL(canonical, siteOrigin).href !== new URL(route, siteOrigin).href) failures.push(`${route}: canonical does not match its route`);
-  if (!privatePath.test(route) && !errorPage.test(route)) {
+  if (!privatePath.test(route) && !noindexPage && !errorPage.test(route)) {
     for (const property of ['og:title', 'og:description', 'og:url', 'og:image', 'og:type']) {
       const escapedProperty = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const tag = page.html.match(new RegExp(`<meta\\b(?=[^>]*\\bproperty=[\"']${escapedProperty}[\"'])[^>]*>`, 'i'))?.[0];
@@ -133,15 +136,15 @@ for (const page of htmlPages) {
     if (headingCount !== 1) failures.push(`${route}: expected one H1, found ${headingCount}`);
   }
 
-  const robotsTag = page.html.match(/<meta\b(?=[^>]*\bname=["']robots["'])[^>]*>/i)?.[0];
-  const robotsValue = (robotsTag ? attribute(robotsTag, 'content') : '')?.toLowerCase() ?? '';
   if (privatePath.test(route) && !robotsValue.includes('noindex')) failures.push(`${route}: private route is missing noindex`);
 
   const ids = new Set([...page.html.matchAll(/\bid=["']([^"']+)["']/gi)].map((match) => decodeHtml(match[1])));
   for (const match of page.html.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/gi)) {
     const href = attribute(match[0], 'href');
     const linkText = decodeHtml(match[1].replace(/<[^>]*>/g, '')).replace(/\s+/g, ' ').trim();
-    if (/^(?:填寫合作意向|開始討論拍攝)$/.test(linkText) && href && new URL(href, new URL(route, siteOrigin)).href !== cooperationFormUrl) {
+    const destination = href ? new URL(href, new URL(route, siteOrigin)) : undefined;
+    const usesMainContactForm = destination?.origin === siteOrigin && destination.pathname === '/' && destination.hash === '#contact';
+    if (/^(?:填寫合作意向|開始討論拍攝)$/.test(linkText) && href && destination.href !== cooperationFormUrl && !usesMainContactForm) {
       failures.push(`${route}: cooperation CTA does not use the configured Google Form URL (${href})`);
     }
     if (href && new URL(href, new URL(route, siteOrigin)).href === cooperationFormUrl) {
@@ -285,12 +288,17 @@ try {
   sitemapUrls = sitemapPages;
   if (!sitemapUrls.length) failures.push('sitemap-index.xml: no URLs found');
   const sitemapPaths = new Set(sitemapUrls.map(decodedPathname));
-  for (const route of knownPages.keys()) {
-    if (!privatePath.test(route) && !errorPage.test(route) && !sitemapPaths.has(route)) failures.push(`sitemap is missing a public page: ${route}`);
+  for (const [route, page] of knownPages) {
+    const robotsTag = page.html.match(/<meta\b(?=[^>]*\bname=["']robots["'])[^>]*>/i)?.[0];
+    const noindexPage = (robotsTag ? attribute(robotsTag, 'content') : '')?.toLowerCase().includes('noindex');
+    if (!privatePath.test(route) && !noindexPage && !errorPage.test(route) && !sitemapPaths.has(route)) failures.push(`sitemap is missing a public page: ${route}`);
   }
   for (const url of sitemapUrls) {
     if (url.search || url.hash) failures.push(`sitemap includes a query or fragment URL: ${url.href}`);
     if (privatePath.test(url.pathname) || /^\/404(?:\.html)?\/?$/.test(url.pathname)) failures.push(`sitemap includes an excluded route: ${url.pathname}`);
+    const page = knownPages.get(decodedPathname(url));
+    const robotsTag = page?.html.match(/<meta\b(?=[^>]*\bname=["']robots["'])[^>]*>/i)?.[0];
+    if ((robotsTag ? attribute(robotsTag, 'content') : '')?.toLowerCase().includes('noindex')) failures.push(`sitemap includes a noindex route: ${url.pathname}`);
     if (!await existingFile(url.pathname, !path.extname(url.pathname))) failures.push(`sitemap points to a missing page: ${url.pathname}`);
   }
 } catch {

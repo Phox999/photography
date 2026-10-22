@@ -19,6 +19,7 @@ for (const fileName of readdirSync(journalDirectory)) {
 const isPublicSitemapPage = (page) => {
   const pathname = new URL(page).pathname;
   return !/^\/(?:admin|client|cooperation-status)(?:\/|$)/.test(pathname)
+    && !/^\/lab(?:\/|$)/.test(pathname)
     && !/^\/apply(?:\/|$)/.test(pathname)
     && !/^\/projects\/preview(?:\/|$)/.test(pathname)
     && !/^\/404(?:\.html)?\/?$/.test(pathname);
@@ -36,6 +37,8 @@ export default defineConfig({
         interval: 500,
         ignored: [
           '**/public/assets/portfolio/**',
+          '**/public/assets/portfolio-thumbnails/**',
+          '**/.motion-dist/**',
           '**/dist/**',
           '**/worker-dist/**',
           '**/.astro/**',

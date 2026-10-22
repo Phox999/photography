@@ -1,0 +1,304 @@
+---
+import { portfolioCatalog } from '../../../data/portfolioCatalog';
+import { defaultHeroContent } from '../../../data/site';
+import thumbnails from '../../../data/portfolio-thumbnails.json';
+import { FX_DEFINITIONS, MOTION_SCENES } from '../../../lib/motion-lab-config.js';
+import '../../../styles/motion-lab.css';
+
+const thumbnailMap = thumbnails as Record<string, string>;
+const projects = portfolioCatalog.slice(0, 6).map((work) => ({
+  ...work,
+  thumbnail: thumbnailMap[work.cover] ?? work.cover,
+  alt: `${work.title}，Phox999 人像攝影作品`,
+}));
+
+if (projects.length !== 6) {
+  throw new Error(`Motion Lab needs six published portfolio collections; found ${projects.length}.`);
+}
+
+const firstProject = projects[0];
+const contactUrl = '/#contact';
+const sceneHref = (id: string) => `#scene-${id}`;
+---
+
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="theme-color" content="#63badf" />
+    <title>Phox999｜人像攝影・互惠外拍</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&amp;family=Noto+Serif+TC:wght@600;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" as="image" href={firstProject.thumbnail} fetchpriority="high" />
+  </head>
+  <body class="motion-lab">
+    <a class="skip-link" href="#story">跳到故事內容</a>
+    <a class="skip-link" href="?mode=static">跳過動效</a>
+
+    <header class="lab-header">
+      <a class="lab-brand" href="/" aria-label="Phox999 首頁">
+        <svg class="lab-brand__mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <circle cx="16" cy="16" r="13.5" fill="none" stroke="currentColor" stroke-opacity=".42" />
+          <path d="M16 16 10 3.8a13.5 13.5 0 0 1 8.5-.2Z" fill="currentColor" fill-opacity=".82" />
+          <path d="M16 16 10 3.8a13.5 13.5 0 0 1 8.5-.2Z" fill="currentColor" fill-opacity=".42" transform="rotate(60 16 16)" />
+          <path d="M16 16 10 3.8a13.5 13.5 0 0 1 8.5-.2Z" fill="currentColor" fill-opacity=".72" transform="rotate(120 16 16)" />
+          <path d="M16 16 10 3.8a13.5 13.5 0 0 1 8.5-.2Z" fill="currentColor" fill-opacity=".38" transform="rotate(180 16 16)" />
+          <path d="M16 16 10 3.8a13.5 13.5 0 0 1 8.5-.2Z" fill="currentColor" fill-opacity=".66" transform="rotate(240 16 16)" />
+          <path d="M16 16 10 3.8a13.5 13.5 0 0 1 8.5-.2Z" fill="currentColor" fill-opacity=".48" transform="rotate(300 16 16)" />
+        </svg>
+        <span>phox999</span>
+      </a>
+      <nav class="lab-main-nav" aria-label="主要導覽">
+        <a href="#scene-idea" data-jump="idea">拍攝理念</a>
+        <a href="#scene-gallery" data-jump="gallery">精選作品</a>
+        <a href="#scene-process" data-jump="process">拍攝流程</a>
+      </nav>
+      <a class="quick-cta" href={contactUrl}>
+        填寫合作意向 <span aria-hidden="true">↗</span>
+      </a>
+    </header>
+
+    <main id="main-content">
+      <section class="story" id="story" data-story aria-label="七幕連續攝影場景">
+        <div class="story__stage" data-stage>
+          <div class="stage-backdrop" aria-hidden="true">
+            <span class="stage-backdrop__line stage-backdrop__line--one" data-parallax="background"></span>
+            <span class="stage-backdrop__line stage-backdrop__line--two" data-parallax="foreground"></span>
+            <span class="stage-backdrop__orb" data-parallax="background"></span>
+          </div>
+
+          <svg class="filter-bank" aria-hidden="true" focusable="false">
+            <filter id="motion-liquid-filter" x="-12%" y="-12%" width="124%" height="124%">
+              <feTurbulence data-liquid-noise type="fractalNoise" baseFrequency="0.012" numOctaves="1" seed="9" result="noise" />
+              <feDisplacementMap data-liquid-map in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+          </svg>
+
+          <div class="trail-layer" data-trail aria-hidden="true"></div>
+
+          <div class="stage-webgl" data-webgl-stage aria-hidden="true">
+            <canvas class="gallery-canvas" data-gallery-canvas></canvas>
+          </div>
+
+          <figure
+            class="hero-art"
+            data-hero-art
+            data-asset-src={firstProject.thumbnail}
+            data-asset-status="完整作品照；非透明人物圖層"
+          >
+            <img
+              src={firstProject.thumbnail}
+              alt={firstProject.alt}
+              width="384"
+              height="576"
+              decoding="async"
+              fetchpriority="high"
+              data-parallax="photo"
+            />
+          </figure>
+
+          <div class="asset-gap" role="status" data-asset-gap>
+            <span class="asset-gap__eyebrow">素材缺口 / ASSET GAP</span>
+            <strong>人物透明圖層與乾淨背景尚未提供</strong>
+            <p>目前移動的是同一張完整作品照。補上同尺寸、對位的去背人物與補景後，才會啟用人物分層位移。</p>
+          </div>
+
+          <div class="stage-topline" aria-hidden="true">
+            <span>PHOTOGRAPHY / MOTION STUDY</span>
+            <span data-current-scene>01 / 入鏡</span>
+          </div>
+
+          <nav class="scene-nav" aria-label="故事章節">
+            {MOTION_SCENES.map((scene) => (
+              <a href={sceneHref(scene.id)} data-jump={scene.id} aria-label={`跳到第 ${scene.number} 幕：${scene.label}`} title={scene.label}>
+                <span>{scene.number}</span>
+              </a>
+            ))}
+          </nav>
+
+          <div class="stage-progress" aria-hidden="true"><span data-progress-bar></span></div>
+
+          <div class="story-copy" data-story-copy>
+            <section class="motion-scene motion-scene--opening" id="scene-opening" data-scene="opening" aria-labelledby="scene-title-opening">
+              <div class="scene-copy scene-copy--left">
+                <h1 id="scene-title-opening">{defaultHeroContent.title}</h1>
+                <p class="scene-deck">一起討論風格、服裝與場景，完成自然、有故事的人像作品。</p>
+                <a class="invite-cta magnetic-cta" data-magnetic-cta href={contactUrl}><span>填寫合作意向</span><i aria-hidden="true">↗</i></a>
+              </div>
+            </section>
+
+            <section class="motion-scene motion-scene--idea" id="scene-idea" data-scene="idea" aria-labelledby="scene-title-idea">
+              <div class="scene-copy scene-copy--right">
+                <h2 id="scene-title-idea">不只是拍照，<br />一起創造畫面。</h2>
+                <p class="scene-deck">從你的想法開始，找到舒服自在的拍攝方式。</p>
+              </div>
+            </section>
+
+            <section class="motion-scene motion-scene--frame" id="scene-frame" data-scene="frame" aria-labelledby="scene-title-frame">
+              <div class="scene-copy scene-copy--center">
+                <h2 id="scene-title-frame">每一種你，<br />都有自己的故事。</h2>
+              </div>
+            </section>
+
+            <section class="motion-scene motion-scene--gallery" id="scene-gallery" data-scene="gallery" aria-labelledby="scene-title-gallery">
+              <div class="gallery-heading">
+                <h2 id="scene-title-gallery">精選作品</h2>
+                <p data-webgl-status role="status">CSS 作品列已就緒；WebGL 展廊會在靠近時載入。</p>
+              </div>
+              <div class="gallery-viewport" data-gallery-viewport>
+                <div class="gallery-fallback" data-gallery-fallback>
+                  {projects.map((project, index) => (
+                    <a class="project-card" href={project.href} data-project-card data-project-index={index}>
+                      <span class="project-card__image"><img src={project.thumbnail} alt={project.alt} width="384" height="576" loading="lazy" decoding="async" /></span>
+                      <span class="project-card__label"><strong>{project.title}</strong><small>{project.category} / {project.styles.slice(0, 2).join('・')}</small></span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <nav class="gallery-links" aria-label="六組作品的真實作品頁">
+                {projects.map((project, index) => (
+                  <a href={project.href} data-gallery-link data-project-index={index}>{project.title}<span aria-hidden="true">↗</span></a>
+                ))}
+              </nav>
+            </section>
+
+            <section class="motion-scene motion-scene--style" id="scene-style" data-scene="style" aria-labelledby="scene-title-style">
+              <div class="scene-copy scene-copy--right scene-copy--light">
+                <h2 id="scene-title-style">找到屬於你的風格。</h2>
+                <p class="scene-deck">自然、個性，或一個從沒試過的自己。</p>
+              </div>
+            </section>
+
+            <section class="motion-scene motion-scene--process" id="scene-process" data-scene="process" aria-labelledby="scene-title-process">
+              <div class="process-heading">
+                <h2 id="scene-title-process">從想法，到作品。</h2>
+              </div>
+              <div class="process-cards">
+                <article class="process-card" data-process-card>
+                  <span>01</span><h3>討論概念</h3><p>一起整理主題、服裝與場景。</p>
+                </article>
+                <article class="process-card" data-process-card>
+                  <span>02</span><h3>安心拍攝</h3><p>配合你的節奏，提供自然的引導。</p>
+                </article>
+                <article class="process-card" data-process-card>
+                  <span>03</span><h3>完成作品</h3><p>依討論的風格，完成影像整理。</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="motion-scene motion-scene--invite" id="scene-invite" data-scene="invite" aria-labelledby="scene-title-invite">
+              <div class="invite-copy">
+                <h2 id="scene-title-invite">下一個畫面，<br />留給你。</h2>
+                <p class="scene-deck">有想拍的主題，就從聊聊開始。</p>
+                <a class="invite-cta magnetic-cta" data-magnetic-cta href={contactUrl}>
+                  <span>填寫合作意向</span><i aria-hidden="true">↗</i>
+                </a>
+              </div>
+              <div class="aperture-ring" aria-hidden="true" data-aperture-ring></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="asset-notes" aria-labelledby="asset-notes-title">
+        <div>
+          <p class="eyebrow">DEV NOTES / ASSET CONTRACT</p>
+          <h2 id="asset-notes-title">下一步要補的素材</h2>
+        </div>
+        <ul>
+          <li><strong>hero-subject.webp</strong><span>透明人物，保留原始畫布和透明邊界。</span></li>
+          <li><strong>hero-background.webp</strong><span>移除人物並補好的同尺寸背景。</span></li>
+          <li><strong>對位資訊</strong><span>同裁切、座標與色彩，另附人物可見範圍和臉部安全區。</span></li>
+        </ul>
+        <p class="asset-notes__foot">目前 3D 展廊取自六組已發布作品；以上人物分層素材尚未在現有 3,096 個影像檔中找到。</p>
+      </section>
+    </main>
+
+    <footer class="lab-footer">
+      <span>phox999 photography</span>
+      <a href="https://www.instagram.com/phox999_/">Instagram ↗</a>
+    </footer>
+
+    <details class="dev-panel" data-dev-panel>
+      <summary><span class="dev-panel__light" aria-hidden="true"></span>DEV 控制台 <small>視覺參數 / 診斷</small></summary>
+      <div class="dev-panel__content">
+        <div class="dev-panel__top">
+          <label for="motion-mode">模式</label>
+          <select id="motion-mode" data-mode-select>
+            <option value="cinematic">Cinematic</option>
+            <option value="max">Max</option>
+            <option value="lite">Lite</option>
+            <option value="static">Static</option>
+          </select>
+        </div>
+
+        <div class="dev-metrics" aria-live="polite">
+          <div><span>故事進度</span><output data-metric-progress>0%</output></div>
+          <div><span>目前幕</span><output data-metric-scene>01 / 入鏡</output></div>
+          <div><span>FPS / tick interval</span><output data-metric-frame>等待動效</output></div>
+          <div><span>WebGL canvas</span><output data-metric-canvas>0 / 1</output></div>
+          <div><span>已載入影像</span><output data-metric-assets>0</output></div>
+          <div><span>JS heap</span><output data-metric-memory>檢查支援中</output></div>
+        </div>
+
+        <details class="dev-controls" open>
+          <summary>FX 開關 <span data-fx-count>0</span></summary>
+          <div class="fx-list">
+            {FX_DEFINITIONS.map((effect) => (
+              <label class:list={["fx-toggle", effect.unavailable && "fx-toggle--unavailable"]} title={effect.unavailable ?? effect.label}>
+                <input type="checkbox" data-fx={effect.id} disabled={Boolean(effect.unavailable)} />
+                <span class="fx-toggle__check" aria-hidden="true"></span>
+                <span class="fx-toggle__label">{effect.id.toUpperCase()} / {effect.label}</span>
+                {effect.unavailable && <small>{effect.unavailable}</small>}
+              </label>
+            ))}
+          </div>
+        </details>
+
+        <details class="dev-controls">
+          <summary>渲染參數</summary>
+          <div class="range-controls">
+            <label for="motion-subject-x">人物移動幅度 <output data-subject-x-value>1.00×</output></label>
+            <input id="motion-subject-x" type="range" min="0.5" max="1.5" step="0.05" value="1" data-subject-x />
+            <label for="motion-subject-scale">人物縮放 <output data-subject-scale-value>1.00×</output></label>
+            <input id="motion-subject-scale" type="range" min="0.75" max="1.25" step="0.05" value="1" data-subject-scale />
+            <label for="motion-parallax">視差強度 <output data-parallax-value>1.00×</output></label>
+            <input id="motion-parallax" type="range" min="0" max="2" step="0.1" value="1" data-parallax />
+            <label for="motion-dpr">DPR <output data-dpr-value>1.50</output></label>
+            <input id="motion-dpr" type="range" min="0.75" max="2" step="0.05" value="1.5" data-dpr />
+            <label for="motion-exposure">曝光 <output data-exposure-value>1.0</output></label>
+            <input id="motion-exposure" type="range" min="0.8" max="1.2" step="0.05" value="1" data-exposure />
+            <label for="motion-chromatic">色散 <output data-chromatic-value>0 px</output></label>
+            <input id="motion-chromatic" type="range" min="0" max="2" step="0.25" value="1" data-chromatic />
+            <label for="motion-particles">粒子數 <output data-particle-value>2000</output></label>
+            <input id="motion-particles" type="range" min="0" max="8000" step="500" value="2000" data-particles />
+            <label class="debug-toggle"><input type="checkbox" data-debug /> 顯示場景邊界</label>
+            <label class="debug-toggle"><input type="checkbox" data-lock-mode /> 鎖定模式供效能量測</label>
+          </div>
+        </details>
+
+        <div class="dev-panel__actions">
+          <button type="button" data-copy-settings>複製視覺設定網址</button>
+          <button type="button" data-reset>Reset</button>
+          <output data-dev-feedback aria-live="polite"></output>
+        </div>
+      </div>
+    </details>
+
+    <div class="custom-cursor" data-custom-cursor aria-hidden="true"><span></span><i></i></div>
+
+    <noscript>
+      <div class="noscript-note">靜態內容與作品連結仍可閱讀；捲動動效、3D 展廊與 Dev 控制台需要 JavaScript。</div>
+    </noscript>
+
+    <script>
+      import { initMotionLab } from '../../../scripts/motion-lab';
+
+      initMotionLab();
+    </script>
+  </body>
+</html>

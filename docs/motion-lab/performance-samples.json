@@ -1,0 +1,41 @@
+[
+  {
+    "canvas": "1 / 1",
+    "dpr": 1,
+    "frame": "120 fps / 8.0 ms p50 · 9.0 ms p95",
+    "heap": "21.8 MB JS",
+    "images": "6",
+    "mode": "cinematic",
+    "progress": "54%",
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "canvas": "1 / 1",
+    "dpr": 1,
+    "frame": "120 fps / 8.0 ms p50 · 9.0 ms p95",
+    "heap": "22.4 MB JS",
+    "images": "6",
+    "mode": "cinematic",
+    "progress": "54%",
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  {
+    "canvas": "1 / 1",
+    "dpr": 1,
+    "frame": "120 fps / 8.0 ms p50 · 9.0 ms p95",
+    "heap": "17.7 MB JS",
+    "images": "6",
+    "mode": "cinematic",
+    "progress": "54%",
+    "viewport": [
+      1280,
+      720
+    ]
+  }
+]
