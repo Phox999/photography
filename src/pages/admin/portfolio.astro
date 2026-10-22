@@ -181,7 +181,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const image = entry.target as HTMLImageElement;
       photoObserver?.unobserve(image);
       if (!image.isConnected || !image.dataset.pendingSrc) continue;
-      setPortfolioThumbnailSource(image, image.dataset.pendingSrc!, image.dataset.pendingThumbnail || '');
+      setPortfolioThumbnailSource(image, image.dataset.pendingSrc!, image.dataset.pendingThumbnail || '', { fallbackToOriginalOnError: true });
       delete image.dataset.pendingSrc;
       delete image.dataset.pendingThumbnail;
     }
@@ -536,7 +536,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
         }
         const badge = document.createElement('span'); badge.className = 'portfolio-photo-cover'; badge.textContent = '封面';
         card.append(selection, order, preview, retry, controls, badge);
-        if (index < 12 || !photoObserver) setPortfolioThumbnailSource(image, photo.url, photo.thumbnail_url || '');
+        if (index < 12 || !photoObserver) setPortfolioThumbnailSource(image, photo.url, photo.thumbnail_url || '', { fallbackToOriginalOnError: true });
         else {
           image.dataset.pendingSrc = photo.url;
           image.dataset.pendingThumbnail = photo.thumbnail_url || '';
@@ -582,7 +582,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const coverThumbnailUrl = cover?.thumbnail_url || collection.coverThumbnailUrl || '';
       preview.hidden = !coverUrl;
       if (coverUrl && (preview.dataset.originalSrc !== coverUrl || preview.dataset.thumbnailSrc !== (coverThumbnailUrl || portfolioThumbnailSource(coverUrl)))) {
-        setPortfolioThumbnailSource(preview, coverUrl, coverThumbnailUrl);
+        setPortfolioThumbnailSource(preview, coverUrl, coverThumbnailUrl, { fallbackToOriginalOnError: true });
       }
       $('portfolio-cover-label').textContent = cover ? '點擊封面可回到照片位置' : coverUrl ? '目前使用獨立封面；可從照片中另選封面' : '請從照片中選擇封面';
       $<HTMLButtonElement>('portfolio-cover-jump').disabled = !cover;
@@ -865,10 +865,17 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     button.setAttribute('aria-label', expanded ? '關閉作品系列清單' : '開啟作品系列清單');
   }
   function clearSelection() {
-    const previous = Array.from(selectedPaths);
     selectedPaths.clear(); rangeAnchorPath = '';
-    previous.forEach((path) => updatePhotoSelection(path, false));
+    syncVisiblePhotoSelection();
     setBatchToolbar();
+  }
+  function syncVisiblePhotoSelection() {
+    photoGrid.querySelectorAll<HTMLElement>('[data-photo-card]').forEach((card) => {
+      const selected = selectedPaths.has(card.dataset.photoPath || '');
+      card.classList.toggle('is-selected', selected);
+      const checkbox = card.querySelector<HTMLInputElement>('[data-photo-select]');
+      if (checkbox) checkbox.checked = selected;
+    });
   }
   function updatePhotoSelection(path: string, selected: boolean) {
     const card = photoGrid.querySelector<HTMLElement>(`[data-photo-path="${CSS.escape(path)}"]`);
@@ -886,9 +893,9 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       if (from !== undefined) {
         const [start, end] = [Math.min(from, to), Math.max(from, to)];
         for (let index = start; index <= end; index += 1) {
-          const selectedPath = collection.images[index].path;
-          selectedPaths.add(selectedPath); updatePhotoSelection(selectedPath, true);
+          selectedPaths.add(collection.images[index].path);
         }
+        syncVisiblePhotoSelection();
       }
     } else if (selectedPaths.has(path)) { selectedPaths.delete(path); updatePhotoSelection(path, false); }
     else { selectedPaths.add(path); updatePhotoSelection(path, true); }
@@ -1110,7 +1117,8 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     const action = target?.closest<HTMLButtonElement>('[data-photo-action]');
     const retry = target?.closest<HTMLButtonElement>('[data-photo-retry]');
     if (checkbox) {
-      event.preventDefault(); event.stopPropagation(); togglePhotoSelection(checkbox.dataset.photoSelect || '', (event as MouseEvent).shiftKey); return;
+      checkbox.dataset.selectionShift = String((event as MouseEvent).shiftKey);
+      return;
     }
     if (preview) {
       const path = preview.dataset.photoPreview || '';
@@ -1145,6 +1153,27 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       syncDraft([collection.slug]); renderEditor();
       announce(`已將第 ${index + 1} 張照片設為封面，尚未發布。`);
     } else if (verb === 'remove' && collection.images.length > 1) void removeSinglePhoto(path);
+  });
+  photoGrid.addEventListener('change', (event) => {
+    const checkbox = event.target instanceof HTMLInputElement && event.target.matches('[data-photo-select]')
+      ? event.target : null;
+    const path = checkbox?.dataset.photoSelect || '';
+    const collection = selectedCollection();
+    if (!checkbox || !collection || !photoIndexByPath.has(path)) return;
+    const shift = checkbox.dataset.selectionShift === 'true';
+    delete checkbox.dataset.selectionShift;
+    if (shift && checkbox.checked && rangeAnchorPath) {
+      const from = photoIndexByPath.get(rangeAnchorPath)!;
+      const to = photoIndexByPath.get(path)!;
+      const [start, end] = [Math.min(from, to), Math.max(from, to)];
+      for (let index = start; index <= end; index += 1) selectedPaths.add(collection.images[index].path);
+      syncVisiblePhotoSelection();
+    } else {
+      if (checkbox.checked) selectedPaths.add(path); else selectedPaths.delete(path);
+      updatePhotoSelection(path, checkbox.checked);
+    }
+    rangeAnchorPath = path;
+    setBatchToolbar();
   });
   photoGrid.addEventListener('dragstart', (event) => {
     const card = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-photo-card]') : null;
@@ -1245,8 +1274,11 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   });
   $<HTMLButtonElement>('portfolio-select-all').addEventListener('click', () => {
     const collection = selectedCollection(); if (!collection) return;
-    const clear = selectedPaths.size === collection.images.length;
-    collection.images.forEach((photo) => { if (clear) selectedPaths.delete(photo.path); else selectedPaths.add(photo.path); updatePhotoSelection(photo.path, !clear); });
+    const selectedCount = collection.images.reduce((total, photo) => total + Number(selectedPaths.has(photo.path)), 0);
+    const clear = selectedCount === collection.images.length;
+    selectedPaths.clear();
+    if (!clear) collection.images.forEach((photo) => selectedPaths.add(photo.path));
+    syncVisiblePhotoSelection();
     rangeAnchorPath = clear ? '' : collection.images[0]?.path || ''; setBatchToolbar();
   });
   $<HTMLButtonElement>('portfolio-clear-selection').addEventListener('click', () => {

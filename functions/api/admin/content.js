@@ -7,9 +7,15 @@ function withHeroUrls(content, config) {
       || paths.some((path) => !isValidHeroImagePath(path))) {
     throw new HttpError(503, '首頁照片設定暫時無法載入。', 'content_unavailable');
   }
-  return { ...content, hero_image_urls: paths.map((path) => path.startsWith('static:')
-    ? path.slice('static:'.length)
-    : `${config.url}/storage/v1/object/public/site-hero/${path}`) };
+  return {
+    ...content,
+    hero_image_urls: paths.map((path) => path.startsWith('static:')
+      ? path.slice('static:'.length)
+      : `${config.url}/storage/v1/object/public/site-hero/${path}`),
+    hero_image_thumbnail_urls: paths.map((path) => path.startsWith('static:')
+      ? null
+      : `${config.url}/storage/v1/object/public/site-hero/${path.replace(/\.(jpg|png|webp)$/i, '.thumb.webp')}`),
+  };
 }
 
 export const onRequest = endpoint(async (context) => {

@@ -7,6 +7,6 @@ export const onRequest = endpoint(async (context) => {
   if (unsupported) return unsupported;
   assertHeroUpload(context.request);
   await requireAdmin(context);
-  const upload = await readHeroUpload(context.request);
-  return json({ image: await persistHeroUpload(context.env, upload) }, 201);
+  const upload = await readHeroUpload(context.request, '首頁照片', { allowThumbnail: true });
+  return json({ image: await persistHeroUpload(context.env, upload, 'site-hero', '首頁照片', context.performanceTimings) }, 201);
 });

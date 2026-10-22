@@ -33,3 +33,20 @@ test('小圖失敗不自動載入原圖，重用封面元素不會退回前一�
   const uploaded = 'https://project.supabase.co/storage/v1/object/public/site-portfolio/new.webp';
   assert.equal(portfolioThumbnailSource(uploaded), uploaded);
 });
+
+test('管理後台的小圖不存在時只退回目前照片原圖一次', () => {
+  const events = new Map();
+  const image = { dataset: {}, addEventListener(type, listener) { events.set(type, listener); } };
+  const [first, second] = portfolioAdminCatalog;
+  setPortfolioThumbnailSource(image, first.cover, '', { fallbackToOriginalOnError: true });
+  events.get('error')();
+  assert.equal(image.src, first.cover);
+  assert.equal(image.dataset.originalFallback, 'true');
+
+  setPortfolioThumbnailSource(image, second.cover, '', { fallbackToOriginalOnError: true });
+  events.get('error')();
+  assert.equal(image.src, second.cover, '重用圖片元素時只會回到目前作品原圖');
+  assert.equal(image.dataset.originalFallback, 'true');
+  events.get('error')();
+  assert.equal(image.dataset.thumbnailFailed, 'true', '原圖也失敗時會記錄終止狀態，不再循環');
+});

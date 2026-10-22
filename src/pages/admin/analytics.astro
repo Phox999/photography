@@ -641,20 +641,20 @@ import '../../styles/admin-analytics.css';
 
   async function loadObservationCounts(force = false) {
     const note = $('[data-journey-capability]') as HTMLElement;
-    const params = buildJourneyParams({ result: false });
-    params.delete('limit');
-    const key = params.toString();
     observationController?.abort();
     observationController = null;
     const generation = ++observationGeneration;
-    const cached = observationCache.get(key);
-    if (!force && cached && Date.now() - cached.loadedAt < 30_000) {
-      renderObservationCounts(cached.value);
-      return;
-    }
     const controller = new AbortController();
     observationController = controller;
     try {
+      const params = buildJourneyParams({ result: false });
+      params.delete('limit');
+      const key = params.toString();
+      const cached = observationCache.get(key);
+      if (!force && cached && Date.now() - cached.loadedAt < 30_000) {
+        if (generation === observationGeneration) renderObservationCounts(cached.value);
+        return;
+      }
       const result = await requestAdmin<ObservationCounts>('/api/admin/analytics/observation-counts?' + params.toString(), { signal: controller.signal });
       if (generation !== observationGeneration) return;
       observationCache.set(key, { value: result, loadedAt: Date.now() });
@@ -1018,40 +1018,55 @@ import '../../styles/admin-analytics.css';
       button.setAttribute('aria-pressed', String(active));
       button.classList.toggle('admin-button--quiet', !active);
     });
-    if (name !== 'sessions') { observationController?.abort(); observationGeneration += 1; }
-    if (name === 'sessions') await Promise.all([loadObservationCounts(), loadSessions()]);
+    if (name !== 'overview') { observationController?.abort(); observationGeneration += 1; }
+    if (name === 'overview') await loadObservationCounts();
+    if (name === 'sessions') await loadSessions();
     if (name === 'pages') await loadPaths();
   }
 
   async function refreshJourneyViews(force = false) {
-    if (activePanel() === 'sessions') await Promise.all([loadObservationCounts(force), loadSessions()]);
+    if (activePanel() === 'overview') await loadObservationCounts(force);
+    if (activePanel() === 'sessions') await loadSessions();
     if (activePanel() === 'pages') await loadPaths();
   }
 
+  let reportController: AbortController | null = null;
+  let reportGeneration = 0;
   async function load() {
-    if (loading) return;
+    const generation = ++reportGeneration;
+    reportController?.abort();
+    const controller = new AbortController();
+    reportController = controller;
     observationCache.clear();
     loading = true; status.textContent = '正在載入流量與轉換資料…';
     reloadButton.disabled = true;
     const params = new URLSearchParams({ range: rangeSelect.value });
     if (rangeSelect.value === 'custom') {
       if (!startInput.value || !endInput.value) {
-        status.textContent = '請選擇開始與結束日期。'; loading = false; reloadButton.disabled = false; return;
+        status.textContent = '請選擇開始與結束日期。'; loading = false; reloadButton.disabled = false;
+        if (reportController === controller) reportController = null;
+        void refreshJourneyViews(true);
+        return;
       }
       params.set('start', startInput.value); params.set('end', endInput.value);
     }
+    void refreshJourneyViews(true);
     try {
-      const result = await requestAdmin<AnalyticsResponse>('/api/admin/analytics?' + params);
+      const result = await requestAdmin<AnalyticsResponse>('/api/admin/analytics?' + params, { signal: controller.signal });
+      if (generation !== reportGeneration) return;
       render(result);
       status.textContent = result.current.totals.visitors
         ? '報表已更新。訪客與轉換數是基於可量測事件的估計。'
         : '目前尚無可量測的公開頁瀏覽；請確認追蹤已啟用。成功意向仍會依資料庫顯示。';
-      void refreshJourneyViews(true);
     } catch (error) {
+      if (controller.signal.aborted || generation !== reportGeneration) return;
       status.textContent = adminErrorMessage(error);
       if (report) status.textContent += ' · 上次成功載入的資料仍顯示於下方。';
     } finally {
-      loading = false; reloadButton.disabled = false;
+      if (generation === reportGeneration) {
+        loading = false; reloadButton.disabled = false;
+        if (reportController === controller) reportController = null;
+      }
     }
   }
 

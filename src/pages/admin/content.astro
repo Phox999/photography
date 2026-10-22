@@ -324,7 +324,7 @@ import '../../styles/admin-content.css';
       const img = preview.querySelector<HTMLImageElement>('img')!;
       img.alt = '輪播第 ' + (index + 1) + ' 張照片'; img.loading = index < 4 ? 'eager' : 'lazy';
       if (img.dataset.originalSrc !== image.url || img.dataset.thumbnailSrc !== (image.thumbnail_url || '')) {
-        setPortfolioThumbnailSource(img, image.url, image.thumbnail_url || '');
+        setPortfolioThumbnailSource(img, image.url, image.thumbnail_url || '', { fallbackToOriginalOnError: true });
       }
       for (const button of card.querySelectorAll<HTMLButtonElement>('[data-photo-action]')) {
         const action = button.dataset.photoAction;
