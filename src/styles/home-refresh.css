@@ -201,6 +201,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   border-radius: var(--radius-xl);
+  background: var(--color-surface);
   cursor: grab;
   scrollbar-width: none;
   -ms-overflow-style: none;
