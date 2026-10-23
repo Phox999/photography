@@ -22,7 +22,7 @@ export const FX_DEFINITIONS = [
   { id: 'fx11', label: '游標影像殘影', group: '實驗', pointerOnly: true },
   { id: 'fx12', label: '深度圖視差', group: '實驗', unavailable: '尚無作品深度圖素材' },
   { id: 'fx13', label: '液態照片轉場', group: '實驗' },
-  { id: 'fx14', label: '顆粒溶解', group: '實驗', requiresWebgl: true },
+  { id: 'fx14', label: '顆粒環境效果', group: '實驗', requiresWebgl: true },
   { id: 'fx15', label: '滑動速度拉伸', group: '實驗' },
   { id: 'fx16', label: '局部 RGB 色散', group: '實驗' },
   { id: 'fx17', label: '淺景深', group: '實驗', requiresWebgl: true },
@@ -30,13 +30,13 @@ export const FX_DEFINITIONS = [
   { id: 'fx19', label: '動態字體寬度', group: '實驗', unavailable: '目前載入的字體未確認支援寬度軸' },
   { id: 'fx20', label: '底片顆粒', group: '輔助' },
   { id: 'fx21', label: '3D 光圈環', group: '加碼', requiresWebgl: true },
-  { id: 'fx22', label: '球體作品排列', group: '加碼', requiresWebgl: true, alternateGallery: true },
+  { id: 'fx22', label: '球體作品排列', group: '加碼', requiresWebgl: true, unavailable: '目前主展廊沿鏡頭路徑前進，球體模式未接入。' },
 ];
 
 export const MOTION_MODES = {
   cinematic: {
     label: 'Cinematic',
-    effects: ['fx01', 'fx02', 'fx03', 'fx04', 'fx05', 'fx06', 'fx07', 'fx08', 'fx09', 'fx18', 'fx20'],
+    effects: ['fx01', 'fx03', 'fx04', 'fx05', 'fx06', 'fx13'],
   },
   max: {
     label: 'Max',

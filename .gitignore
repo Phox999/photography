@@ -5,6 +5,8 @@ node_modules/
 dist/
 worker-dist/
 public/assets/portfolio-thumbnails/
+public/assets/motion-lab-v2/
+.motion-dist/
 
 # Cloudflare local state
 .wrangler/

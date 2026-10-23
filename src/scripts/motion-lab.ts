@@ -1,5 +1,6 @@
 import type * as THREE from 'three';
 import { gsap } from 'gsap';
+import { layerState, smooth, galleryCursor, galleryX, coverUv } from '../lib/motion-story-state.js';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   DEFAULT_MODE,
@@ -53,6 +54,12 @@ export function initMotionLab() {
     image: card.querySelector('img')?.currentSrc || card.querySelector('img')?.src || '',
   }));
 
+  const layerReady = heroArt.dataset.layerReady === 'true';
+  const stylePhoto = document.querySelector<HTMLElement>('[data-style-photo]');
+  const styleImages = Array.from(stylePhoto?.querySelectorAll('img') ?? []);
+  const domGallery = document.querySelector<HTMLElement>('[data-dom-gallery]');
+  const domWorks = Array.from(document.querySelectorAll<HTMLElement>('[data-dom-work]'));
+  document.body.dataset.layersReady = String(layerReady);
   const metrics = {
     progress: document.querySelector<HTMLOutputElement>('[data-metric-progress]'),
     scene: document.querySelector<HTMLOutputElement>('[data-metric-scene]'),
@@ -114,6 +121,8 @@ export function initMotionLab() {
   let galleryLoading = false;
   let galleryFailed = false;
   let galleryInView = false;
+  let galleryFrameReady = false;
+  let renderedPhotoIndex = -1;
   let generation = 0;
   let webglGeneration = 0;
   let layoutTimer: ReturnType<typeof setTimeout> | undefined;
@@ -224,7 +233,7 @@ export function initMotionLab() {
     maxSlowSince = 0;
     if (document.visibilityState === 'visible' && mode !== 'static') {
       ScrollTrigger.update();
-      updateProgress(timeline?.scrollTrigger?.progress ?? currentProgress, 0);
+      updateProgress(timeline?.progress() ?? currentProgress, 0);
     }
   }
 
@@ -284,6 +293,7 @@ export function initMotionLab() {
       if (definition.pointerOnly && !window.matchMedia('(pointer: fine)').matches) return false;
       return true;
     }));
+    if (!layerReady) sanitized.delete('fx01');
 
     if (sanitized.has('fx06')) sanitized.delete('fx22');
     if (sanitized.has('fx22')) sanitized.delete('fx06');
@@ -390,6 +400,7 @@ export function initMotionLab() {
       input.disabled = Boolean(
         mode === 'static'
         || definition.unavailable
+        || (id === 'fx01' && !layerReady)
         || (definition.requiresWebgl && ['lite', 'static'].includes(mode))
         || (definition.pointerOnly && !window.matchMedia('(pointer: fine)').matches),
       );
@@ -438,7 +449,7 @@ export function initMotionLab() {
       bodySceneReset();
       setupTimeline(Boolean(context.conditions?.mobile), Boolean(context.conditions?.tablet));
       gsap.ticker.add(renderTick);
-      updateProgress(timeline?.scrollTrigger?.progress ?? currentProgress, scrollVelocity);
+      updateProgress(timeline?.progress() ?? currentProgress, scrollVelocity);
       return () => {
         gsap.ticker.remove(renderTick);
         timeline?.scrollTrigger?.kill();
@@ -522,8 +533,8 @@ export function initMotionLab() {
         end: 'bottom bottom',
         scrub: 0.45,
         invalidateOnRefresh: true,
-        onUpdate: (self) => updateProgress(self.progress, self.getVelocity()),
-        onRefresh: (self) => updateProgress(self.progress, self.getVelocity()),
+        onUpdate: (self) => { scrollVelocity = self.getVelocity(); },
+        onRefresh: (self) => { scrollVelocity = self.getVelocity(); },
       },
     });
 
@@ -535,16 +546,48 @@ export function initMotionLab() {
       .to(motion, { processReveal: 1, duration: 0.13, ease: 'none' }, 0.77)
       .to(motion, { subjectX: offset * 0.9, handoff: 0, frameScale: 0.8, ringScale: 1.15, ringOpacity: 1, ringRotation: 34, duration: 0.1, ease: 'none' }, 0.9);
 
-    timeline.eventCallback('onUpdate', () => applyFrameStyles(motion, isMobile));
+    timeline.eventCallback('onUpdate', () => updateProgress(timeline?.progress() ?? 0, scrollVelocity));
     applyFrameStyles(motion, isMobile);
   }
 
   function applyFrameStyles(motion = activeMotionState, isMobile = activeMotionIsMobile) {
     if (!motion || mode === 'static') return;
-    const offsetX = effects.has('fx01') ? motion.subjectX * subjectX : 0;
+    // The blocked preview keeps the photograph on the right; it does not pretend
+    // that moving a complete photograph is a separated-person animation.
+    const offsetX = layerReady ? 0 : innerWidth * (isMobile ? .05 : .22) * (1-smooth((currentProgress-.30)/.055));
     heroArt.style.translate = `${offsetX}px 0`;
     heroArt.style.setProperty('--photo-frame-scale', String((effects.has('fx05') ? motion.frameScale : 1) * subjectScale));
-    heroArt.style.opacity = String(1 - (effects.has('fx05') ? motion.handoff : 0));
+    const firstDomImage = domWorks[0]?.querySelector('img');
+    const handoffReady = (firstDomImage?.complete && firstDomImage.naturalWidth > 0) || photoTextures.has(0);
+    const handoff = handoffReady ? smooth((currentProgress-.43)/.035) : 0;
+    heroArt.style.opacity = String(currentProgress < .64 ? 1-handoff : currentProgress >= .9 ? 1-motion.handoff : 0);
+    heroArt.style.borderRadius = `${30*(1-smooth((currentProgress-.375)/.055))}px`;
+    if(layerReady){
+      const state=layerState(currentProgress);
+      heroArt.style.translate='0px 0';
+      heroArt.style.setProperty('--photo-frame-scale',String(state.scale*subjectScale));
+      const subject=heroArt.querySelector<HTMLElement>('[data-layer-subject]');
+      const bg=heroArt.querySelector<HTMLElement>('[data-layer-background]');
+      const original=heroArt.querySelector<HTMLElement>('[data-layer-original]');
+      if(subject){subject.style.translate=String((effects.has('fx01')?state.subjectX:0)*innerWidth*(isMobile?.1:.22)*subjectX)+'px 0';subject.style.opacity=String(1-state.original);}
+      if(bg)bg.style.opacity=String(state.background*(1-state.original));
+      if(original)original.style.opacity=String(state.original);
+    }
+    const styleIndex=clamp((currentProgress-.66)/.08,0,3);
+    if(stylePhoto){
+      stylePhoto.style.opacity=String(currentProgress>=.64&&currentProgress<=.95?smooth((currentProgress-.64)/.02)*(1-smooth((currentProgress-.91)/.04)):0);
+      const stageRect=stage.getBoundingClientRect(),heroRect=heroArt.getBoundingClientRect();
+      const blend=smooth((currentProgress-.64)/.025),returnBlend=smooth((currentProgress-.865)/.04);
+      const target={left:stageRect.width*(isMobile?.13:.18),top:stageRect.height*(isMobile?.14:.18),width:stageRect.width*(isMobile?.74:.29),height:stageRect.height*(isMobile?.38:.58)};
+      const lerp=(a:number,b:number,t:number)=>a+(b-a)*t;
+      const position=(start:number,end:number)=>lerp(lerp(start,end,blend),start,returnBlend);
+      stylePhoto.style.left=`${position(heroRect.left-stageRect.left,target.left)}px`;
+      stylePhoto.style.top=`${position(heroRect.top-stageRect.top,target.top)}px`;
+      stylePhoto.style.width=`${position(heroRect.width,target.width)}px`;
+      stylePhoto.style.height=`${position(heroRect.height,target.height)}px`;
+      styleImages.forEach((image,index)=>image.style.opacity=String(Math.max(0,1-Math.abs(styleIndex-index))));
+      stylePhoto.style.filter=effects.has('fx13')?'url(#motion-liquid-filter)':'none';
+    }
     heroArt.style.setProperty('--aperture-radius', effects.has('fx18') ? `${100 - motion.handoff * 82}%` : '100%');
 
     const parallaxX = effects.has('fx02') ? pointerX * parallax : 0;
@@ -570,13 +613,14 @@ export function initMotionLab() {
     const style = clamp((motion.styleMix - 0.15) / 0.7, 0, 1);
     stage.style.setProperty('--style-mix', String(style));
     stage.style.setProperty('--chromatic-offset', `${effects.has('fx16') ? chromatic * Math.sin(style * Math.PI) : 0}px`);
-    const liquidAmount = effects.has('fx13') ? 8 * Math.sin(style * Math.PI) : 0;
+    const liquidAmount = effects.has('fx13') ? 12 * Math.sin((styleIndex % 1) * Math.PI) : 0;
     liquidMap?.setAttribute('scale', String(liquidAmount));
     liquidNoise?.setAttribute('baseFrequency', String(0.01 + 0.015 * Math.sin(style * Math.PI)));
 
     const stretch = effects.has('fx15') ? clamp(Math.abs(scrollVelocity) / 100000, 0, 0.02) : 0;
     stage.style.setProperty('--motion-stretch', String(stretch));
 
+    updateDomGallery();
     if (webglRenderer) updateGalleryScene(currentProgress, isMobile);
   }
 
@@ -597,7 +641,10 @@ export function initMotionLab() {
       const fade = 0.012;
       const enter = index === 0 ? 1 : clamp((currentProgress - range.start + fade) / (fade * 2), 0, 1);
       const leave = index === MOTION_SCENES.length - 1 ? 1 : clamp((range.end - currentProgress + fade) / (fade * 2), 0, 1);
-      const opacity = Math.min(enter, leave);
+      let opacity = Math.min(enter, leave);
+      if (index === 0) opacity = clamp((0.12 - currentProgress) / 0.04, 0, 1);
+      if (index === 1) opacity *= clamp((currentProgress - 0.22) / 0.035, 0, 1);
+      if (index === 2) opacity *= clamp((currentProgress - 0.34) / 0.025, 0, 1);
       if (opacity > 0.001) element.setAttribute('data-visual-active', 'true');
       else element.removeAttribute('data-visual-active');
       element.style.opacity = String(opacity);
@@ -634,8 +681,59 @@ export function initMotionLab() {
   }
 
   function findActivePhoto(value: number) {
-    const galleryProgress = clamp((value - 0.43) / (0.64 - 0.43), 0, 1);
-    return clamp(Math.round(galleryProgress * Math.max(0, projects.length - 1)), 0, Math.max(0, projects.length - 1));
+    return Math.round(galleryCursor(value, projects.length));
+  }
+
+  // The DOM fallback and WebGL share this measured view. Pixel geometry is
+  // derived from the photograph that is actually on screen, including mobile.
+  function galleryView() {
+    const frame = heroArt.getBoundingClientRect();
+    const host = canvasHost.getBoundingClientRect();
+    const unitsPerPixel = 3.72 / Math.max(1, frame.height);
+    const distance = host.height * unitsPerPixel / (2*Math.tan(35*Math.PI/360));
+    const cursor = galleryCursor(currentProgress, projects.length);
+    const segment = Math.floor(cursor);
+    const next = Math.min(projects.length-1, segment+1);
+    const t = cursor-segment;
+    const firstX = (frame.left+frame.width/2-host.left-host.width/2)*unitsPerPixel;
+    const firstY = (host.top+host.height/2-frame.top-frame.height/2)*unitsPerPixel;
+    const cameraX = galleryX(segment)+(galleryX(next)-galleryX(segment))*t;
+    const cameraZ = distance-cursor*7;
+    const pointerWeight = smooth((currentProgress-.465)/.025);
+    return {frame,host,unitsPerPixel,distance,cursor,firstX,firstY,
+      cameraX:cameraX+pointerX*.045*pointerWeight,
+      cameraY:pointerY*.035*pointerWeight,cameraZ};
+  }
+
+  function galleryHasFrame() {
+    return galleryFrameReady && renderedPhotoIndex === activePhotoIndex && photoTextures.has(activePhotoIndex) && shouldUseWebgl();
+  }
+
+  function updateDomGallery() {
+    if (!domGallery) return;
+    const view = galleryView();
+    const visible = currentProgress >= .43 && currentProgress <= .66;
+    const glFrame=galleryHasFrame();
+    const galleryAlpha=visible?smooth((currentProgress-.43)/.035)*(1-smooth((currentProgress-.64)/.02)):0;
+    domGallery.style.opacity = String(visible ? glFrame ? 1-galleryAlpha : galleryAlpha : 0);
+    domGallery.inert = !visible || (glFrame && galleryAlpha>.5);
+    domGallery.setAttribute('aria-hidden', String(domGallery.inert));
+    domWorks.forEach((work,index) => {
+      const depth = view.cameraZ+index*7;
+      const scale = view.distance / Math.max(.3,depth);
+      const x = view.host.width/2+(view.firstX+galleryX(index)-view.cameraX)/view.unitsPerPixel*scale;
+      const y = view.host.height/2-(view.firstY-view.cameraY)/view.unitsPerPixel*scale;
+      work.style.width = `${view.frame.width*scale}px`;
+      work.style.height = `${view.frame.height*scale}px`;
+      work.style.left = `${x}px`;
+      work.style.top = `${y}px`;
+      work.style.zIndex = String(projects.length-index);
+      work.style.visibility = depth > .3 ? 'visible' : 'hidden';
+      work.style.pointerEvents = index === activePhotoIndex ? 'auto' : 'none';
+      const image=work.querySelector<HTMLImageElement>('img');
+      if(image)image.style.objectPosition=index===0?'center 42%':'center 50%';
+      work.inert = index !== activePhotoIndex;
+    });
   }
 
   function colorAtProgress(value: number) {
@@ -654,7 +752,8 @@ export function initMotionLab() {
     const index = SCROLL_SCENE_INDEX.get(id);
     if (index === undefined || mode === 'static') return;
     const range = MOTION_SCENES[index];
-    const midpoint = (range.start + range.end) / 2;
+    const readingPoints = [0.04, 0.27, 0.395, 0.515, 0.705, 0.85, 0.96];
+    const midpoint = readingPoints[index] ?? (range.start + range.end) / 2;
     const start = story.getBoundingClientRect().top + window.scrollY;
     const distance = Math.max(1, story.offsetHeight - stage.offsetHeight);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -755,6 +854,7 @@ export function initMotionLab() {
         uniform sampler2D uMap;
         uniform vec2 uTexelSize;
         uniform vec2 uUvScale;
+        uniform vec2 uUvOffset;
         uniform float uBlur;
         uniform float uLoaded;
         uniform float uDissolve;
@@ -766,7 +866,7 @@ export function initMotionLab() {
           float grain = fract(sin(dot(floor(vUv * 180.0), vec2(12.9898, 78.233))) * 43758.5453);
           if (grain < uDissolve) discard;
           vec4 color;
-          vec2 imageUv = (vUv - 0.5) * uUvScale + 0.5;
+          vec2 imageUv = (vUv - 0.5) * uUvScale + 0.5 + uUvOffset;
           if (uBlur < 0.5) {
             color = texture2D(uMap, imageUv);
           } else {
@@ -791,6 +891,7 @@ export function initMotionLab() {
           uMap: { value: null },
           uTexelSize: { value: new THREE_RUNTIME.Vector2(1 / 384, 1 / 576) },
           uUvScale: { value: new THREE_RUNTIME.Vector2(1, 1) },
+          uUvOffset: { value: new THREE_RUNTIME.Vector2(0, 0) },
           uBlur: { value: 0 },
           uLoaded: { value: 0 },
           uDissolve: { value: 0 },
@@ -891,15 +992,25 @@ export function initMotionLab() {
         texture.anisotropy = Math.min(4, webglRenderer.capabilities.getMaxAnisotropy());
         photoTextures.set(index, texture);
         const material = photoMaterials[index];
-        const imageAspect = Math.max(1, texture.image?.width ?? 384) / Math.max(1, texture.image?.height ?? 576);
-        const planeAspect = 2.55 / 3.72;
-        material.uniforms.uUvScale.value.set(Math.min(1, planeAspect / imageAspect), Math.min(1, imageAspect / planeAspect));
+        const imageAspect = Math.max(1, texture.image?.width ?? 960) / Math.max(1, texture.image?.height ?? 1440);
+        const planeAspect = heroArt.offsetWidth / Math.max(1, heroArt.offsetHeight);
+        const crop = coverUv(imageAspect,planeAspect,index===0?.42:.5);
+        material.uniforms.uUvScale.value.set(crop.x,crop.y);
+        material.uniforms.uUvOffset.value.set(crop.offsetX,crop.offsetY);
         material.uniforms.uMap.value = texture;
         material.uniforms.uTexelSize.value.set(1 / Math.max(1, texture.image?.width ?? 384), 1 / Math.max(1, texture.image?.height ?? 576));
         material.uniforms.uLoaded.value = 1;
         material.needsUpdate = true;
+        if(index===0){
+          updateGalleryScene(currentProgress,window.matchMedia('(max-width: 767px)').matches);
+          webglRenderer.render(webglScene!,webglCamera!);
+          galleryFrameReady=true;
+          renderedPhotoIndex=0;
+        }
         updateAssetsMetric();
         if (metrics.webglStatus) metrics.webglStatus.textContent = `3D 展廊已載入 ${photoTextures.size} / ${projects.length} 張作品圖。`;
+        updateDomGallery();
+        applyFrameStyles();
       }, undefined, (error) => {
         if (token !== webglGeneration || destroyed) return;
         clearTimeout(textureTimers.get(index));
@@ -926,42 +1037,20 @@ export function initMotionLab() {
     const focus = findActivePhoto(value);
     activePhotoIndex = focus;
     loadNeighborTextures(focus);
-    const galleryT = clamp((value - 0.43) / (0.64 - 0.43), 0, 1);
-    const sphereMode = effects.has('fx22');
-    photoMeshes.forEach((mesh, index) => {
-      const material = photoMaterials[index];
-      const relative = index - (galleryT * (projects.length - 1));
-      if (sphereMode) {
-        const point = mesh.userData.spherePosition as THREE.Vector3;
-        mesh.position.copy(point);
-        mesh.lookAt(webglCamera!.position);
-        mesh.scale.setScalar(0.88);
-        mesh.visible = effects.has('fx22');
-        material.uniforms.uBlur.value = 0;
-      } else {
-        mesh.position.set(relative * (isMobile ? 3.05 : 3.25), Math.sin(relative * 0.48) * 0.22, -Math.abs(relative) * 1.05);
-        mesh.rotation.set(0, clamp(relative * -0.09, -0.28, 0.28), clamp(relative * 0.015, -0.04, 0.04));
-        const focused = Math.abs(relative) < 0.5;
-        const scale = (focused ? 1 : 0.92 - Math.min(0.1, Math.abs(relative) * 0.015)) * 0.82;
-        mesh.scale.setScalar(scale);
-        if (focused && effects.has('fx09')) {
-          mesh.rotation.x = -pointerY * Math.PI / 45;
-          mesh.rotation.y += pointerX * Math.PI / 45;
-        }
-        if (effects.has('fx15')) mesh.scale.x *= 1 + clamp(Math.abs(scrollVelocity) / 100000, 0, 0.02);
-        mesh.visible = (effects.has('fx06') || effects.has('fx17')) && Math.abs(relative) < 3.1;
-        material.uniforms.uBlur.value = effects.has('fx17') ? Math.min(3, Math.abs(relative) * 1.25) : 0;
-      }
-      const dissolveProgress = clamp((value - 0.64) / 0.13, 0, 1);
-      material.uniforms.uDissolve.value = effects.has('fx14') ? Math.sin(dissolveProgress * Math.PI) * 0.94 : 0;
-      material.uniforms.uSpot.value = effects.has('fx10') ? 1 : effects.has('fx09') ? 0.35 : 0;
-      material.uniforms.uPointer.value.set(0.5 + pointerX * 0.3, 0.5 - pointerY * 0.3);
+    const view=galleryView();
+    webglCamera.position.set(view.cameraX,view.cameraY,view.cameraZ);
+    webglCamera.lookAt(view.cameraX,view.cameraY,view.cameraZ-1);
+    photoMeshes.forEach((mesh,index)=>{
+      mesh.position.set(view.firstX+galleryX(index),view.firstY,-index*7);
+      mesh.rotation.set(0,0,0);
+      mesh.scale.set(1,1,1);
+      mesh.scale.x=(view.frame.width/view.frame.height)/(2.55/3.72);
+      mesh.visible=photoTextures.has(index)&&mesh.position.z<view.cameraZ-.3;
+      const material=photoMaterials[index];
+      material.uniforms.uBlur.value=effects.has('fx17')?Math.min(2,Math.abs(index-view.cursor)*.6):0;
+      material.uniforms.uDissolve.value=0;
+      material.uniforms.uSpot.value=effects.has('fx10')?.4:0;
     });
-
-    webglCamera.position.x = pointerX * parallax * (effects.has('fx06') && !isMobile ? 0.18 : 0);
-    webglCamera.position.y = 0.05 + pointerY * parallax * (effects.has('fx06') && !isMobile ? 0.12 : 0);
-    webglCamera.position.z = sphereMode ? 11.2 : 9.2;
-    webglCamera.lookAt(0, 0, 0);
 
     if (aperture) {
       const ringProgress = clamp((value - 0.9) / 0.1, 0, 1);
@@ -1031,7 +1120,13 @@ export function initMotionLab() {
     }
 
     if (webglRenderer && webglScene && webglCamera && galleryInView) {
+      const photoChanged=renderedPhotoIndex !== activePhotoIndex;
       webglRenderer.render(webglScene, webglCamera);
+      if(photoChanged){
+        renderedPhotoIndex = activePhotoIndex;
+        updateDomGallery();
+        updateRendererVisibility();
+      }
     }
   }
 
@@ -1074,11 +1169,11 @@ export function initMotionLab() {
   }
 
   function updateRendererVisibility() {
-    const galleryWindow = currentProgress >= 0.4 && currentProgress <= 0.68 && (effects.has('fx06') || effects.has('fx17') || effects.has('fx22'));
+    const galleryWindow = currentProgress >= 0.43 && currentProgress <= 0.66 && (effects.has('fx06') || effects.has('fx17') || effects.has('fx22'));
     const particleWindow = currentProgress >= 0.64 && currentProgress <= 0.78 && effects.has('fx14');
     const ringWindow = currentProgress >= 0.88 && currentProgress <= 1 && effects.has('fx21');
     galleryInView = galleryWindow || particleWindow || ringWindow;
-    if (canvas) canvas.style.opacity = webglRenderer && galleryInView ? (galleryWindow ? '1' : '0.78') : '0';
+    if (canvas) canvas.style.opacity = webglRenderer && galleryInView && galleryHasFrame() ? String(galleryWindow ? smooth((currentProgress-.43)/.035)*(1-smooth((currentProgress-.64)/.02)) : .78) : '0';
     if (metrics.canvas) metrics.canvas.textContent = webglRenderer && galleryInView ? '1 / 1' : '0 / 1';
   }
 
@@ -1098,6 +1193,8 @@ export function initMotionLab() {
     resizeObserver = undefined;
     galleryInitialized = false;
     galleryInView = false;
+    galleryFrameReady = false;
+    renderedPhotoIndex = -1;
     pendingTextures.clear();
     photoTextures.forEach((texture) => texture.dispose());
     photoTextures.clear();

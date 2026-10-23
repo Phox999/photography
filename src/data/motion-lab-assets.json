@@ -1,0 +1,116 @@
+[
+  {
+    "slug": "260201_棚拍 RE",
+    "title": "耳機白日",
+    "category": "棚拍",
+    "styles": [
+      "音樂主題",
+      "青春感"
+    ],
+    "href": "/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/",
+    "source": "/assets/portfolio/260201_棚拍 RE/_I7A0019.webp",
+    "sizes": {
+      "960": "/assets/motion-lab-v2/work-0-960.webp",
+      "1600": "/assets/motion-lab-v2/work-0-1600.webp"
+    },
+    "dimensions": {
+      "width": 960,
+      "height": 1440
+    }
+  },
+  {
+    "slug": "260827_敦煌 RE",
+    "title": "敦煌幻境",
+    "category": "棚拍",
+    "styles": [
+      "異域造型",
+      "金色光影"
+    ],
+    "href": "/portfolio/260827_%E6%95%A6%E7%85%8C%20RE/",
+    "source": "/assets/portfolio/260827_%E6%95%A6%E7%85%8C%20RE/_I7A7616.webp",
+    "sizes": {
+      "960": "/assets/motion-lab-v2/work-1-960.webp",
+      "1600": "/assets/motion-lab-v2/work-1-1600.webp"
+    },
+    "dimensions": {
+      "width": 960,
+      "height": 1440
+    }
+  },
+  {
+    "slug": "260712_運動風 RE",
+    "title": "街頭節拍",
+    "category": "外拍",
+    "styles": [
+      "運動風",
+      "街頭"
+    ],
+    "href": "/portfolio/260712_%E9%81%8B%E5%8B%95%E9%A2%A8%20RE/",
+    "source": "/assets/portfolio/260712_%E9%81%8B%E5%8B%95%E9%A2%A8%20RE/_I7A3916.webp",
+    "sizes": {
+      "960": "/assets/motion-lab-v2/work-2-960.webp",
+      "1600": "/assets/motion-lab-v2/work-2-1600.webp"
+    },
+    "dimensions": {
+      "width": 960,
+      "height": 1440
+    }
+  },
+  {
+    "slug": "260621_Y2K RE",
+    "title": "千禧街色",
+    "category": "外拍",
+    "styles": [
+      "Y2K",
+      "街頭時尚"
+    ],
+    "href": "/portfolio/260621_Y2K%20RE/",
+    "source": "/assets/portfolio/260621_Y2K%20RE/_I7A8988.webp",
+    "sizes": {
+      "960": "/assets/motion-lab-v2/work-3-960.webp",
+      "1600": "/assets/motion-lab-v2/work-3-1600.webp"
+    },
+    "dimensions": {
+      "width": 960,
+      "height": 1440
+    }
+  },
+  {
+    "slug": "260614_天使與惡魔 RE",
+    "title": "羽翼之間",
+    "category": "外拍",
+    "styles": [
+      "天使與惡魔",
+      "明暗對比"
+    ],
+    "href": "/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/",
+    "source": "/assets/portfolio/260614_%E5%A4%A9%E4%BD%BF%E8%88%87%E6%83%A1%E9%AD%94%20RE/_I7A0275.webp",
+    "sizes": {
+      "960": "/assets/motion-lab-v2/work-4-960.webp",
+      "1600": "/assets/motion-lab-v2/work-4-1600.webp"
+    },
+    "dimensions": {
+      "width": 960,
+      "height": 1440
+    }
+  },
+  {
+    "slug": "260530_台博女僕 RE",
+    "title": "古館女僕",
+    "category": "外拍",
+    "styles": [
+      "女僕造型",
+      "古典建築"
+    ],
+    "href": "/portfolio/260530_%E5%8F%B0%E5%8D%9A%E5%A5%B3%E5%83%95%20RE/",
+    "source": "/assets/portfolio/260530_%E5%8F%B0%E5%8D%9A%E5%A5%B3%E5%83%95%20RE/_I7A8781.webp",
+    "sizes": {
+      "960": "/assets/motion-lab-v2/work-5-960.webp",
+      "1600": "/assets/motion-lab-v2/work-5-1600.webp"
+    },
+    "dimensions": {
+      "width": 960,
+      "height": 1440
+    }
+  }
+]

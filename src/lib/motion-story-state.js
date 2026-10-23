@@ -1,0 +1,19 @@
+export const unit = n => Math.min(1, Math.max(0, n));
+export const smooth = n => { const t = unit(n); return t*t*(3-2*t); };
+export function galleryCursor(p, count = 6) {
+  const cursor = unit((p - .465) / (.64 - .465)) * (count - 1);
+  const index = Math.floor(cursor);
+  return index + smooth((cursor - index - .15) / .7);
+}
+export const galleryX = i => i === 0 ? 0 : i % 2 ? 1.65 : -1.65;
+export function coverUv(imageAspect, frameAspect, positionY = .5) {
+  const x = Math.min(1, frameAspect / imageAspect);
+  const y = Math.min(1, imageAspect / frameAspect);
+  return { x, y, offsetX: (1 - x) * .5, offsetY: (1 - y) * (1 - positionY) };
+}
+export function layerState(p) {
+  const travel = smooth((p-.12)/.10);
+  const rejoin = smooth((p-.30)/.055);
+  const subjectX=p<.30?1-2*travel:rejoin>=1?0:-(1-rejoin);
+  return {subjectX,background:rejoin,original:smooth((p-.355)/.02),scale:1-.34*smooth((p-.375)/.055)};
+}

@@ -1,14 +1,16 @@
 ---
-import { portfolioCatalog } from '../../../data/portfolioCatalog';
+import layers from '../../../data/motion-lab-layers.json';
+import sharp from 'sharp';
+const layerReady = layers.approved;
+if(layerReady){const m=await Promise.all([layers.subject,layers.background,layers.original].map(p=>sharp('public'+p).metadata()));if(m.some(m=>m.width!==layers.width||m.height!==layers.height)||!m[0].hasAlpha)throw new Error('Invalid hero layer dimensions or alpha');}
+import assetWorks from '../../../data/motion-lab-assets.json';
 import { defaultHeroContent } from '../../../data/site';
-import thumbnails from '../../../data/portfolio-thumbnails.json';
 import { FX_DEFINITIONS, MOTION_SCENES } from '../../../lib/motion-lab-config.js';
 import '../../../styles/motion-lab.css';
 
-const thumbnailMap = thumbnails as Record<string, string>;
-const projects = portfolioCatalog.slice(0, 6).map((work) => ({
+const projects = assetWorks.map((work) => ({
   ...work,
-  thumbnail: thumbnailMap[work.cover] ?? work.cover,
+  thumbnail: work.sizes['1600'],
   alt: `${work.title}，Phox999 人像攝影作品`,
 }));
 
@@ -33,7 +35,14 @@ const sceneHref = (id: string) => `#scene-${id}`;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&amp;family=Noto+Serif+TC:wght@600;700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preload" as="image" href={firstProject.thumbnail} fetchpriority="high" />
+    <link
+      rel="preload"
+      as="image"
+      href={firstProject.sizes['960']}
+      imagesrcset={`${firstProject.sizes['960']} 960w, ${firstProject.sizes['1600']} 1600w`}
+      imagesizes="(max-width: 767px) 90vw, 55vw"
+      fetchpriority="high"
+    />
   </head>
   <body class="motion-lab">
     <a class="skip-link" href="#story">跳到故事內容</a>
@@ -86,20 +95,27 @@ const sceneHref = (id: string) => `#scene-${id}`;
 
           <figure
             class="hero-art"
-            data-hero-art
+            data-hero-art data-layer-ready={String(layerReady)}
             data-asset-src={firstProject.thumbnail}
             data-asset-status="完整作品照；非透明人物圖層"
           >
-            <img
+            {layerReady && <><img class="hero-layer" data-layer-background src={layers.background} alt="" width={layers.width} height={layers.height}/><img class="hero-layer" data-layer-subject src={layers.subject} alt={firstProject.alt} width={layers.width} height={layers.height}/></>}
+            <img data-layer-original
               src={firstProject.thumbnail}
+              srcset={`${firstProject.sizes['960']} 960w, ${firstProject.sizes['1600']} 1600w`}
+              sizes="(max-width: 767px) 90vw, 55vw"
               alt={firstProject.alt}
-              width="384"
-              height="576"
+              width={firstProject.dimensions.width}
+              height={firstProject.dimensions.height}
               decoding="async"
               fetchpriority="high"
               data-parallax="photo"
             />
           </figure>
+          <div class="dom-gallery" data-dom-gallery aria-label="作品展廊">
+            {projects.map(project => <a href={project.href} data-dom-work aria-label={`查看${project.title}`}><img src={project.sizes['960']} srcset={`${project.sizes['960']} 960w, ${project.sizes['1600']} 1600w`} sizes="(max-width:767px) 85vw, 45vw" alt={project.alt} width={project.dimensions.width} height={project.dimensions.height} loading="lazy" decoding="async" /></a>)}
+          </div>
+          {!layerReady && <p class="layer-blocked">人物分層尚未完成：目前僅供檢查鏡頭、作品與版型。</p>}
 
           <div class="asset-gap" role="status" data-asset-gap>
             <span class="asset-gap__eyebrow">素材缺口 / ASSET GAP</span>
@@ -122,6 +138,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
 
           <div class="stage-progress" aria-hidden="true"><span data-progress-bar></span></div>
 
+          <div class="style-photo" data-style-photo aria-hidden="true">{[projects[5],projects[1],projects[2],firstProject].map(p=><img src={p.sizes['1600']} alt="" width={p.dimensions.width} height={p.dimensions.height} loading="lazy" decoding="async"/>)}</div>
           <div class="story-copy" data-story-copy>
             <section class="motion-scene motion-scene--opening" id="scene-opening" data-scene="opening" aria-labelledby="scene-title-opening">
               <div class="scene-copy scene-copy--left">
@@ -153,7 +170,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
                 <div class="gallery-fallback" data-gallery-fallback>
                   {projects.map((project, index) => (
                     <a class="project-card" href={project.href} data-project-card data-project-index={index}>
-                      <span class="project-card__image"><img src={project.thumbnail} alt={project.alt} width="384" height="576" loading="lazy" decoding="async" /></span>
+                    <span class="project-card__image"><img src={project.thumbnail} srcset={`${project.sizes['960']} 960w, ${project.sizes['1600']} 1600w`} sizes="(max-width:767px) 85vw,40vw" alt={project.alt} width={project.dimensions.width} height={project.dimensions.height} loading="lazy" decoding="async" /></span>
                       <span class="project-card__label"><strong>{project.title}</strong><small>{project.category} / {project.styles.slice(0, 2).join('・')}</small></span>
                     </a>
                   ))}
