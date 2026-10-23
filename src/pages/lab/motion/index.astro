@@ -4,7 +4,6 @@ import sharp from 'sharp';
 const layerReady = layers.approved;
 if(layerReady){const m=await Promise.all([layers.subject,layers.background,layers.original].map(p=>sharp('public'+p).metadata()));if(m.some(m=>m.width!==layers.width||m.height!==layers.height)||!m[0].hasAlpha)throw new Error('Invalid hero layer dimensions or alpha');}
 import assetWorks from '../../../data/motion-lab-assets.json';
-import { defaultHeroContent } from '../../../data/site';
 import { FX_DEFINITIONS, MOTION_SCENES } from '../../../lib/motion-lab-config.js';
 import '../../../styles/motion-lab.css';
 import '../../../styles/motion-lab-theme.css';
@@ -107,7 +106,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
             class="hero-art"
             data-hero-art data-layer-ready={String(layerReady)}
             data-asset-src={firstProject.thumbnail}
-            data-asset-status="完整作品照；非透明人物圖層"
+            data-asset-status={layerReady ? "透明人物與補景已按原照座標對齊" : "完整作品照；非透明人物圖層"}
           >
             {layerReady && <><img class="hero-layer" data-layer-background src={layers.background} alt="" width={layers.width} height={layers.height}/><img class="hero-layer" data-layer-subject src={layers.subject} alt={firstProject.alt} width={layers.width} height={layers.height}/></>}
             <img data-layer-original
@@ -165,9 +164,9 @@ const sceneHref = (id: string) => `#scene-${id}`;
           <div class="story-copy" data-story-copy>
             <section class="motion-scene motion-scene--opening" id="scene-opening" data-scene="opening" aria-labelledby="scene-title-opening">
               <div class="scene-copy scene-copy--left">
-                <p class="eyebrow">PHOX999 / 台北・雙北人像合作</p>
-                <h1 id="scene-title-opening">{defaultHeroContent.title}</h1>
-                <p class="scene-deck">一起討論風格、服裝與場景，完成自然、有故事的人像作品。</p>
+                <p class="eyebrow">PHOX999 / 台北人像攝影</p>
+                <h1 id="scene-title-opening"><span>把喜歡的自己，</span><span>好好留住。</span></h1>
+                <p class="scene-deck">用喜歡的光線，留住此刻的樣子。</p>
                 <div class="hero-actions">
                   <a class="invite-cta magnetic-cta" data-magnetic-cta href={contactUrl}><span>填寫合作意向</span><i aria-hidden="true">↗</i></a>
                   <a class="text-cta" href="#scene-gallery" data-jump="gallery">看看作品 <span aria-hidden="true">↓</span></a>
@@ -261,7 +260,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
         </div>
       </section>
 
-      <section class="asset-notes" aria-labelledby="asset-notes-title">
+      {!layerReady && <section class="asset-notes" aria-labelledby="asset-notes-title">
         <div>
           <p class="eyebrow">DEV NOTES / ASSET CONTRACT</p>
           <h2 id="asset-notes-title">下一步要補的素材</h2>
@@ -272,7 +271,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
           <li><strong>對位資訊</strong><span>同裁切、座標與色彩，另附人物可見範圍和臉部安全區。</span></li>
         </ul>
         <p class="asset-notes__foot">目前 3D 展廊取自六組已發布作品；以上人物分層素材尚未在現有 3,096 個影像檔中找到。</p>
-      </section>
+      </section>}
     </main>
 
     <footer class="lab-footer">

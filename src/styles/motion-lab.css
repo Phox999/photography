@@ -925,10 +925,6 @@ body.motion-lab :focus-visible {
   background-color: var(--scene-background, var(--lab-bg));
 }
 
-.motion-lab.fx-fx05 .hero-art {
-  scale: var(--photo-frame-scale, 1);
-}
-
 .motion-lab.fx-fx09 .project-card {
   --card-tilt-x: 0deg;
   --card-tilt-y: 0deg;

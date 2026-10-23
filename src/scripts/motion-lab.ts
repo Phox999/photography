@@ -831,7 +831,7 @@ export function initMotionLab() {
     const layout = measuredLayout!;
     const frame = heroFrameBox();
     const host = { left: layout.hostLeft, top: layout.hostTop, width: layout.hostWidth, height: layout.hostHeight };
-    const xSpacing = window.matchMedia('(max-width: 767px)').matches ? 2.4 : 3.2;
+    const xSpacing = window.matchMedia('(max-width: 767px)').matches ? 1.35 : 1.8;
     const unitsPerPixel = 3.72 / Math.max(1, frame.height);
     const distance = host.height * unitsPerPixel / (2 * Math.tan(35 * Math.PI / 360));
     const cursor = galleryCursor(currentProgress, projects.length);

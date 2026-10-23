@@ -48,7 +48,7 @@ test('gallery progress advances through six depth stops and reverses continuousl
     const b = galleryCursor(.465 + (index + 1) / 500 * (.64 - .465));
     assert.ok(b >= a, `cursor moved backwards at sample ${index}`);
   }
-  assert.deepEqual(Array.from({ length: 6 }, (_, i) => galleryX(i)), [0, 3.2, -3.2, 3.2, -3.2, 3.2]);
+  assert.deepEqual(Array.from({ length: 6 }, (_, i) => galleryX(i)), [0, 1.8, -1.8, 1.8, -1.8, 1.8]);
 });
 
 test('gallery camera passes the previous frame before it can crowd the next frame', () => {

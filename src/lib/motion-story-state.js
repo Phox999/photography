@@ -5,7 +5,7 @@ export function galleryCursor(p, count = 6) {
   const index = Math.floor(cursor);
   return index + smooth((cursor - index - .15) / .7);
 }
-export const galleryX = (i, spacing = 3.2) => i === 0 ? 0 : i % 2 ? spacing : -spacing;
+export const galleryX = (i, spacing = 1.8) => i === 0 ? 0 : i % 2 ? spacing : -spacing;
 export const GALLERY_DEPTH_STEP = 12;
 export const galleryCameraZ = (distance, cursor) => distance - cursor * GALLERY_DEPTH_STEP;
 export const galleryCardDepth = (distance, cursor, index) => galleryCameraZ(distance, cursor) + index * GALLERY_DEPTH_STEP;
