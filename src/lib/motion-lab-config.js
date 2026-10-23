@@ -21,7 +21,7 @@ export const FX_DEFINITIONS = [
   { id: 'fx10', label: '跟隨聚光燈', group: '實驗', pointerOnly: true },
   { id: 'fx11', label: '游標影像殘影', group: '實驗', pointerOnly: true },
   { id: 'fx12', label: '深度圖視差', group: '實驗', unavailable: '尚無作品深度圖素材' },
-  { id: 'fx13', label: '液態照片轉場', group: '實驗' },
+  { id: 'fx13', label: '液態照片轉場', group: '實驗', modes: ['max'] },
   { id: 'fx14', label: '顆粒環境效果', group: '實驗', requiresWebgl: true },
   { id: 'fx15', label: '滑動速度拉伸', group: '實驗' },
   { id: 'fx16', label: '局部 RGB 色散', group: '實驗' },
@@ -36,7 +36,7 @@ export const FX_DEFINITIONS = [
 export const MOTION_MODES = {
   cinematic: {
     label: 'Cinematic',
-    effects: ['fx01', 'fx03', 'fx04', 'fx05', 'fx06', 'fx13'],
+    effects: ['fx01', 'fx02', 'fx03', 'fx04', 'fx05', 'fx06'],
   },
   max: {
     label: 'Max',
@@ -53,13 +53,13 @@ export const MOTION_MODES = {
 };
 
 export const SCENE_COLORS = [
-  '#ffffff',
-  '#effaff',
-  '#e5f3fa',
-  '#f7fcff',
-  '#eaf6fc',
-  '#ffffff',
-  '#effaff',
+  '#f8faf7',
+  '#eef7fa',
+  '#eaf5fa',
+  '#f4f8f4',
+  '#eaf0e8',
+  '#f6f1e7',
+  '#f8faf7',
 ];
 
 export const DEFAULT_MODE = 'cinematic';

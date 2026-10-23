@@ -1,6 +1,6 @@
 import type * as THREE from 'three';
 import { gsap } from 'gsap';
-import { layerState, smooth, galleryCursor, galleryX, coverUv } from '../lib/motion-story-state.js';
+import { layerState, smooth, galleryCursor, galleryX, coverUv, GALLERY_DEPTH_STEP, galleryCameraZ, galleryCardDepth } from '../lib/motion-story-state.js';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   DEFAULT_MODE,
@@ -30,6 +30,20 @@ type StoredSettings = {
   particles?: number;
 };
 
+type StageLayout = {
+  stageLeft: number;
+  stageTop: number;
+  hostLeft: number;
+  hostTop: number;
+  hostWidth: number;
+  hostHeight: number;
+  heroCenterX: number;
+  heroCenterY: number;
+  heroWidth: number;
+  heroHeight: number;
+  heroRadius: number;
+};
+
 export function initMotionLab() {
   const story = document.querySelector<HTMLElement>('[data-story]');
   const stage = document.querySelector<HTMLElement>('[data-stage]');
@@ -37,6 +51,8 @@ export function initMotionLab() {
   const canvasHost = document.querySelector<HTMLElement>('[data-webgl-stage]');
   const modeSelect = document.querySelector<HTMLSelectElement>('[data-mode-select]');
   const panel = document.querySelector<HTMLDetailsElement>('[data-dev-panel]');
+  const menuToggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const mainNav = document.querySelector<HTMLElement>('#lab-main-nav');
 
   if (!story || !stage || !heroArt || !canvasHost || !modeSelect || document.body.dataset.motionInitialized) return;
   document.body.dataset.motionInitialized = 'true';
@@ -55,10 +71,16 @@ export function initMotionLab() {
   }));
 
   const layerReady = heroArt.dataset.layerReady === 'true';
+  const layerSubject = heroArt.querySelector<HTMLElement>('[data-layer-subject]');
+  const layerBackground = heroArt.querySelector<HTMLElement>('[data-layer-background]');
+  const layerOriginal = heroArt.querySelector<HTMLElement>('[data-layer-original]');
   const stylePhoto = document.querySelector<HTMLElement>('[data-style-photo]');
-  const styleImages = Array.from(stylePhoto?.querySelectorAll('img') ?? []);
+  const stylePair = stylePhoto?.querySelector<HTMLElement>('[data-style-pair]');
+  const styleVariants = Array.from(stylePhoto?.querySelectorAll<HTMLElement>('[data-style-variant]') ?? []);
   const domGallery = document.querySelector<HTMLElement>('[data-dom-gallery]');
   const domWorks = Array.from(document.querySelectorAll<HTMLElement>('[data-dom-work]'));
+  const processCards = Array.from(document.querySelectorAll<HTMLElement>('[data-process-card]'));
+  const apertureRing = document.querySelector<HTMLElement>('[data-aperture-ring]');
   document.body.dataset.layersReady = String(layerReady);
   const metrics = {
     progress: document.querySelector<HTMLOutputElement>('[data-metric-progress]'),
@@ -104,6 +126,7 @@ export function initMotionLab() {
   let timeline: gsap.core.Timeline | undefined;
   let activeMotionState: Record<string, number> | undefined;
   let activeMotionIsMobile = false;
+  let activeMotionIsTablet = false;
   let ThreeRuntime: typeof import('three') | undefined;
   let webglRenderer: THREE.WebGLRenderer | undefined;
   let webglScene: THREE.Scene | undefined;
@@ -117,6 +140,8 @@ export function initMotionLab() {
   let particlePoints: THREE.Points | undefined;
   let aperture: THREE.Mesh | undefined;
   let resizeObserver: ResizeObserver | undefined;
+  let layoutObserver: ResizeObserver | undefined;
+  let measuredLayout: StageLayout | undefined;
   let galleryInitialized = false;
   let galleryLoading = false;
   let galleryFailed = false;
@@ -173,9 +198,22 @@ export function initMotionLab() {
     console.warn('Motion Lab static fallback:', error);
   }
 
+  measureLayout();
+  layoutObserver = new ResizeObserver(() => {
+    measureLayout();
+    if (webglRenderer) resizeWebgl();
+  });
+  layoutObserver.observe(stage);
+  layoutObserver.observe(heroArt);
+  layoutObserver.observe(canvasHost);
+
   modeSelect.addEventListener('change', onModeChange);
   fxInputs.forEach((input) => input.addEventListener('change', onFxChange));
   sceneLinks.forEach((link) => link.addEventListener('click', onSceneJump));
+  menuToggle?.addEventListener('click', onMenuToggle);
+  mainNav?.addEventListener('click', onMenuNavigation);
+  document.addEventListener('pointerdown', onMenuOutsidePointer);
+  document.addEventListener('keydown', onMenuKeydown);
   document.querySelector('[data-reset]')?.addEventListener('click', onReset);
   document.querySelector('[data-copy-settings]')?.addEventListener('click', onCopySettings);
   subjectXInput?.addEventListener('input', onSubjectXChange);
@@ -194,6 +232,7 @@ export function initMotionLab() {
     cta.addEventListener('pointerleave', resetMagnetic);
   });
   window.addEventListener('pagehide', onPageHide, { once: true });
+  window.addEventListener('resize', onWindowResize, { passive: true });
   window.addEventListener('astro:before-swap', teardown, { once: true });
   document.addEventListener('visibilitychange', onVisibilityChange);
   window.addEventListener('hashchange', onHashChange);
@@ -216,9 +255,66 @@ export function initMotionLab() {
     clearTimeout(layoutTimer);
     layoutTimer = setTimeout(() => {
       if (destroyed) return;
+      measureLayout();
       ScrollTrigger.refresh();
+      updateProgress(timeline?.progress() ?? currentProgress, scrollVelocity);
       updateAssetsMetric();
     }, 100);
+  }
+
+  function measureLayout() {
+    const stageRect = stage.getBoundingClientRect();
+    const hostRect = canvasHost.getBoundingClientRect();
+    const heroRect = heroArt.getBoundingClientRect();
+    measuredLayout = {
+      stageLeft: stageRect.left,
+      stageTop: stageRect.top,
+      hostLeft: hostRect.left,
+      hostTop: hostRect.top,
+      hostWidth: Math.max(1, canvasHost.clientWidth),
+      hostHeight: Math.max(1, canvasHost.clientHeight),
+      heroCenterX: heroRect.left + heroRect.width / 2 - stageRect.left,
+      heroCenterY: heroRect.top + heroRect.height / 2 - stageRect.top,
+      heroWidth: Math.max(1, heroArt.offsetWidth),
+      heroHeight: Math.max(1, heroArt.offsetHeight),
+      heroRadius: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--lab-radius-large')) || 48,
+    };
+  }
+
+  function onWindowResize() {
+    measureLayout();
+    scheduleLayoutRefresh();
+  }
+
+  function setMenuOpen(open: boolean, returnFocus = false) {
+    if (!menuToggle) return;
+    document.body.classList.toggle('is-menu-open', open);
+    menuToggle.setAttribute('aria-expanded', String(open));
+    const label = menuToggle.querySelector<HTMLElement>('.visually-hidden');
+    if (label) label.textContent = open ? '關閉導覽選單' : '開啟導覽選單';
+    if (open) mainNav?.querySelector<HTMLAnchorElement>('a')?.focus({ preventScroll: true });
+    else if (returnFocus) menuToggle.focus({ preventScroll: true });
+  }
+
+  function onMenuToggle() {
+    setMenuOpen(menuToggle?.getAttribute('aria-expanded') !== 'true');
+  }
+
+  function onMenuNavigation(event: Event) {
+    if ((event.target as HTMLElement | null)?.closest('a')) setMenuOpen(false, true);
+  }
+
+  function onMenuOutsidePointer(event: PointerEvent) {
+    if (!document.body.classList.contains('is-menu-open')) return;
+    const target = event.target;
+    if (!(target instanceof Node) || menuToggle?.contains(target) || mainNav?.contains(target)) return;
+    setMenuOpen(false);
+  }
+
+  function onMenuKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && document.body.classList.contains('is-menu-open')) {
+      setMenuOpen(false, true);
+    }
   }
 
   function onHashChange() {
@@ -289,6 +385,7 @@ export function initMotionLab() {
     const sanitized = new Set([...selected].filter((id) => {
       const definition = FX_DEFINITIONS.find((effect) => effect.id === id);
       if (!definition || definition.unavailable || selectedMode === 'static') return false;
+      if (definition.modes && !definition.modes.includes(selectedMode)) return false;
       if (definition.requiresWebgl && selectedMode === 'lite') return false;
       if (definition.pointerOnly && !window.matchMedia('(pointer: fine)').matches) return false;
       return true;
@@ -356,7 +453,7 @@ export function initMotionLab() {
 
   function setEffect(id: string, enabled: boolean) {
     const definition = FX_DEFINITIONS.find((effect) => effect.id === id);
-    if (!definition || definition.unavailable || (definition.requiresWebgl && ['lite', 'static'].includes(mode))) {
+    if (!definition || definition.unavailable || (definition.modes && !definition.modes.includes(mode)) || (definition.requiresWebgl && ['lite', 'static'].includes(mode))) {
       updateControls();
       return;
     }
@@ -400,6 +497,7 @@ export function initMotionLab() {
       input.disabled = Boolean(
         mode === 'static'
         || definition.unavailable
+        || Boolean(definition.modes && !definition.modes.includes(mode))
         || (id === 'fx01' && !layerReady)
         || (definition.requiresWebgl && ['lite', 'static'].includes(mode))
         || (definition.pointerOnly && !window.matchMedia('(pointer: fine)').matches),
@@ -420,6 +518,7 @@ export function initMotionLab() {
     disposeWebgl();
     galleryFailed = false;
     resetDynamicStyles();
+    setMenuOpen(false);
     mode = selectedMode;
     document.body.dataset.mode = mode;
     document.body.classList.toggle('is-enhanced', mode !== 'static');
@@ -446,6 +545,7 @@ export function initMotionLab() {
       if (currentGeneration !== generation) return;
       story?.setAttribute('data-enhanced', 'true');
       stage?.setAttribute('data-enhanced', 'true');
+      measureLayout();
       bodySceneReset();
       setupTimeline(Boolean(context.conditions?.mobile), Boolean(context.conditions?.tablet));
       gsap.ticker.add(renderTick);
@@ -499,6 +599,14 @@ export function initMotionLab() {
     story?.style.removeProperty('--reveal-inset');
     story?.style.removeProperty('--story-progress');
     document.querySelector<HTMLElement>('[data-aperture-ring]')?.removeAttribute('style');
+    stylePhoto?.removeAttribute('style');
+    stylePair?.removeAttribute('style');
+    styleVariants.forEach((variant) => variant.removeAttribute('style'));
+    domGallery?.removeAttribute('style');
+    domWorks.forEach((work) => {
+      work.removeAttribute('style');
+      work.inert = false;
+    });
     document.querySelectorAll<HTMLElement>('[data-process-card]').forEach((card) => {
       card.style.removeProperty('opacity');
       card.style.removeProperty('translate');
@@ -512,9 +620,7 @@ export function initMotionLab() {
   }
 
   function setupTimeline(isMobile: boolean, isTablet: boolean) {
-    const offset = window.innerWidth * (isMobile ? 0.1 : isTablet ? 0.18 : 0.22);
     const motion = {
-      subjectX: offset,
       frameScale: 1,
       handoff: 0,
       styleMix: 0,
@@ -525,6 +631,7 @@ export function initMotionLab() {
     };
     activeMotionState = motion;
     activeMotionIsMobile = isMobile;
+    activeMotionIsTablet = isTablet;
 
     timeline = gsap.timeline({
       scrollTrigger: {
@@ -539,54 +646,75 @@ export function initMotionLab() {
     });
 
     timeline
-      .to(motion, { subjectX: -offset, frameScale: 0.88, duration: 0.18, ease: 'none' }, 0.12)
-      .to(motion, { subjectX: 0, frameScale: 0.66, duration: 0.13, ease: 'none' }, 0.3)
+      .to(motion, { frameScale: 0.88, duration: 0.18, ease: 'none' }, 0.12)
+      .to(motion, { frameScale: 0.66, duration: 0.13, ease: 'none' }, 0.3)
       .to(motion, { handoff: 1, duration: 0.03, ease: 'none' }, 0.4)
       .to(motion, { styleMix: 1, duration: 0.13, ease: 'none' }, 0.64)
       .to(motion, { processReveal: 1, duration: 0.13, ease: 'none' }, 0.77)
-      .to(motion, { subjectX: offset * 0.9, handoff: 0, frameScale: 0.8, ringScale: 1.15, ringOpacity: 1, ringRotation: 34, duration: 0.1, ease: 'none' }, 0.9);
+      .to(motion, { handoff: 0, frameScale: 0.8, ringScale: 1.15, ringOpacity: 1, ringRotation: 34, duration: 0.1, ease: 'none' }, 0.9);
 
     timeline.eventCallback('onUpdate', () => updateProgress(timeline?.progress() ?? 0, scrollVelocity));
-    applyFrameStyles(motion, isMobile);
+    applyFrameStyles(motion, isMobile, isTablet);
   }
 
-  function applyFrameStyles(motion = activeMotionState, isMobile = activeMotionIsMobile) {
+  function applyFrameStyles(motion = activeMotionState, isMobile = activeMotionIsMobile, isTablet = activeMotionIsTablet) {
     if (!motion || mode === 'static') return;
-    // The blocked preview keeps the photograph on the right; it does not pretend
-    // that moving a complete photograph is a separated-person animation.
-    const offsetX = layerReady ? 0 : innerWidth * (isMobile ? .05 : .22) * (1-smooth((currentProgress-.30)/.055));
-    heroArt.style.translate = `${offsetX}px 0`;
-    heroArt.style.setProperty('--photo-frame-scale', String((effects.has('fx05') ? motion.frameScale : 1) * subjectScale));
+    // Keep the unlayered photo stationary. Only approved, registered layers may
+    // move the subject independently across the frame.
+    heroArt.style.translate = '0px 0px';
+    const frameScale = (effects.has('fx05') ? motion.frameScale : 1) * subjectScale;
+    heroArt.style.setProperty('--photo-frame-scale', String(frameScale));
     const firstDomImage = domWorks[0]?.querySelector('img');
     const handoffReady = (firstDomImage?.complete && firstDomImage.naturalWidth > 0) || photoTextures.has(0);
     const handoff = handoffReady ? smooth((currentProgress-.43)/.035) : 0;
     heroArt.style.opacity = String(currentProgress < .64 ? 1-handoff : currentProgress >= .9 ? 1-motion.handoff : 0);
-    heroArt.style.borderRadius = `${30*(1-smooth((currentProgress-.375)/.055))}px`;
-    if(layerReady){
-      const state=layerState(currentProgress);
-      heroArt.style.translate='0px 0';
-      heroArt.style.setProperty('--photo-frame-scale',String(state.scale*subjectScale));
-      const subject=heroArt.querySelector<HTMLElement>('[data-layer-subject]');
-      const bg=heroArt.querySelector<HTMLElement>('[data-layer-background]');
-      const original=heroArt.querySelector<HTMLElement>('[data-layer-original]');
-      if(subject){subject.style.translate=String((effects.has('fx01')?state.subjectX:0)*innerWidth*(isMobile?.1:.22)*subjectX)+'px 0';subject.style.opacity=String(1-state.original);}
-      if(bg)bg.style.opacity=String(state.background*(1-state.original));
-      if(original)original.style.opacity=String(state.original);
+    if (layerReady) {
+      const state = layerState(currentProgress);
+      heroArt.style.setProperty('--photo-frame-scale', String(state.scale * subjectScale));
+      const travel = window.innerWidth * (isMobile ? 0.23 : isTablet ? 0.2 : 0.3) * subjectX;
+      if (layerSubject) {
+        layerSubject.style.translate = `${(effects.has('fx01') ? state.subjectX * travel : 0)}px 0`;
+        layerSubject.style.opacity = String(1 - state.original);
+      }
+      if (layerBackground) layerBackground.style.opacity = String(state.background * (1 - state.original));
+      if (layerOriginal) layerOriginal.style.opacity = String(state.original);
     }
-    const styleIndex=clamp((currentProgress-.66)/.08,0,3);
-    if(stylePhoto){
-      stylePhoto.style.opacity=String(currentProgress>=.64&&currentProgress<=.95?smooth((currentProgress-.64)/.02)*(1-smooth((currentProgress-.91)/.04)):0);
-      const stageRect=stage.getBoundingClientRect(),heroRect=heroArt.getBoundingClientRect();
-      const blend=smooth((currentProgress-.64)/.025),returnBlend=smooth((currentProgress-.865)/.04);
-      const target={left:stageRect.width*(isMobile?.13:.18),top:stageRect.height*(isMobile?.14:.18),width:stageRect.width*(isMobile?.74:.29),height:stageRect.height*(isMobile?.38:.58)};
-      const lerp=(a:number,b:number,t:number)=>a+(b-a)*t;
-      const position=(start:number,end:number)=>lerp(lerp(start,end,blend),start,returnBlend);
-      stylePhoto.style.left=`${position(heroRect.left-stageRect.left,target.left)}px`;
-      stylePhoto.style.top=`${position(heroRect.top-stageRect.top,target.top)}px`;
-      stylePhoto.style.width=`${position(heroRect.width,target.width)}px`;
-      stylePhoto.style.height=`${position(heroRect.height,target.height)}px`;
-      styleImages.forEach((image,index)=>image.style.opacity=String(Math.max(0,1-Math.abs(styleIndex-index))));
-      stylePhoto.style.filter=effects.has('fx13')?'url(#motion-liquid-filter)':'none';
+    const styleIndex = clamp((currentProgress - .67) / .052, 0, styleVariants.length - 1);
+    if (stylePhoto && measuredLayout) {
+      const frame = heroFrameBox();
+      const blend = smooth((currentProgress - .64) / .04);
+      const target = isMobile
+        ? { left: measuredLayout.hostWidth * .05, top: measuredLayout.hostHeight * .12, width: measuredLayout.hostWidth * .9, height: measuredLayout.hostHeight * .46 }
+        : { left: measuredLayout.hostWidth * .055, top: measuredLayout.hostHeight * .15, width: measuredLayout.hostWidth * .53, height: measuredLayout.hostHeight * .7 };
+      const lerp = (start: number, end: number) => start + (end - start) * blend;
+      stylePhoto.style.opacity = String(
+        currentProgress >= .64 && currentProgress <= .94
+          ? smooth((currentProgress - .64) / .022) * (1 - smooth((currentProgress - .9) / .04))
+          : 0,
+      );
+      stylePhoto.style.left = `${lerp(frame.left - measuredLayout.hostLeft, target.left)}px`;
+      stylePhoto.style.top = `${lerp(frame.top - measuredLayout.hostTop, target.top)}px`;
+      stylePhoto.style.width = `${lerp(frame.width, target.width)}px`;
+      stylePhoto.style.height = `${lerp(frame.height, target.height)}px`;
+      if (stylePair) stylePair.style.opacity = String(smooth((currentProgress - .66) / .04));
+      const activeVariantIndex = Math.min(styleVariants.length - 1, Math.floor(styleIndex));
+      const variantReveal = activeVariantIndex < styleVariants.length - 1
+        ? smooth(styleIndex - activeVariantIndex)
+        : 0;
+      styleVariants.forEach((variant, index) => {
+        const isCurrent = index === activeVariantIndex;
+        const isRevealing = index === activeVariantIndex + 1 && variantReveal > 0;
+        variant.style.opacity = isCurrent || isRevealing ? '1' : '0';
+        variant.style.zIndex = isRevealing ? '2' : '1';
+        const edge = variantReveal * 100;
+        const feather = 4;
+        const mask = isRevealing
+          ? `linear-gradient(90deg, #000 0%, #000 ${Math.max(0, edge - feather)}%, transparent ${Math.min(100, edge + feather)}%, transparent 100%)`
+          : 'linear-gradient(90deg, #000 0%, #000 100%)';
+        variant.style.maskImage = mask;
+        variant.style.webkitMaskImage = mask;
+      });
+      stylePhoto.style.filter = effects.has('fx13') ? 'url(#motion-liquid-filter)' : 'none';
     }
     heroArt.style.setProperty('--aperture-radius', effects.has('fx18') ? `${100 - motion.handoff * 82}%` : '100%');
 
@@ -596,14 +724,12 @@ export function initMotionLab() {
     stage.style.setProperty('--pointer-y', String(parallaxY));
     stage.style.setProperty('--scene-background', effects.has('fx04') ? colorAtProgress(currentProgress) : SCENE_COLORS[0]);
 
-    const ring = document.querySelector<HTMLElement>('[data-aperture-ring]');
-    if (ring) {
-      ring.style.setProperty('--ring-scale', effects.has('fx21') ? String(motion.ringScale) : '0.55');
-      ring.style.setProperty('--ring-opacity', effects.has('fx21') ? String(motion.ringOpacity) : '0');
-      ring.style.setProperty('--ring-rotation', `${motion.ringRotation}deg`);
+    if (apertureRing) {
+      apertureRing.style.setProperty('--ring-scale', effects.has('fx21') ? String(motion.ringScale) : '0.55');
+      apertureRing.style.setProperty('--ring-opacity', effects.has('fx21') ? String(motion.ringOpacity) : '0');
+      apertureRing.style.setProperty('--ring-rotation', `${motion.ringRotation}deg`);
     }
 
-    const processCards = Array.from(document.querySelectorAll<HTMLElement>('[data-process-card]'));
     processCards.forEach((card, index) => {
       const step = clamp((motion.processReveal - index * 0.28) / 0.38, 0, 1);
       card.style.opacity = String(step);
@@ -684,25 +810,61 @@ export function initMotionLab() {
     return Math.round(galleryCursor(value, projects.length));
   }
 
-  // The DOM fallback and WebGL share this measured view. Pixel geometry is
-  // derived from the photograph that is actually on screen, including mobile.
+  function heroFrameBox() {
+    const layout = measuredLayout;
+    if (!layout) return { left: 0, top: 0, width: heroArt.offsetWidth, height: heroArt.offsetHeight };
+    const scale = Number.parseFloat(heroArt.style.getPropertyValue('--photo-frame-scale')) || 1;
+    const width = layout.heroWidth * scale;
+    const height = layout.heroHeight * scale;
+    return {
+      left: layout.stageLeft + layout.heroCenterX - width / 2,
+      top: layout.stageTop + layout.heroCenterY - height / 2,
+      width,
+      height,
+    };
+  }
+
+  // Layout is measured on resize; scroll frames only derive camera geometry
+  // from that snapshot and the same scrubbed frame scale.
   function galleryView() {
-    const frame = heroArt.getBoundingClientRect();
-    const host = canvasHost.getBoundingClientRect();
+    if (!measuredLayout) measureLayout();
+    const layout = measuredLayout!;
+    const frame = heroFrameBox();
+    const host = { left: layout.hostLeft, top: layout.hostTop, width: layout.hostWidth, height: layout.hostHeight };
+    const xSpacing = window.matchMedia('(max-width: 767px)').matches ? 2.4 : 3.2;
     const unitsPerPixel = 3.72 / Math.max(1, frame.height);
-    const distance = host.height * unitsPerPixel / (2*Math.tan(35*Math.PI/360));
+    const distance = host.height * unitsPerPixel / (2 * Math.tan(35 * Math.PI / 360));
     const cursor = galleryCursor(currentProgress, projects.length);
     const segment = Math.floor(cursor);
-    const next = Math.min(projects.length-1, segment+1);
-    const t = cursor-segment;
-    const firstX = (frame.left+frame.width/2-host.left-host.width/2)*unitsPerPixel;
-    const firstY = (host.top+host.height/2-frame.top-frame.height/2)*unitsPerPixel;
-    const cameraX = galleryX(segment)+(galleryX(next)-galleryX(segment))*t;
-    const cameraZ = distance-cursor*7;
-    const pointerWeight = smooth((currentProgress-.465)/.025);
-    return {frame,host,unitsPerPixel,distance,cursor,firstX,firstY,
-      cameraX:cameraX+pointerX*.045*pointerWeight,
-      cameraY:pointerY*.035*pointerWeight,cameraZ};
+    const next = Math.min(projects.length - 1, segment + 1);
+    const t = cursor - segment;
+    const firstX = (frame.left + frame.width / 2 - host.left - host.width / 2) * unitsPerPixel;
+    const firstY = (host.top + host.height / 2 - frame.top - frame.height / 2) * unitsPerPixel;
+    const pathX = galleryX(segment, xSpacing)+(galleryX(next, xSpacing)-galleryX(segment, xSpacing))*t;
+    const cameraX = pathX + firstX * smooth(cursor / 0.8);
+    const cameraZ = galleryCameraZ(distance, cursor);
+    const pointerWeight = smooth((currentProgress - .465) / .025);
+    return {
+      frame,
+      host,
+      xSpacing,
+      unitsPerPixel,
+      distance,
+      cursor,
+      firstX,
+      firstY,
+      cameraX: cameraX + pointerX * .045 * pointerWeight,
+      cameraY: firstY * smooth(cursor / 0.8) + pointerY * .035 * pointerWeight,
+      cameraZ,
+    };
+  }
+
+  function gallerySceneOpacity(value = currentProgress) {
+    return smooth((value - .43) / .035) * (1 - smooth((value - .64) / .02));
+  }
+
+  function galleryHandoffMix() {
+    return galleryHasFrame() ? smooth((currentProgress - .465) / .035) : 0;
   }
 
   function galleryHasFrame() {
@@ -712,16 +874,15 @@ export function initMotionLab() {
   function updateDomGallery() {
     if (!domGallery) return;
     const view = galleryView();
-    const visible = currentProgress >= .43 && currentProgress <= .66;
-    const glFrame=galleryHasFrame();
-    const galleryAlpha=visible?smooth((currentProgress-.43)/.035)*(1-smooth((currentProgress-.64)/.02)):0;
-    domGallery.style.opacity = String(visible ? glFrame ? 1-galleryAlpha : galleryAlpha : 0);
-    domGallery.inert = !visible || (glFrame && galleryAlpha>.5);
+    const sceneOpacity = gallerySceneOpacity();
+    const domOpacity = sceneOpacity * (1 - galleryHandoffMix());
+    domGallery.style.opacity = String(domOpacity);
+    domGallery.inert = domOpacity < 0.5;
     domGallery.setAttribute('aria-hidden', String(domGallery.inert));
     domWorks.forEach((work,index) => {
-      const depth = view.cameraZ+index*7;
+      const depth = galleryCardDepth(view.distance, view.cursor, index);
       const scale = view.distance / Math.max(.3,depth);
-      const x = view.host.width/2+(view.firstX+galleryX(index)-view.cameraX)/view.unitsPerPixel*scale;
+      const x = view.host.width/2+(view.firstX+galleryX(index, view.xSpacing)-view.cameraX)/view.unitsPerPixel*scale;
       const y = view.host.height/2-(view.firstY-view.cameraY)/view.unitsPerPixel*scale;
       work.style.width = `${view.frame.width*scale}px`;
       work.style.height = `${view.frame.height*scale}px`;
@@ -730,8 +891,8 @@ export function initMotionLab() {
       work.style.zIndex = String(projects.length-index);
       work.style.visibility = depth > .3 ? 'visible' : 'hidden';
       work.style.pointerEvents = index === activePhotoIndex ? 'auto' : 'none';
-      const image=work.querySelector<HTMLImageElement>('img');
-      if(image)image.style.objectPosition=index===0?'center 42%':'center 50%';
+      const radius = measuredLayout!.heroRadius * view.frame.height / measuredLayout!.heroHeight;
+      work.style.borderRadius = `${radius}px`;
       work.inert = index !== activePhotoIndex;
     });
   }
@@ -859,6 +1020,8 @@ export function initMotionLab() {
         uniform float uLoaded;
         uniform float uDissolve;
         uniform float uSpot;
+        uniform float uFrameAspect;
+        uniform float uCornerRatio;
         uniform vec2 uPointer;
         varying vec2 vUv;
         void main() {
@@ -866,7 +1029,7 @@ export function initMotionLab() {
           float grain = fract(sin(dot(floor(vUv * 180.0), vec2(12.9898, 78.233))) * 43758.5453);
           if (grain < uDissolve) discard;
           vec4 color;
-          vec2 imageUv = (vUv - 0.5) * uUvScale + 0.5 + uUvOffset;
+          vec2 imageUv = vUv * uUvScale + uUvOffset;
           if (uBlur < 0.5) {
             color = texture2D(uMap, imageUv);
           } else {
@@ -878,7 +1041,14 @@ export function initMotionLab() {
             color += texture2D(uMap, imageUv - vec2(0.0, offset.y)) * 0.15;
           }
           float spot = max(0.0, 1.0 - distance(vUv, uPointer) * 1.7);
-          gl_FragColor = vec4(color.rgb + vec3(0.032, 0.045, 0.055) * spot * uSpot, 1.0);
+          vec2 point = vec2((vUv.x - 0.5) * uFrameAspect, vUv.y - 0.5);
+          vec2 halfSize = vec2(uFrameAspect * 0.5, 0.5);
+          float radius = clamp(uCornerRatio, 0.0, 0.5);
+          vec2 corner = abs(point) - halfSize + radius;
+          float roundedDistance = length(max(corner, 0.0)) + min(max(corner.x, corner.y), 0.0) - radius;
+          float alpha = 1.0 - smoothstep(-0.002, 0.002, roundedDistance);
+          if (alpha < 0.001) discard;
+          gl_FragColor = vec4(color.rgb + vec3(0.032, 0.045, 0.055) * spot * uSpot, alpha);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }
@@ -897,9 +1067,13 @@ export function initMotionLab() {
           uDissolve: { value: 0 },
           uSpot: { value: 0 },
           uPointer: { value: new THREE_RUNTIME.Vector2(0.5, 0.5) },
+          uFrameAspect: { value: 2.55 / 3.72 },
+          uCornerRatio: { value: 0.08 },
         },
         vertexShader: materialShader.vertexShader,
         fragmentShader: materialShader.fragmentShader,
+        transparent: true,
+        depthWrite: false,
       });
       const mesh = new THREE_RUNTIME.Mesh(photoGeometry as THREE.PlaneGeometry, material);
       mesh.userData.projectIndex = index;
@@ -993,7 +1167,7 @@ export function initMotionLab() {
         photoTextures.set(index, texture);
         const material = photoMaterials[index];
         const imageAspect = Math.max(1, texture.image?.width ?? 960) / Math.max(1, texture.image?.height ?? 1440);
-        const planeAspect = heroArt.offsetWidth / Math.max(1, heroArt.offsetHeight);
+        const planeAspect = measuredLayout!.heroWidth / Math.max(1, measuredLayout!.heroHeight);
         const crop = coverUv(imageAspect,planeAspect,index===0?.42:.5);
         material.uniforms.uUvScale.value.set(crop.x,crop.y);
         material.uniforms.uUvOffset.value.set(crop.offsetX,crop.offsetY);
@@ -1039,14 +1213,16 @@ export function initMotionLab() {
     loadNeighborTextures(focus);
     const view=galleryView();
     webglCamera.position.set(view.cameraX,view.cameraY,view.cameraZ);
-    webglCamera.lookAt(view.cameraX,view.cameraY,view.cameraZ-1);
+    webglCamera.lookAt(view.cameraX,view.cameraY,view.cameraZ-view.distance);
     photoMeshes.forEach((mesh,index)=>{
-      mesh.position.set(view.firstX+galleryX(index),view.firstY,-index*7);
+      mesh.position.set(view.firstX+galleryX(index, view.xSpacing),view.firstY,-index*GALLERY_DEPTH_STEP);
       mesh.rotation.set(0,0,0);
       mesh.scale.set(1,1,1);
       mesh.scale.x=(view.frame.width/view.frame.height)/(2.55/3.72);
       mesh.visible=photoTextures.has(index)&&mesh.position.z<view.cameraZ-.3;
       const material=photoMaterials[index];
+      material.uniforms.uFrameAspect.value = view.frame.width / Math.max(1, view.frame.height);
+      material.uniforms.uCornerRatio.value = measuredLayout!.heroRadius / measuredLayout!.heroHeight;
       material.uniforms.uBlur.value=effects.has('fx17')?Math.min(2,Math.abs(index-view.cursor)*.6):0;
       material.uniforms.uDissolve.value=0;
       material.uniforms.uSpot.value=effects.has('fx10')?.4:0;
@@ -1173,7 +1349,9 @@ export function initMotionLab() {
     const particleWindow = currentProgress >= 0.64 && currentProgress <= 0.78 && effects.has('fx14');
     const ringWindow = currentProgress >= 0.88 && currentProgress <= 1 && effects.has('fx21');
     galleryInView = galleryWindow || particleWindow || ringWindow;
-    if (canvas) canvas.style.opacity = webglRenderer && galleryInView && galleryHasFrame() ? String(galleryWindow ? smooth((currentProgress-.43)/.035)*(1-smooth((currentProgress-.64)/.02)) : .78) : '0';
+    const webglOpacity = galleryWindow ? gallerySceneOpacity() * galleryHandoffMix() : 0;
+    const effectOpacity = particleWindow || ringWindow ? .78 : 0;
+    if (canvas) canvas.style.opacity = webglRenderer && galleryInView && galleryHasFrame() ? String(Math.max(webglOpacity, effectOpacity)) : '0';
     if (metrics.canvas) metrics.canvas.textContent = webglRenderer && galleryInView ? '1 / 1' : '0 / 1';
   }
 
@@ -1484,13 +1662,21 @@ export function initMotionLab() {
     particlesInput?.removeEventListener('input', onParticlesChange);
     debugInput?.removeEventListener('change', onDebugChange);
     lockModeInput?.removeEventListener('change', onLockModeChange);
+    menuToggle?.removeEventListener('click', onMenuToggle);
+    mainNav?.removeEventListener('click', onMenuNavigation);
+    document.removeEventListener('pointerdown', onMenuOutsidePointer);
+    document.removeEventListener('keydown', onMenuKeydown);
     document.querySelector('[data-reset]')?.removeEventListener('click', onReset);
     document.querySelector('[data-copy-settings]')?.removeEventListener('click', onCopySettings);
     window.removeEventListener('pagehide', onPageHide);
     window.removeEventListener('astro:before-swap', teardown);
+    window.removeEventListener('resize', onWindowResize);
     window.removeEventListener('hashchange', onHashChange);
     document.removeEventListener('visibilitychange', onVisibilityChange);
-    document.body.classList.remove('is-enhanced', 'has-webgl', 'is-debug');
+    layoutObserver?.disconnect();
+    layoutObserver = undefined;
+    document.body.classList.remove('is-enhanced', 'has-webgl', 'is-debug', 'is-menu-open');
+    menuToggle?.setAttribute('aria-expanded', 'false');
     delete document.body.dataset.motionInitialized;
   }
 }

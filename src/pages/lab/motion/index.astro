@@ -7,6 +7,7 @@ import assetWorks from '../../../data/motion-lab-assets.json';
 import { defaultHeroContent } from '../../../data/site';
 import { FX_DEFINITIONS, MOTION_SCENES } from '../../../lib/motion-lab-config.js';
 import '../../../styles/motion-lab.css';
+import '../../../styles/motion-lab-theme.css';
 
 const projects = assetWorks.map((work) => ({
   ...work,
@@ -19,6 +20,11 @@ if (projects.length !== 6) {
 }
 
 const firstProject = projects[0];
+const stylePairs = [
+  [projects[2], projects[3]],
+  [projects[4], projects[5]],
+  [projects[1], projects[3]],
+];
 const contactUrl = '/#contact';
 const sceneHref = (id: string) => `#scene-${id}`;
 ---
@@ -61,11 +67,15 @@ const sceneHref = (id: string) => `#scene-${id}`;
         </svg>
         <span>phox999</span>
       </a>
-      <nav class="lab-main-nav" aria-label="主要導覽">
+      <nav class="lab-main-nav" id="lab-main-nav" aria-label="主要導覽">
         <a href="#scene-idea" data-jump="idea">拍攝理念</a>
         <a href="#scene-gallery" data-jump="gallery">精選作品</a>
         <a href="#scene-process" data-jump="process">拍攝流程</a>
       </nav>
+      <button class="lab-menu-toggle" type="button" data-menu-toggle aria-controls="lab-main-nav" aria-expanded="false">
+        <span class="visually-hidden">開啟導覽選單</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+      </button>
       <a class="quick-cta" href={contactUrl}>
         填寫合作意向 <span aria-hidden="true">↗</span>
       </a>
@@ -111,12 +121,14 @@ const sceneHref = (id: string) => `#scene-${id}`;
               fetchpriority="high"
               data-parallax="photo"
             />
+            <figcaption class="hero-art__caption">
+              <span>{firstProject.title}</span>
+              <span>{firstProject.category}・{firstProject.styles.slice(0, 2).join(' / ')}</span>
+            </figcaption>
           </figure>
           <div class="dom-gallery" data-dom-gallery aria-label="作品展廊">
             {projects.map(project => <a href={project.href} data-dom-work aria-label={`查看${project.title}`}><img src={project.sizes['960']} srcset={`${project.sizes['960']} 960w, ${project.sizes['1600']} 1600w`} sizes="(max-width:767px) 85vw, 45vw" alt={project.alt} width={project.dimensions.width} height={project.dimensions.height} loading="lazy" decoding="async" /></a>)}
           </div>
-          {!layerReady && <p class="layer-blocked">人物分層尚未完成：目前僅供檢查鏡頭、作品與版型。</p>}
-
           <div class="asset-gap" role="status" data-asset-gap>
             <span class="asset-gap__eyebrow">素材缺口 / ASSET GAP</span>
             <strong>人物透明圖層與乾淨背景尚未提供</strong>
@@ -138,13 +150,29 @@ const sceneHref = (id: string) => `#scene-${id}`;
 
           <div class="stage-progress" aria-hidden="true"><span data-progress-bar></span></div>
 
-          <div class="style-photo" data-style-photo aria-hidden="true">{[projects[5],projects[1],projects[2],firstProject].map(p=><img src={p.sizes['1600']} alt="" width={p.dimensions.width} height={p.dimensions.height} loading="lazy" decoding="async"/>)}</div>
+          <div class="style-photo" data-style-photo aria-hidden="true">
+            <figure class="style-photo__main">
+              <img src={firstProject.sizes['1600']} alt="" width={firstProject.dimensions.width} height={firstProject.dimensions.height} loading="lazy" decoding="async" />
+            </figure>
+            <div class="style-photo__pair" data-style-pair>
+              {stylePairs.map((pair, index) => (
+                <div class="style-photo__variant" data-style-variant data-style-index={index}>
+                  {pair.map((project) => <img src={project.sizes['960']} alt="" width={project.dimensions.width} height={project.dimensions.height} loading="lazy" decoding="async" />)}
+                </div>
+              ))}
+            </div>
+          </div>
           <div class="story-copy" data-story-copy>
             <section class="motion-scene motion-scene--opening" id="scene-opening" data-scene="opening" aria-labelledby="scene-title-opening">
               <div class="scene-copy scene-copy--left">
+                <p class="eyebrow">PHOX999 / 台北・雙北人像合作</p>
                 <h1 id="scene-title-opening">{defaultHeroContent.title}</h1>
                 <p class="scene-deck">一起討論風格、服裝與場景，完成自然、有故事的人像作品。</p>
-                <a class="invite-cta magnetic-cta" data-magnetic-cta href={contactUrl}><span>填寫合作意向</span><i aria-hidden="true">↗</i></a>
+                <div class="hero-actions">
+                  <a class="invite-cta magnetic-cta" data-magnetic-cta href={contactUrl}><span>填寫合作意向</span><i aria-hidden="true">↗</i></a>
+                  <a class="text-cta" href="#scene-gallery" data-jump="gallery">看看作品 <span aria-hidden="true">↓</span></a>
+                </div>
+                {!layerReady && <p class="layer-status" role="status">人物分層待補・目前以完整原照呈現</p>}
               </div>
             </section>
 
@@ -164,7 +192,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
             <section class="motion-scene motion-scene--gallery" id="scene-gallery" data-scene="gallery" aria-labelledby="scene-title-gallery">
               <div class="gallery-heading">
                 <h2 id="scene-title-gallery">精選作品</h2>
-                <p data-webgl-status role="status">CSS 作品列已就緒；WebGL 展廊會在靠近時載入。</p>
+                <p data-webgl-status role="status">作品將沿著鏡頭路徑展開；載入 3D 時會保留同一張照片作為銜接。</p>
               </div>
               <div class="gallery-viewport" data-gallery-viewport>
                 <div class="gallery-fallback" data-gallery-fallback>
@@ -184,8 +212,20 @@ const sceneHref = (id: string) => `#scene-${id}`;
             </section>
 
             <section class="motion-scene motion-scene--style" id="scene-style" data-scene="style" aria-labelledby="scene-title-style">
+              <div class="static-style-collage" aria-label="不同人像攝影風格作品">
+                <figure class="static-style-collage__main">
+                  <img src={firstProject.sizes['1600']} srcset={`${firstProject.sizes['960']} 960w, ${firstProject.sizes['1600']} 1600w`} sizes="(max-width:767px) 90vw, 48vw" alt={`${firstProject.title} 人像攝影作品`} width={firstProject.dimensions.width} height={firstProject.dimensions.height} loading="lazy" decoding="async" />
+                </figure>
+                <div class="static-style-collage__pair">
+                  {stylePairs[0].map((project) => (
+                    <figure>
+                      <img src={project.sizes['960']} srcset={`${project.sizes['960']} 960w, ${project.sizes['1600']} 1600w`} sizes="(max-width:767px) 42vw, 21vw" alt={`${project.title} 人像攝影作品`} width={project.dimensions.width} height={project.dimensions.height} loading="lazy" decoding="async" />
+                    </figure>
+                  ))}
+                </div>
+              </div>
               <div class="scene-copy scene-copy--right scene-copy--light">
-                <h2 id="scene-title-style">找到屬於你的風格。</h2>
+                <h2 id="scene-title-style">找到屬於你的<br />風格。</h2>
                 <p class="scene-deck">自然、個性，或一個從沒試過的自己。</p>
               </div>
             </section>
@@ -194,17 +234,17 @@ const sceneHref = (id: string) => `#scene-${id}`;
               <div class="process-heading">
                 <h2 id="scene-title-process">從想法，到作品。</h2>
               </div>
-              <div class="process-cards">
-                <article class="process-card" data-process-card>
+              <ol class="process-cards">
+                <li class="process-card" data-process-card>
                   <span>01</span><h3>討論概念</h3><p>一起整理主題、服裝與場景。</p>
-                </article>
-                <article class="process-card" data-process-card>
+                </li>
+                <li class="process-card" data-process-card>
                   <span>02</span><h3>安心拍攝</h3><p>配合你的節奏，提供自然的引導。</p>
-                </article>
-                <article class="process-card" data-process-card>
+                </li>
+                <li class="process-card" data-process-card>
                   <span>03</span><h3>完成作品</h3><p>依討論的風格，完成影像整理。</p>
-                </article>
-              </div>
+                </li>
+              </ol>
             </section>
 
             <section class="motion-scene motion-scene--invite" id="scene-invite" data-scene="invite" aria-labelledby="scene-title-invite">
