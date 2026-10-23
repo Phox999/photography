@@ -99,7 +99,7 @@
 | 檢查 | 結果 |
 | --- | --- |
 | `node --test test/motion-lab-config.test.js` | 通過，7/7。 |
-| `node --test --test-concurrency=1` | 129/132；未通過項目是既有縮圖檔缺失，以及兩項 `site-analytics` 測試失敗（`src/lib/site-analytics.ts:178` 的測試 mock 與 lifecycle 期望），都不屬 Motion Lab 變更。 |
+| `npm test -- --test-concurrency=1`（乾淨臨時 worktree） | 130/132；兩項既有 `site-analytics` 測試失敗：client mock 缺少 `addEventListener`，以及 cookie 過期測試期望 `null` 卻收到 cookie；都不屬 Motion Lab 變更。 |
 | `git diff --check`（Motion Lab 原始碼與文件） | 通過。 |
 | Dev 預覽 | `http://127.0.0.1:4325/lab/motion/?mode=cinematic` 可開啟；此處是本機 worktree 預覽，沒有替換或部署正式首頁。 |
-| 標準前置流程與 Astro build | 本回合未重跑：`npm run dev`／`npm run build` 會先執行 LFS 照片縮圖和 Motion Lab 資產產生器；上一回合已記錄指標檔造成 Sharp 失敗及 Windows Astro 產頁異常。需先修復/水合來源照片再驗完整 build。 |
+| 標準前置流程與 Astro build | 在乾淨臨時 worktree 安裝 lockfile 套件後，`npm run build` 通過，完成 59 個路由；2,748 張縮圖沿用快取、六組 Motion Lab 高解析圖成功產生。Vite 提醒 Three.js chunk 為 746.88 KB，超過 500 KB 門檻。`npm ci` 回報 15 項 audit findings（1 low、13 high、1 critical），本次未更新依賴。 |
