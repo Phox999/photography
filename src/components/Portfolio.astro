@@ -4,6 +4,8 @@ import { orderFeaturedPortfolio } from '../lib/featured-portfolio.js';
 import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
 import { getImageDimensions, getImageSrcset } from '../lib/image-variants';
 import { serializePortfolioRouteMap } from '../lib/portfolio-routes';
+interface Props { editorial?: boolean; }
+const { editorial = false } = Astro.props;
 
 const portfolioItems = orderFeaturedPortfolio(portfolioCatalog).slice(0, 12);
 const imageDimensions = new Map<string, ImageDimensions>();
@@ -19,7 +21,7 @@ const countFor = (category: string) =>
   <div class="section-heading section-heading--row">
     <div>
       <p class="eyebrow">PORTFOLIO</p>
-      <h2 id="portfolio-title">作品集</h2>
+      <h2 id="portfolio-title">{editorial ? '精選作品' : '作品集'}</h2>
     </div>
 
     <div class="portfolio-scroll-controls" role="group" aria-label="瀏覽更多作品">

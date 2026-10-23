@@ -2,17 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
-import TrustBar from '../components/TrustBar.astro';
 import Portfolio from '../components/Portfolio.astro';
-import ShootProjectHighlights from '../components/ShootProjectHighlights.astro';
-import Plans from '../components/Plans.astro';
-import Guidelines from '../components/Guidelines.astro';
-import Feedback from '../components/Feedback.astro';
+import FeaturedSeries from '../components/FeaturedSeries.astro';
+import VisualDirections from '../components/VisualDirections.astro';
 import Dates from '../components/Dates.astro';
-import FAQ from '../components/FAQ.astro';
 import Contact from '../components/Contact.astro';
-import Footer from '../components/Footer.astro';
 import '../styles/home-refresh.css';
+import '../styles/home-editorial.css';
 import { siteConfig } from '../data/site';
 
 const pageDescription = 'Phox999 是台北人像攝影師，提供雙北互惠攝影、外拍、棚拍與主題人像創作。第一次拍攝也沒關係，從主題、服裝到現場引導一起完成喜歡的作品。';
@@ -41,19 +37,27 @@ const homepageStructuredData = [
   description={pageDescription}
   ogImage="/assets/hero.webp"
   structuredData={homepageStructuredData}
+  editorialHome
 >
-  <Header home />
-  <main class="home-page">
-    <Hero />
-    <TrustBar />
-    <Portfolio />
-    <ShootProjectHighlights />
-    <Plans />
-    {/* <Guidelines /> */}
-    <Feedback />
-    <Dates />
-    <FAQ />
-    <Contact />
+  <Header home editorial />
+  <main class="editorial-home">
+    <Hero editorial />
+    <Portfolio editorial />
+    <FeaturedSeries />
+    <VisualDirections />
+    <Dates editorial />
+    <Contact editorial />
   </main>
-  <Footer />
+  <footer class="editorial-footer">
+    <a href="#hero" aria-label="回到首頁頂端">PHOX999</a>
+    <nav aria-label="其他資訊">
+      <a href="/portfolio/">全部作品</a>
+      <a href="/cooperation/">合作方式</a>
+      <a href={siteConfig.aboutUrl}>關於我</a>
+      <a href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>
+      <a href={siteConfig.mailtoUrl}>Email</a>
+      <button type="button" data-open-analytics-preferences hidden>隱私設定</button>
+    </nav>
+    <small>© {new Date().getFullYear()} Phox999 photography</small>
+  </footer>
 </BaseLayout>

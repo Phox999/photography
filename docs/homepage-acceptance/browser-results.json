@@ -1,0 +1,73 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "sections": [
+        "hero",
+        "portfolio",
+        "featured-series",
+        "directions",
+        "dates",
+        "contact"
+      ],
+      "hero": 900
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "scroll": 1920,
+      "sections": [
+        "hero",
+        "portfolio",
+        "featured-series",
+        "directions",
+        "dates",
+        "contact"
+      ],
+      "hero": 1080
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "scroll": 1280,
+      "sections": [
+        "hero",
+        "portfolio",
+        "featured-series",
+        "directions",
+        "dates",
+        "contact"
+      ],
+      "hero": 800
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scroll": 390,
+      "sections": [
+        "hero",
+        "portfolio",
+        "featured-series",
+        "directions",
+        "dates",
+        "contact"
+      ],
+      "hero": 844
+    }
+  ],
+  "errors": [],
+  "submissionCount": 2,
+  "checks": [
+    "calendar switch/clear/transfer",
+    "reference preview/remove/multipart",
+    "review/edit/required fields",
+    "intercepted error/retry/success with same identity",
+    "availability error/retry/empty",
+    "reduced motion",
+    "published portfolio/links/arrows",
+    "keyboard focus",
+    "apply isolation"
+  ]
+}

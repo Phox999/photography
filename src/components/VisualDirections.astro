@@ -1,0 +1,12 @@
+---
+import { visualDirection as direction } from '../data/visualDirections';
+---
+<section id="directions" class="visual-directions editorial-section" aria-labelledby="directions-title">
+  <header class="editorial-label"><span>04</span><h2 id="directions-title">創作方向</h2><p>VISUAL<br />DIRECTIONS</p></header>
+  <div>
+    <div class="direction-grid">
+      {[0, 1, 2].map((index) => direction.images[index] ? <img src={direction.images[index].src} alt={direction.images[index].alt} width={direction.images[index].width} height={direction.images[index].height} style={{ objectPosition: direction.images[index].position }} loading="lazy" decoding="async" /> : <div class="direction-placeholder"><span>CONCEPT / 0{index + 1}</span><p>獨立概念影像待補</p><small>版面預覽・非攝影作品</small></div>)}
+    </div>
+    <div class="direction-caption"><div><h3>{direction.title}</h3><p>{direction.description}</p></div><small>{direction.nature}</small></div>
+  </div>
+</section>

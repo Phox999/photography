@@ -1,12 +1,12 @@
 ---
 import { siteConfig } from '../data/site';
 
-interface Props { id?: string; }
-const { id = 'dates' } = Astro.props;
+interface Props { id?: string; editorial?: boolean; }
+const { id = 'dates', editorial = false } = Astro.props;
 ---
 <section class="section dates-section availability-section" id={id} aria-labelledby="dates-title" data-availability>
   <div class="container availability-container">
-    <div class="section-heading availability-heading"><p class="eyebrow">OPEN DATES</p><h2 id="dates-title">開放檔期</h2></div>
+    <div class="section-heading availability-heading"><p class="eyebrow">{editorial ? '05 / OPEN DATES' : 'OPEN DATES'}</p><h2 id="dates-title">開放檔期</h2></div>
     <div class="availability-months" role="group" aria-label="切換月份" data-calendar-months hidden>
       <button type="button" data-calendar-month="0" aria-pressed="true">本月</button>
       <button type="button" data-calendar-month="1" aria-pressed="false">下個月</button>

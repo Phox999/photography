@@ -229,7 +229,9 @@ for (const page of htmlPages) {
   }
 
   const requiredSchemaTypes = route === '/'
-    ? ['ProfessionalService', 'FAQPage']
+    ? ['ProfessionalService']
+    : route === '/cooperation/'
+      ? ['FAQPage']
     : route === '/about/'
       ? ['Person']
       : /^\/portfolio\/[^/]+\/$/.test(route)

@@ -5,6 +5,7 @@ import '../styles/inner-refresh.css';
 import FloatingActions from '../components/FloatingActions.astro';
 
 interface Props {
+  editorialHome?: boolean;
   title?: string;
   description?: string;
   canonical?: string;
@@ -27,6 +28,7 @@ const {
   noindex = false,
   referrer,
   structuredData,
+  editorialHome = false,
 } = Astro.props;
 
 const canonicalUrl = new URL(canonical ?? Astro.url.pathname, siteOrigin).href;
@@ -76,7 +78,7 @@ const structuredDataJson = structuredData
     {structuredDataJson && <script type="application/ld+json" set:html={structuredDataJson} />}
     <title>{title}</title>
   </head>
-  <body id="top">
+  <body id="top" class:list={{ 'editorial-shell': editorialHome }}>
     {!noindex && <aside class="public-announcement" data-public-announcement role="status" hidden></aside>}
     <slot />
     {!noindex && <dialog class="site-analytics-dialog" data-site-analytics-dialog aria-labelledby="site-analytics-dialog-title">
@@ -91,7 +93,7 @@ const structuredDataJson = structuredData
         <button type="button" class="site-analytics-dialog__button site-analytics-dialog__button--quiet" data-site-analytics-clear>清除識別碼</button>
       </div>
     </dialog>}
-    {!noindex && <FloatingActions />}
+    {!noindex && !editorialHome && <FloatingActions />}
   </body>
 </html>
 

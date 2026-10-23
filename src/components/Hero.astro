@@ -3,13 +3,16 @@ import { defaultHeroContent, siteConfig } from '../data/site';
 import { getPublicImageDimensions } from '../lib/image-dimensions';
 import heroManifest from '../data/hero-image-variants.json' with { type: 'json' };
 import { heroImageSources } from '../lib/hero-images';
+import { heroFocalPoint } from '../data/homePhotoPresentation';
+interface Props { editorial?: boolean; }
+const { editorial = false } = Astro.props;
 
 const initialHeroSource = heroManifest.defaultSource;
 const initialHeroSources = initialHeroSource ? heroImageSources(initialHeroSource) : undefined;
 const heroImageDimensions = await getPublicImageDimensions('/assets/hero.webp');
 ---
 
-<section class="hero" id="hero" aria-labelledby="hero-title" data-hero-carousel>
+<section class="hero" id="hero" aria-labelledby="hero-title" data-hero-carousel data-editorial={editorial || undefined}>
   <div class="hero__media" aria-hidden="true">
     <img
       class="hero__image is-active"
@@ -24,13 +27,14 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero.webp');
       decoding="async"
       data-original-src={initialHeroSource}
       data-hero-image
+      style={editorial ? { objectPosition: heroFocalPoint(initialHeroSource) } : undefined}
     />
   </div>
 
   <div class="hero__overlay"></div>
 
   <div class="hero__content container">
-    <h1 id="hero-title" data-hero-title>第一次互惠拍攝，<br />也能安心開始。</h1>
+    <h1 id="hero-title" data-hero-title>{editorial ? 'PHOX999 / 人像攝影' : <>第一次互惠拍攝，<br />也能安心開始。</>}</h1>
 
     <p class="hero__subtitle"></p>
 
@@ -45,10 +49,12 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero.webp');
       填寫合作意向
     </a>
   </div>
+  {editorial && <><div class="hero-editorial-note"><span>01 / PHOTOGRAPHY</span><p>以自己的視角，<br />留下每一次相遇。</p><span>BY PHOX999</span></div><a class="hero-scroll" href="#portfolio">向下瀏覽 <span aria-hidden="true">↓</span></a><div class="hero-focus" aria-hidden="true"></div></>}
 </section>
 
 <script>
   import { loadPublicSiteContent } from '../lib/site-content';
+  import { heroFocalPoint } from '../data/homePhotoPresentation';
   import { canReuseStaticHeroImage, heroImageSources, loadHeroImageWithFallback, replaceHeroImagesWhenLoaded } from '../lib/hero-images';
 
   const heroCarousel = document.querySelector('[data-hero-carousel]');
@@ -72,8 +78,8 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero.webp');
     };
 
     loadPublicSiteContent().then(async (content) => {
-      if (title) title.textContent = content.hero_title;
-      if (copy) copy.textContent = content.hero_copy;
+      if (title && !heroCarousel.hasAttribute('data-editorial')) title.textContent = content.hero_title;
+      if (copy && !heroCarousel.hasAttribute('data-editorial')) copy.textContent = content.hero_copy;
 
       if (media && content.hero_image_urls.length) {
         const firstUrl = content.hero_image_urls[0];
@@ -87,6 +93,7 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero.webp');
           const image = document.createElement('img');
           image.className = `hero__image ${index === 0 ? 'is-active' : ''}`;
           image.dataset.originalSrc = url;
+          if (heroCarousel.hasAttribute('data-editorial')) image.style.objectPosition = heroFocalPoint(url);
           image.alt = '';
           if (sources.width && sources.height) {
             image.width = sources.width;
@@ -109,8 +116,18 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero.webp');
       }
 
       if (images.length > 1) {
-        window.setInterval(() => void goToHeroImage(currentIndex + 1), 4600);
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          const timer = window.setInterval(() => { if (!document.hidden) void goToHeroImage(currentIndex + 1); }, 4600);
+          window.addEventListener('pagehide', () => window.clearInterval(timer), { once: true });
+        }
       }
     });
+  }
+  if (heroCarousel?.hasAttribute('data-editorial')) {
+    const image = heroCarousel.querySelector<HTMLImageElement>('[data-hero-image]');
+    if (image && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      image.animate([{ filter: 'blur(6px)', scale: '1.02' }, { filter: 'blur(0)', scale: '1' }], { duration: 1100, easing: 'ease-out' });
+      heroCarousel.querySelector('.hero-focus')?.animate([{ opacity: 0.3 }, { opacity: 0 }], { duration: 1100 });
+    }
   }
 </script>
