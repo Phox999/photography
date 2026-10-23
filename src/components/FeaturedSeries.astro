@@ -3,37 +3,46 @@ import { portfolioCatalog } from '../data/portfolioCatalog';
 import { getImageSrcset } from '../lib/image-variants';
 import { serializePortfolioRouteMap } from '../lib/portfolio-routes';
 import { getPublicImageDimensions } from '../lib/image-dimensions';
-const series = portfolioCatalog.find(item => item.slug === '260614_天使與惡魔 RE') ?? portfolioCatalog[0];
-const photos = [...new Set(series.images)].slice(0, 3);
-const dimensions = await Promise.all(photos.map(getPublicImageDimensions));
+import { selectHomepageSeries } from '../lib/home-featured-series.js';
+const series = await Promise.all(selectHomepageSeries(portfolioCatalog).map(async item => {
+  const photos = [...new Set(item.images)].slice(0, 3);
+  const dimensions = await Promise.all(photos.map(getPublicImageDimensions));
+  return { ...item, photos, dimensions };
+}));
 ---
-<section id="featured-series" class="featured-series" aria-labelledby="series-title" data-featured-series data-series-slug={series.slug} data-series-routes={serializePortfolioRouteMap(portfolioCatalog)}>
-  <div class="series-images" data-series-images>
-    {photos.map((src, index) => <img src={src} srcset={getImageSrcset(src)} sizes={index === 0 ? '70vw' : '23vw'} alt={`${series.title}・影像 ${index + 1}`} loading="lazy" decoding="async" width={dimensions[index]?.width} height={dimensions[index]?.height} />)}
-  </div>
-  <header class="series-label editorial-label"><span>03</span><h2 id="series-title">特色系列</h2><p>FEATURED<br />SERIES</p></header>
-  <div class="series-info"><span>SELECTED SERIES</span><h3 data-series-title>{series.title}</h3><a href={series.href} data-series-link>查看系列 <span aria-hidden="true">↗</span></a></div>
+<section id="featured-series" class="featured-series" aria-labelledby="series-title" data-featured-series data-series-routes={serializePortfolioRouteMap(portfolioCatalog)}>
+  {series.map((item, seriesIndex) => <article class="series-row" data-series-card data-series-slug={item.slug} aria-labelledby={`series-name-${seriesIndex}`}>
+    <div class="series-images" data-series-images>
+      {item.photos.map((src, index) => <img src={src} srcset={getImageSrcset(src)} sizes={index === 0 ? '70vw' : '23vw'} alt={`${item.title}・影像 ${index + 1}`} loading="lazy" decoding="async" width={item.dimensions[index]?.width} height={item.dimensions[index]?.height} />)}
+    </div>
+    <div class="series-label editorial-label"><span>03 / 0{seriesIndex + 1}</span>{seriesIndex === 0 && <h2 id="series-title">特色系列</h2>}<p>FEATURED<br />SERIES</p></div>
+    <div class="series-info"><span>SELECTED SERIES / 0{seriesIndex + 1}</span><h3 id={`series-name-${seriesIndex}`} data-series-title>{item.title}</h3><a href={item.href} data-series-link>查看系列 <span aria-hidden="true">↗</span></a></div>
+  </article>)}
 </section>
 <script>
   import { loadPublishedPortfolio } from '../lib/portfolio-content';
   import { parsePortfolioRouteMap } from '../lib/portfolio-routes';
   import { setPortfolioImageSource } from '../lib/image-variants';
+  import { selectHomepageSeries } from '../lib/home-featured-series.js';
   const root = document.querySelector<HTMLElement>('[data-featured-series]');
   if (root) loadPublishedPortfolio(parsePortfolioRouteMap(root.dataset.seriesRoutes)).then(collections => {
     if (!collections) return;
-    const item = collections.find(item => item.slug === root.dataset.seriesSlug) ?? collections[0];
-    if (!item) return;
-    const photos = [...new Set(item.images)].slice(0, 3);
-    const images = photos.map((src, index) => {
-      const image = document.createElement('img');
-      image.alt = `${item.title}・影像 ${index + 1}`;
-      image.loading = 'lazy'; image.decoding = 'async'; image.width = 1200; image.height = 800;
-      setPortfolioImageSource(image, src, index === 0 ? '70vw' : '23vw');
-      image.sizes = index === 0 ? '70vw' : '23vw';
-      return image;
+    const selected = selectHomepageSeries(collections);
+    root.querySelectorAll<HTMLElement>('[data-series-card]').forEach((card, seriesIndex) => {
+      const item = selected[seriesIndex];
+      card.hidden = !item;
+      if (!item) return;
+      card.dataset.seriesSlug = item.slug;
+      const images = [...new Set(item.images)].slice(0, 3).map((src, index) => {
+        const image = document.createElement('img');
+        image.alt = `${item.title}・影像 ${index + 1}`;
+        image.loading = 'lazy'; image.decoding = 'async'; image.width = 1200; image.height = 800;
+        setPortfolioImageSource(image, src, index === 0 ? '70vw' : '23vw');
+        return image;
+      });
+      card.querySelector('[data-series-images]')?.replaceChildren(...images);
+      card.querySelector('[data-series-title]')!.textContent = item.title;
+      card.querySelector<HTMLAnchorElement>('[data-series-link]')!.href = item.href;
     });
-    root.querySelector('[data-series-images]')?.replaceChildren(...images);
-    root.querySelector('[data-series-title]')!.textContent = item.title;
-    root.querySelector<HTMLAnchorElement>('[data-series-link]')!.href = item.href;
   });
 </script>

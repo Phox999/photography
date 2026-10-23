@@ -35,8 +35,13 @@ for (const [width, height] of [[1440,900],[1920,1080],[1280,800],[390,844]]) {
   assert.ok(layout.scroll <= width, `overflow at ${width}: ${layout.scroll}`);
   assert.deepEqual(layout.sections, ['hero','portfolio','featured-series','directions','dates','contact']);
   assert.equal(layout.hero, height);
+  assert.equal(await page.locator('body').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 255, 255)');
+  const seriesSlugs = await page.locator('[data-series-card]:visible').evaluateAll(cards=>cards.map(card=>card.dataset.seriesSlug));
+  assert.equal(seriesSlugs.length,3);
+  assert.equal(new Set(seriesSlugs).size,3);
   if (width >= 1280) {
     for (const id of layout.sections) { await page.locator(`#${id}`).scrollIntoViewIfNeeded(); await page.waitForTimeout(200); }
+    for (const card of await page.locator('[data-series-card]').all()) { await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(200); }
     await page.screenshot({ path: `${output}/full-${width}.png`, fullPage: true });
   }
   results.push({ width, height, ...layout });
@@ -87,6 +92,10 @@ assert.equal(identities[0],identities[1]);
 assert.ok((await page.locator('[data-inquiry-status]').textContent()).includes('收到'));
 await page.goto('http://127.0.0.1:4336/',{waitUntil:'networkidle'});
 for (const [i,id] of ['hero','portfolio','featured-series','directions','dates','contact'].entries()) {
+  if (id === 'featured-series') for (const [index,card] of (await page.locator('[data-series-card]').all()).entries()) {
+    await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(200);
+    await card.screenshot({path:`${output}/03-${index+1}-series.png`});
+  }
   await page.locator(`#${id}`).scrollIntoViewIfNeeded(); await page.waitForTimeout(200);
   await page.locator(`#${id}`).screenshot({path:`${output}/0${i+1}-${id}.png`});
 }
@@ -114,6 +123,9 @@ await page.waitForTimeout(200);
 assert.ok(await page.locator('[data-portfolio-strip]').evaluate(e=>e.scrollLeft) > 0);
 const broken = await page.locator('#featured-series img').evaluateAll(images=>images.filter(i=>i.complete && !i.naturalWidth).map(i=>i.src));
 assert.deepEqual(broken,[]);
+const publishedSlugs = await page.locator('[data-series-card]:visible').evaluateAll(cards=>cards.map(card=>card.dataset.seriesSlug));
+assert.equal(publishedSlugs.length,3);
+assert.equal(new Set(publishedSlugs).size,3);
 await page.goto('http://127.0.0.1:4336/apply/',{waitUntil:'networkidle'});
 assert.equal(await page.locator('body').evaluate(e=>e.classList.contains('editorial-shell')),false);
 await page.screenshot({path:`${output}/apply-regression.png`,fullPage:true});

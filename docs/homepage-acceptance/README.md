@@ -5,9 +5,9 @@ Base: existing `dev`, `4ba8f150b2b725ba3ce473c4065995090c63fe45`. Work was isola
 ## Implementation
 
 - `src/pages/index.astro`: exactly Hero, selected works, featured series, visual directions, dates and application, followed by a compact footer.
-- `src/styles/home-editorial.css`: homepage-only warm neutral palette, full viewport Hero, five portrait covers, image-led series layout, functional calendar and application styling. No new package.
+- `src/styles/home-editorial.css`: homepage-only pure white (#FFFFFF) palette, full viewport Hero, five portrait covers, image-led series layout, functional calendar and application styling. No new package.
 - `Hero.astro`, `Header.astro`, `Portfolio.astro`, `Dates.astro`, `Contact.astro`, `BaseLayout.astro`: opt-in presentation variants. Published Hero photos still load; backend headline text cannot restore the old large homepage heading. Focus entrance is progressive enhancement; no added carousel timer.
-- `FeaturedSeries.astro`: three distinct photographs from one real series, using existing catalogue/routes/image helpers, with published-data refresh and smaller layouts when images are insufficient. One series has no fake arrows.
+- `FeaturedSeries.astro`: three stacked, distinct real series, each with a large photograph and two detail photographs, using existing catalogue/routes/image helpers, with published-data refresh and smaller layouts when images are insufficient. The three rows are 羽翼之間, 耳機白日 and 華裳夜行 when published; unpublished selections fall back to distinct published records, with no fake arrows.
 - `VisualDirections.astro`, `visualDirections.ts`: typed, explicitly labelled concept slots. **Three independent concept images are still needed.** No reference-board crops or invented photography were added. Supply source, alt, dimensions and focal point in this file. Current placeholders say “獨立概念影像待補 / 版面預覽・非攝影作品”.
 - `homePhotoPresentation.ts`: source-specific Hero crop settings, separated from portfolio records.
 - Reference images in baseline dev were preview-only. Contact now retains accepted `File` objects, allows individual removal and sends the existing `reference_images` multipart contract. Content hashes participate only in the client idempotency identity; the server payload schema is unchanged. Same data/photos reuse identity on uncertain retries.
@@ -21,8 +21,8 @@ Base: existing `dev`, `4ba8f150b2b725ba3ce473c4065995090c63fe45`. Work was isola
 | `npm run build` / `npm run build:worker` | Pass, 59 pages and Worker asset preparation. |
 | `npm run verify:seo` / `npm run verify:worker` | Pass, no failures, 41 structured-data checks. |
 | `npm run verify:routes` | Pass, 29 generated portfolio routes and route maps. |
-| Targeted existing tests | 30/30 pass: calendar range, featured ordering, inquiry form/workflow/references, published portfolio and Hero image fallback. |
-| Full `node --test` | 131/132 pass. Existing `site-analytics-client.test.js` fails at `resolveTabId` because its mocked window lacks an event target. Reproduced with the unchanged test and module extracted from origin/dev. Not modified in this task. An initial analytics signature test also failed once, then passed in isolation and later full runs. |
+| Targeted existing tests | 33/33 pass: calendar range, featured ordering, inquiry form/workflow/references, published portfolio and Hero image fallback. |
+| Full `node --test` | 134/135 pass. Existing `site-analytics-client.test.js` fails at `resolveTabId` because its mocked window lacks an event target. Reproduced with the unchanged test and module extracted from origin/dev. Not modified in this task. An initial analytics signature test also failed once, then passed in isolation and later full runs. |
 | Desktop Edge | 1440×900, 1920×1080, 1280×800: exact six-section order, viewport-height Hero, no page overflow. |
 | Small-screen smoke | 390×844: no page overflow. A designed mobile/tablet refresh remains the next phase. |
 | Calendar | Month switch, selection, clearing, date transfer, error/retry and empty state pass. Uses test fixtures, not a production availability claim. |
