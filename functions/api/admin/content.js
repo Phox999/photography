@@ -1,15 +1,25 @@
-import { assertMutation, endpoint, HttpError, json, readJson, requireAdmin, supabaseRequest } from '../../../server/auth.js';
+import { assertMutation, endpoint, getSecretConfig, HttpError, json, readJson, requireAdmin, supabaseRequest } from '../../../server/auth.js';
 import { allowMethods, CONTENT_FIELDS, contentUpdate, isValidHeroImagePath, rowResult } from '../../../server/admin-validation.js';
+import { imageThumbnailUrls } from '../../../server/storage-thumbnails.js';
 
-function withHeroUrls(content, config) {
+async function withHeroUrls(content, config, env) {
   const paths = content.hero_image_paths;
   if (!Array.isArray(paths) || paths.length > 10
       || paths.some((path) => !isValidHeroImagePath(path))) {
     throw new HttpError(503, '首頁照片設定暫時無法載入。', 'content_unavailable');
   }
-  return { ...content, hero_image_urls: paths.map((path) => path.startsWith('static:')
-    ? path.slice('static:'.length)
-    : `${config.url}/storage/v1/object/public/site-hero/${path}`) };
+  let storageConfig = null;
+  if (paths.some((path) => !path.startsWith('static:'))) {
+    try { storageConfig = getSecretConfig(env); } catch { /* Optional legacy thumbnail inventory. */ }
+  }
+  const thumbnails = await imageThumbnailUrls(storageConfig, 'site-hero', paths);
+  return {
+    ...content,
+    hero_image_urls: paths.map((path) => path.startsWith('static:')
+      ? path.slice('static:'.length)
+      : `${config.url}/storage/v1/object/public/site-hero/${path}`),
+    hero_image_thumbnail_urls: paths.map((path) => thumbnails.get(path) || null),
+  };
 }
 
 export const onRequest = endpoint(async (context) => {
@@ -23,7 +33,7 @@ export const onRequest = endpoint(async (context) => {
     if (!Array.isArray(result.data) || !result.data[0]) {
       throw new HttpError(503, '網站內容尚未初始化，請先完成資料庫設定。', 'content_unavailable');
     }
-    return json({ content: withHeroUrls(result.data[0], config) });
+    return json({ content: await withHeroUrls(result.data[0], config, context.env) });
   }
   // Twelve Chinese FAQ entries can exceed 32 KiB while staying within all
   // character limits. Keep a byte cap large enough for escaped Unicode JSON.
@@ -31,5 +41,5 @@ export const onRequest = endpoint(async (context) => {
   const result = await supabaseRequest(config, '/rest/v1/rpc/admin_update_content', {
     method: 'POST', accessToken, body: payload,
   });
-  return json({ content: withHeroUrls(rowResult(result.data), config) });
+  return json({ content: await withHeroUrls(rowResult(result.data), config, context.env) });
 });

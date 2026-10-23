@@ -4,10 +4,6 @@ import { isValidPortfolioImagePath } from './admin-validation.js';
 const imageUrl = (path, config) => path.startsWith('static:')
   ? path.slice('static:'.length)
   : `${config.url}/storage/v1/object/public/site-portfolio/${path}`;
-const thumbnailUrl = (path, config, bucket = 'site-portfolio') => path.startsWith('static:')
-  ? null
-  : `${config.url}/storage/v1/object/public/${bucket}/${path.replace(/\.(jpg|png|webp)$/i, '.thumb.webp')}`;
-
 function checkedCollections(data) {
   const collections = data?.collections;
   if (!Array.isArray(collections) || collections.length > 80 || !Number.isInteger(data.version)) {
@@ -29,15 +25,15 @@ function checkedCollections(data) {
   return collections;
 }
 
-export function adminPortfolioResult(data, config) {
+export function adminPortfolioResult(data, config, thumbnailUrls = new Map()) {
   const collections = checkedCollections(data);
   return {
     version: data.version,
     collections: collections.map((item) => ({
       ...item,
       cover_url: imageUrl(item.cover, config),
-      cover_thumbnail_url: thumbnailUrl(item.cover, config),
-      images: item.images.map((path) => ({ path, url: imageUrl(path, config), thumbnail_url: thumbnailUrl(path, config) })),
+      cover_thumbnail_url: thumbnailUrls.get(item.cover) || null,
+      images: item.images.map((path) => ({ path, url: imageUrl(path, config), thumbnail_url: thumbnailUrls.get(path) || null })),
     })),
   };
 }

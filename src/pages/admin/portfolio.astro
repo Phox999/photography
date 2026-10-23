@@ -230,6 +230,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   let detailUpdateTimer = 0;
   let detailComposing = false;
   const selectedPaths = new Set<string>();
+  let checkboxShiftKey = false;
   const uploadItems: UploadItem[] = [];
   const uploadQueueList = $('portfolio-upload-queue-list');
 
@@ -877,7 +878,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     const checkbox = card.querySelector<HTMLInputElement>('[data-photo-select]');
     if (checkbox) checkbox.checked = selected;
   }
-  function togglePhotoSelection(path: string, shiftKey = false) {
+  function togglePhotoSelection(path: string, shiftKey = false, selected = !selectedPaths.has(path)) {
     const collection = selectedCollection();
     const to = photoIndexByPath.get(path);
     if (!collection || to === undefined) return;
@@ -890,8 +891,8 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
           selectedPaths.add(selectedPath); updatePhotoSelection(selectedPath, true);
         }
       }
-    } else if (selectedPaths.has(path)) { selectedPaths.delete(path); updatePhotoSelection(path, false); }
-    else { selectedPaths.add(path); updatePhotoSelection(path, true); }
+    } else if (selected) { selectedPaths.add(path); updatePhotoSelection(path, true); }
+    else { selectedPaths.delete(path); updatePhotoSelection(path, false); }
     rangeAnchorPath = path; setBatchToolbar();
     photoGrid.querySelector<HTMLInputElement>(`[data-photo-select="${CSS.escape(path)}"]`)?.focus({ preventScroll: true });
   }
@@ -1102,6 +1103,13 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     draggedCollectionSlug = ''; list.querySelectorAll('.is-dragging,.is-drop-target').forEach((row) => row.classList.remove('is-dragging', 'is-drop-target'));
   });
 
+  photoGrid.addEventListener('change', (event) => {
+    const checkbox = event.target instanceof HTMLInputElement && event.target.matches('[data-photo-select]')
+      ? event.target : null;
+    if (!checkbox) return;
+    togglePhotoSelection(checkbox.dataset.photoSelect || '', checkboxShiftKey, checkbox.checked);
+    checkboxShiftKey = false;
+  });
   photoGrid.addEventListener('click', (event) => {
     if (busy) return;
     const target = event.target instanceof Element ? event.target : null;
@@ -1110,7 +1118,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     const action = target?.closest<HTMLButtonElement>('[data-photo-action]');
     const retry = target?.closest<HTMLButtonElement>('[data-photo-retry]');
     if (checkbox) {
-      event.preventDefault(); event.stopPropagation(); togglePhotoSelection(checkbox.dataset.photoSelect || '', (event as MouseEvent).shiftKey); return;
+      checkboxShiftKey = (event as MouseEvent).shiftKey; return;
     }
     if (preview) {
       const path = preview.dataset.photoPreview || '';

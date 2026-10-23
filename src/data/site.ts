@@ -14,7 +14,7 @@ export const siteConfig = {
 
 export const defaultHeroContent = {
   title: '第一次互惠拍攝，\n也能安心開始。',
-  copy: '在台北拍人像，也提供雙北互惠外拍、棚拍與主題攝影合作。不論你是第一次拍照，還是想累積作品，拍攝前都會一起討論需求、服裝與風格，完成自然、有故事的畫面。',
+  copy: '不論你是第一次拍照，還是想累積作品，\n都歡迎來一起討論創作。',
 };
 
 export const navItems = [

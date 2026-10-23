@@ -652,19 +652,23 @@ import '../../styles/admin-analytics.css';
       renderObservationCounts(cached.value);
       return;
     }
+    note.textContent = '正在載入造訪現象…';
     const controller = new AbortController();
     observationController = controller;
+    let timedOut = false;
+    const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 15_000);
     try {
       const result = await requestAdmin<ObservationCounts>('/api/admin/analytics/observation-counts?' + params.toString(), { signal: controller.signal });
       if (generation !== observationGeneration) return;
       observationCache.set(key, { value: result, loadedAt: Date.now() });
       renderObservationCounts(result);
     } catch (error) {
-      if (controller.signal.aborted || generation !== observationGeneration) return;
+      if (generation !== observationGeneration) return;
       journeyAvailable = false;
       const unavailable = typeof error === 'object' && error !== null && 'code' in error
         && (error as { code?: unknown }).code === 'analytics_journeys_unavailable';
-      note.textContent = unavailable ? journeyError(error) : '造訪現象暫時無法載入：' + journeyError(error);
+      note.textContent = timedOut ? '造訪現象查詢逾時，請稍後重新整理。'
+        : unavailable ? journeyError(error) : '造訪現象暫時無法載入：' + journeyError(error);
       observationResults.forEach((result) => {
         const countNode = document.querySelector<HTMLElement>('[data-observation-count="' + result + '"]');
         const ratioNode = document.querySelector<HTMLElement>('[data-observation-ratio="' + result + '"]');
@@ -672,6 +676,7 @@ import '../../styles/admin-analytics.css';
         if (ratioNode) ratioNode.textContent = '未量測或新查詢暫不可用。';
       });
     } finally {
+      window.clearTimeout(timeout);
       if (observationController === controller) observationController = null;
     }
   }
@@ -1018,13 +1023,15 @@ import '../../styles/admin-analytics.css';
       button.setAttribute('aria-pressed', String(active));
       button.classList.toggle('admin-button--quiet', !active);
     });
-    if (name !== 'sessions') { observationController?.abort(); observationGeneration += 1; }
-    if (name === 'sessions') await Promise.all([loadObservationCounts(), loadSessions()]);
+    if (name !== 'overview') { observationController?.abort(); observationGeneration += 1; }
+    if (name === 'overview') await loadObservationCounts();
+    if (name === 'sessions') await loadSessions();
     if (name === 'pages') await loadPaths();
   }
 
   async function refreshJourneyViews(force = false) {
-    if (activePanel() === 'sessions') await Promise.all([loadObservationCounts(force), loadSessions()]);
+    if (activePanel() === 'overview') await loadObservationCounts(force);
+    if (activePanel() === 'sessions') await loadSessions();
     if (activePanel() === 'pages') await loadPaths();
   }
 
@@ -1046,12 +1053,12 @@ import '../../styles/admin-analytics.css';
       status.textContent = result.current.totals.visitors
         ? '報表已更新。訪客與轉換數是基於可量測事件的估計。'
         : '目前尚無可量測的公開頁瀏覽；請確認追蹤已啟用。成功意向仍會依資料庫顯示。';
-      void refreshJourneyViews(true);
     } catch (error) {
       status.textContent = adminErrorMessage(error);
       if (report) status.textContent += ' · 上次成功載入的資料仍顯示於下方。';
     } finally {
       loading = false; reloadButton.disabled = false;
+      void refreshJourneyViews(true);
     }
   }
 

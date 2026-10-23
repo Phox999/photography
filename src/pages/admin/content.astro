@@ -390,7 +390,7 @@ import '../../styles/admin-content.css';
         if (list.children[index] !== row) list.insertBefore(row, list.children[index] || null);
       }
     } else {
-      const rows = new Map(Array.from(list.querySelectorAll<HTMLLIElement>('[data-upload-id]'), (row) => [row.dataset.uploadId || '', row]));
+      const rows = new Map(Array.from(list.querySelectorAll<HTMLLIElement>(':scope > li.content-upload-item[data-upload-id]'), (row) => [row.dataset.uploadId || '', row]));
       uploadQueue.forEach((item, index) => {
         const row = rows.get(item.id) || createUploadQueueRow(item);
         updateUploadQueueRow(row, item);

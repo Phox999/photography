@@ -1,4 +1,5 @@
 import { getSecretConfig, HttpError } from './auth.js';
+import { invalidateStorageThumbnailInventory } from './storage-thumbnails.js';
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const MAX_THUMBNAIL_BYTES = 512 * 1024;
@@ -205,6 +206,7 @@ export async function persistHeroUpload(env, upload, bucket = 'site-hero', label
     const image = { path: upload.path, url: `${config.url}/storage/v1/object/public/${bucket}/${upload.path}` };
     if (upload.thumbnail) {
       await persistObject(config, upload, upload.thumbnail, bucket, label);
+      invalidateStorageThumbnailInventory(bucket, config.url);
       image.thumbnail_path = upload.thumbnail.path;
       image.thumbnail_url = `${config.url}/storage/v1/object/public/${bucket}/${upload.thumbnail.path}`;
     }

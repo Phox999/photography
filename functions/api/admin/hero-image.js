@@ -7,6 +7,8 @@ export const onRequest = endpoint(async (context) => {
   if (unsupported) return unsupported;
   assertHeroUpload(context.request);
   await requireAdmin(context);
-  const upload = await readHeroUpload(context.request);
+  // This endpoint's client sends both the original and a WebP thumbnail.
+  // Keep the helper's default strict for callers that do not use thumbnails.
+  const upload = await readHeroUpload(context.request, '首頁照片', { allowThumbnail: true });
   return json({ image: await persistHeroUpload(context.env, upload) }, 201);
 });

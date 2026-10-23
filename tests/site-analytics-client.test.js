@@ -19,6 +19,8 @@ test('停用會丟棄尚未送出的事件，重新啟用會重新確認偏好�
   let timerId = 0;
   const window = new EventTarget();
   Object.assign(window, {
+    Element,
+    navigator: { locks: { request: (_name, callback) => callback() } },
     location: { pathname: '/', search: '', origin: 'https://phox999.com', href: 'https://phox999.com/' },
     crypto: { randomUUID },
     localStorage: { getItem: (key) => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: (key) => storage.delete(key) },
@@ -28,18 +30,21 @@ test('停用會丟棄尚未送出的事件，重新啟用會重新確認偏好�
   });
   const document = new EventTarget();
   Object.assign(document, {
-    referrer: '', defaultView: { Element },
+    referrer: '', defaultView: window,
     querySelector: (selector) => selector === '[data-site-analytics-toggle]' ? toggle : selector === '[data-site-analytics-status]' ? status : null,
   });
+  window.document = document;
   Object.assign(globalThis, { window, document, fetch: async (url, options) => {
     requests.push(JSON.parse(options.body));
     return new Response('{}', { status: 202 });
   } });
   const settle = () => new Promise((resolve) => setImmediate(resolve));
   const drain = async () => {
-    const callbacks = [...timers.values()]; timers.clear();
-    callbacks.forEach((callback) => callback());
-    await settle();
+    for (let cycle = 0; cycle < 8 && timers.size; cycle += 1) {
+      const callbacks = [...timers.values()]; timers.clear();
+      callbacks.forEach((callback) => callback());
+      await settle();
+    }
   };
   const { initSiteAnalytics, trackSiteEvent } = await import('../src/lib/site-analytics.ts');
   let enabled = 0;
