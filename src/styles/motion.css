@@ -1,0 +1,68 @@
+:root {
+  --motion-fast: 160ms;
+  --motion-ui: 240ms;
+  --motion-reveal: 560ms;
+  --motion-image: 480ms;
+  --motion-transition: 320ms;
+  --motion-ease-out: cubic-bezier(.22, 1, .36, 1);
+  --motion-ease-ui: cubic-bezier(.2, 0, 0, 1);
+  --motion-anchor-offset: 116px;
+}
+html { scroll-padding-top: var(--motion-anchor-offset); }
+/* Root scroll padding is the single anchor offset; do not add section margins twice. */
+body [id] { scroll-margin-top: 0; }
+.motion-title-mask { clip-path: inset(-.2em -.1em); }
+.motion-title-text { display: block; }
+.motion-pending { opacity: 0; transform: translateY(20px); }
+.hero .hero__image { transform: none; transition: opacity 650ms var(--motion-ease-ui); }
+.hero .hero__image.is-active { transform: none; }
+.portfolio-justified__button:focus-visible img { transform: none; filter: none; }
+.portfolio-justified__button img { transition: transform var(--motion-image) var(--motion-ease-out); }
+@media (hover: hover) and (pointer: fine) { .portfolio-justified__button:hover img { filter: none; } }
+.hero__toggle {
+  position: absolute; z-index: 2; right: max(16px, env(safe-area-inset-right)); bottom: 168px;
+  min-width: 88px; min-height: 44px; padding: 8px 14px;
+  border: 1px solid rgb(255 255 255 / .65); border-radius: var(--radius-pill);
+  background: rgb(6 16 22 / .58); color: #fff; font: inherit; font-size: .85rem; cursor: pointer;
+}
+.hero__toggle[hidden] { display: none; }
+.hero__toggle:disabled { cursor: default; }
+.hero__toggle:focus-visible, .portfolio-card__link:focus-visible { outline: 3px solid var(--color-focus, #f4b542); outline-offset: 4px; }
+.desktop-nav a { position: relative; }
+.desktop-nav a::after {
+  position: absolute; inset: auto 0 -5px; height: 2px; content: ''; background: currentColor;
+  transform: scaleX(0); transform-origin: left; transition: transform var(--motion-fast) var(--motion-ease-ui);
+}
+.desktop-nav a[aria-current="page"]::after, .desktop-nav a:focus-visible::after { transform: scaleX(1); }
+.button { transition: background-color var(--motion-fast) var(--motion-ease-ui), color var(--motion-fast) var(--motion-ease-ui), transform var(--motion-fast) var(--motion-ease-ui); }
+.button:active { transform: scale(.98); transition-duration: 120ms; }
+.faq-item { transition: border-radius var(--motion-ui) var(--motion-ease-ui); }
+.faq-item summary::after { content: '+'; transition: transform var(--motion-ui) var(--motion-ease-ui); }
+.faq-item[open] summary::after { content: '+'; transform: rotate(45deg); }
+.contact-style, .contact-style__label { transition: border-color var(--motion-fast), background-color var(--motion-fast); }
+@keyframes motion-fade { from { opacity: .3; } to { opacity: 1; } }
+@keyframes motion-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  .portfolio-lightbox[data-gallery-motion][open]::backdrop { animation: motion-backdrop-in 200ms var(--motion-ease-ui); }
+  [data-contact-review]:not([hidden]), [data-contact-editor]:not([hidden]) { animation: motion-fade var(--motion-fast) var(--motion-ease-ui); }
+  @view-transition { navigation: auto; }
+  html[data-page-motion]::view-transition-group(root) { animation-duration: 180ms; }
+  html[data-page-motion]::view-transition-old(root), html[data-page-motion]::view-transition-new(root) { animation-duration: 180ms; }
+}
+html:not([data-page-motion])::view-transition-group(root), html:not([data-page-motion])::view-transition-old(root), html:not([data-page-motion])::view-transition-new(root) { animation: none; }
+html.motion-dialog-open { overflow: hidden; scrollbar-gutter: stable; }
+html.motion-dialog-open body { overflow: hidden; }
+.portfolio-lightbox__image { transform-origin: center; }
+.portfolio-lightbox__flight { position: fixed; z-index: 2; inset: 0; pointer-events: none; overflow: hidden; }
+.portfolio-lightbox__flight-image { position: fixed; object-fit: contain; transform-origin: top left; }
+@media (hover: hover) and (pointer: fine) { .desktop-nav a:hover::after { transform: scaleX(1); } }
+@media (max-width: 620px) { .motion-pending { transform: translateY(12px); } .hero__toggle { bottom: 150px; } }
+@media (prefers-reduced-motion: reduce) {
+  html, body .portfolio-strip, body .feedback-strip { scroll-behavior: auto; }
+  .motion-pending { opacity: 1; transform: none; }
+  .hero .hero__image, .button, .desktop-nav a::after, .faq-item, .faq-item summary::after, .contact-style, .contact-style__label { transition: none; }
+  .button:hover, .button:active { transform: none; }
+  .portfolio-justified__button img { transition: none; }
+  .portfolio-lightbox::backdrop { animation: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none; }
+}

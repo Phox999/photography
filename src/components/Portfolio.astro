@@ -90,10 +90,17 @@ const countFor = (category: string) =>
   /* Published cards are rebuilt in client JavaScript, so their selectors must remain global. */
   .portfolio-section :global(.portfolio-card__link) { position: relative; display: block; overflow: hidden; border-radius: var(--portfolio-card-radius); }
   .portfolio-section :global(.portfolio-card__media) { overflow: hidden; aspect-ratio: 1; border-radius: var(--portfolio-card-radius); background: var(--color-surface-soft); }
-  :global(.portfolio-card img) { display: block; width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 240ms ease; }
-  :global(.portfolio-card__link:hover img), :global(.portfolio-card__link:focus-visible img) { transform: scale(1.025); }
-  :global(.portfolio-card__caption) { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 18px; color: #fff; background: rgb(0 0 0 / .58); text-align: center; opacity: 0; transition: opacity 180ms ease; }
-  :global(.portfolio-card:hover .portfolio-card__caption), :global(.portfolio-card:focus-within .portfolio-card__caption) { opacity: 1; }
+  :global(.portfolio-card img) { display: block; width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; transition: transform var(--motion-image) var(--motion-ease-out); }
+  :global(.portfolio-card__caption) { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 18px; color: #fff; background: rgb(0 0 0 / .58); text-align: center; opacity: 0; transition: opacity 200ms var(--motion-ease-ui); }
+  :global(.portfolio-card:focus-within .portfolio-card__caption) { opacity: 1; }
+  :global(.portfolio-card:focus-within img) { transform: none; }
+  :global(.portfolio-card__caption h3), :global(.portfolio-card__caption p) { transform: translateY(6px); transition: transform 200ms var(--motion-ease-ui); }
+  :global(.portfolio-card:focus-within .portfolio-card__caption h3), :global(.portfolio-card:focus-within .portfolio-card__caption p) { transform: none; }
+  @media (hover: hover) and (pointer: fine) {
+    :global(.portfolio-card__link:hover img) { transform: scale(1.04); }
+    :global(.portfolio-card:hover .portfolio-card__caption) { opacity: 1; transition-duration: var(--motion-ui); }
+    :global(.portfolio-card:hover .portfolio-card__caption h3), :global(.portfolio-card:hover .portfolio-card__caption p) { transform: none; transition-duration: var(--motion-ui); }
+  }
   :global(.portfolio-card__caption h3) { position: static; display: block; width: auto; max-width: 100%; margin: 0; padding: 0; border-radius: 0; background: none; color: #fff; font-family: var(--font-heading); font-size: 20px; line-height: 1.5; }
   :global(.portfolio-card__caption p) { display: flex; gap: 12px; margin: 4px 0 0; color: #fff; font-size: 16px; }
   .portfolio-result { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -117,11 +124,12 @@ const countFor = (category: string) =>
   @media (hover: none), (pointer: coarse) {
     :global(.portfolio-card__caption) { justify-content: flex-end; padding: 40px 20px 20px; background: linear-gradient(transparent 30%, rgb(0 0 0 / .68)); opacity: 1; }
     :global(.portfolio-card__caption h3) { font-size: 18px; }
+    :global(.portfolio-card__caption h3), :global(.portfolio-card__caption p) { transform: none; }
     :global(.portfolio-card__caption p) { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .portfolio-strip { scroll-behavior: auto; }
-    :global(.portfolio-card img), :global(.portfolio-card__caption) { transition: none; }
+    :global(.portfolio-card img), :global(.portfolio-card__caption), :global(.portfolio-card__caption h3), :global(.portfolio-card__caption p) { transition: none; transform: none; }
     :global(.portfolio-card__link:hover img) { transform: none; }
   }
 </style>
@@ -131,6 +139,7 @@ const countFor = (category: string) =>
   import { setPortfolioImageSource } from '../lib/image-variants';
   import { parsePortfolioRouteMap } from '../lib/portfolio-routes';
   import { orderFeaturedPortfolio } from '../lib/featured-portfolio.js';
+  import { animatePortfolioFilter, refreshMotion } from '../scripts/site-motion.js';
 
   const portfolioSection = document.querySelector<HTMLElement>('[data-portfolio-filter]');
 
@@ -158,7 +167,7 @@ const countFor = (category: string) =>
       const target = direction === 1
         ? positions.find((left) => left > currentLeft + 6)
         : positions.reverse().find((left) => left < currentLeft - 6);
-      if (target !== undefined) strip.scrollTo({ left: target, behavior: 'smooth' });
+      if (target !== undefined) strip.scrollTo({ left: target, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
     };
     let activeFilter = '全部';
     const applyFilter = (filter: string) => {
@@ -177,6 +186,7 @@ const countFor = (category: string) =>
       if (empty) empty.hidden = visibleCount > 0;
       if (result) result.textContent = `${activeFilter} · 精選 ${visibleCount} 組作品`;
       updateControls();
+      if (strip) animatePortfolioFilter(strip);
     };
 
     buttons.forEach((button) => button.addEventListener('click', () => applyFilter(button.dataset.filter || '全部')));
@@ -221,6 +231,7 @@ const countFor = (category: string) =>
         return article;
       }));
       cards = Array.from(portfolioSection.querySelectorAll<HTMLElement>('[data-portfolio-card]'));
+      refreshMotion(strip);
       buttons.forEach((button) => {
         const category = button.dataset.filter || '全部';
         const count = published.filter((item) => category === '全部' || item.category === category).length;
