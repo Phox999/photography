@@ -20,7 +20,7 @@ const countFor = (category: string) =>
 <section class="section portfolio-section container" id="portfolio" aria-labelledby="portfolio-title" data-portfolio-filter data-static-route-map={serializePortfolioRouteMap(portfolioCatalog)}>
   <div class="section-heading section-heading--row">
     <div>
-      <p class="eyebrow">PORTFOLIO</p>
+      <p class="eyebrow">{editorial ? '04 / PORTFOLIO' : 'PORTFOLIO'}</p>
       <h2 id="portfolio-title">{editorial ? '精選作品' : '作品集'}</h2>
     </div>
 
