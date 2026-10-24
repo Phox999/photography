@@ -11,15 +11,11 @@ const series = await Promise.all(selectHomepageSeries(portfolioCatalog).map(asyn
 }));
 ---
 <section id="featured-series" class="featured-series" aria-labelledby="series-title" data-featured-series data-series-routes={serializePortfolioRouteMap(portfolioCatalog)}>
-  <header class="featured-series__heading">
-    <p class="eyebrow">03 / FEATURED SERIES</p>
-    <h2 id="series-title">每一種你，都有自己的故事。</h2>
-  </header>
   {series.map((item, seriesIndex) => <article class="series-row" data-series-card data-series-slug={item.slug} aria-labelledby={`series-name-${seriesIndex}`}>
     <div class="series-images" data-series-images>
       {item.photos.map((src, index) => <img src={src} srcset={getImageSrcset(src)} sizes={index === 0 ? '70vw' : '23vw'} alt={`${item.title}・影像 ${index + 1}`} loading="lazy" decoding="async" width={item.dimensions[index]?.width} height={item.dimensions[index]?.height} />)}
     </div>
-    <div class="series-label editorial-label"><span>03 / 0{seriesIndex + 1}</span><p>FEATURED<br />SERIES</p></div>
+    <div class="series-label editorial-label"><span>03 / 0{seriesIndex + 1}</span>{seriesIndex === 0 && <h2 id="series-title">特色系列</h2>}<p>FEATURED<br />SERIES</p></div>
     <div class="series-info"><span>SELECTED SERIES / 0{seriesIndex + 1}</span><h3 id={`series-name-${seriesIndex}`} data-series-title>{item.title}</h3><a href={item.href} data-series-link>查看系列 <span aria-hidden="true">↗</span></a></div>
   </article>)}
 </section>

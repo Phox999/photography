@@ -1,24 +1,5 @@
 ---
-import { portfolioCatalog } from '../data/portfolioCatalog';
-import { orderFeaturedPortfolio } from '../lib/featured-portfolio.js';
-import { getImageSrcset } from '../lib/image-variants';
-import { getPublicImageDimensions } from '../lib/image-dimensions';
-
-interface Props { editorial?: boolean; }
-const { editorial = false } = Astro.props;
-const featuredPhotos = editorial ? await Promise.all(orderFeaturedPortfolio(portfolioCatalog).slice(0, 2).map(async (item) => ({
-  ...item,
-  dimensions: await getPublicImageDimensions(item.cover),
-}))) : [];
-const editorialSteps = [
-  { title: '討論概念', text: '一起整理主題、服裝與場景。' },
-  { title: '安心拍攝', text: '配合你的節奏，提供自然的引導。' },
-  { title: '完成作品', text: '依討論的風格，完成影像整理。' },
-];
-const steps = editorial ? editorialSteps.map((step, index) => ({
-  ...step,
-  icon: ['/assets/icons/process/process-03.webp', '/assets/icons/process/process-04.webp', '/assets/icons/process/process-05.webp'][index],
-})) : [
+const steps = [
   {
     icon: '/assets/icons/process/process-03.webp',
     title: '討論方向',
@@ -36,30 +17,25 @@ const steps = editorial ? editorialSteps.map((step, index) => ({
   },
 ];
 ---
-<section class:list={['workflow', 'mini-section', editorial && 'workflow--editorial']} id="process" aria-labelledby="process-title">
-  {editorial && <div class="workflow__gallery" aria-label="拍攝過程作品參考">
-    {featuredPhotos.map((item, index) => <img src={item.cover} srcset={getImageSrcset(item.cover)} sizes={index === 0 ? '(max-width: 720px) 62vw, 33vw' : '(max-width: 720px) 30vw, 18vw'} alt={`${item.title}拍攝作品參考`} width={item.dimensions?.width} height={item.dimensions?.height} loading="lazy" decoding="async" />)}
-  </div>}
-  <div class="workflow__content">
-    <header class="section-heading workflow__heading">
-      <p class="eyebrow">{editorial ? '06 / PROCESS' : 'THE PROCESS'}</p>
-      <h2 id="process-title">{editorial ? '從想法，到作品。' : '三步，完成一組作品。'}</h2>
-    </header>
+<section class="workflow mini-section" id="process" aria-labelledby="process-title">
+  <header class="section-heading workflow__heading">
+    <p class="eyebrow">THE PROCESS</p>
+    <h2 id="process-title">三步，完成一組作品。</h2>
+  </header>
 
-    <ol class="workflow__steps">
-      {steps.map((step, index) => (
-        <li>
-          <span class="workflow__icon" aria-hidden="true">
-            <img src={step.icon} alt="" width="40" height="40" loading="lazy" />
-          </span>
-          <div class="workflow__body">
-            <h3><span class="workflow__number" aria-hidden="true">0{index + 1}</span>{step.title}</h3>
-            <p>{step.text}</p>
-          </div>
-        </li>
-      ))}
-    </ol>
-  </div>
+  <ol class="workflow__steps">
+    {steps.map((step, index) => (
+      <li>
+        <span class="workflow__icon" aria-hidden="true">
+          <img src={step.icon} alt="" width="40" height="40" loading="lazy" />
+        </span>
+        <div class="workflow__body">
+          <h3><span class="workflow__number" aria-hidden="true">0{index + 1}</span>{step.title}</h3>
+          <p>{step.text}</p>
+        </div>
+      </li>
+    ))}
+  </ol>
 </section>
 
 <style>

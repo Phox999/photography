@@ -1,45 +1,12 @@
 ---
-import { portfolioCatalog } from '../data/portfolioCatalog';
-import { orderFeaturedPortfolio } from '../lib/featured-portfolio.js';
-import { getImageSrcset } from '../lib/image-variants';
-import { getPublicImageDimensions } from '../lib/image-dimensions';
-
-const portrait = '/assets/portfolio/260201_棚拍 RE/_I7A0019.webp';
-const secondWork = orderFeaturedPortfolio(portfolioCatalog).find((item) => item.cover !== portrait);
-const secondImage = secondWork?.cover ?? portfolioCatalog[0]?.cover ?? portrait;
-const [portraitDimensions, secondDimensions] = await Promise.all([
-  getPublicImageDimensions(portrait),
-  getPublicImageDimensions(secondImage),
-]);
+import { visualDirection as direction } from '../data/visualDirections';
 ---
 <section id="directions" class="visual-directions editorial-section" aria-labelledby="directions-title">
-  <div class="direction-grid" aria-label="精選拍攝風格">
-    <img
-      class="direction-grid__main"
-      src={portrait}
-      srcset={getImageSrcset(portrait)}
-      sizes="(max-width: 720px) 100vw, 35vw"
-      alt="耳機主題棚拍作品，呈現自在且有個性的風格"
-      width={portraitDimensions?.width}
-      height={portraitDimensions?.height}
-      loading="lazy"
-      decoding="async"
-    />
-    <img
-      class="direction-grid__detail"
-      src={secondImage}
-      srcset={getImageSrcset(secondImage)}
-      sizes="(max-width: 720px) 42vw, 16vw"
-      alt={secondWork ? `${secondWork.title}人像作品` : '人像攝影作品'}
-      width={secondDimensions?.width}
-      height={secondDimensions?.height}
-      loading="lazy"
-      decoding="async"
-    />
+  <header class="editorial-label"><span>04</span><h2 id="directions-title">創作方向</h2><p>VISUAL<br />DIRECTIONS</p></header>
+  <div>
+    <div class="direction-grid">
+      {[0, 1, 2].map((index) => direction.images[index] ? <img src={direction.images[index].src} alt={direction.images[index].alt} width={direction.images[index].width} height={direction.images[index].height} style={{ objectPosition: direction.images[index].position }} loading="lazy" decoding="async" /> : <div class="direction-placeholder"><span>CONCEPT / 0{index + 1}</span><p>獨立概念影像待補</p><small>版面預覽・非攝影作品</small></div>)}
+    </div>
+    <div class="direction-caption"><div><h3>{direction.title}</h3><p>{direction.description}</p></div><small>{direction.nature}</small></div>
   </div>
-  <header class="direction-copy">
-    <p class="eyebrow">05 / VISUAL DIRECTION</p>
-    <h2 id="directions-title">找到屬於你的<br />風格。</h2>
-    <p>自然、個性，或一個從沒試過的自己。</p>
-  </header>
 </section>

@@ -2,12 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
-import HomeStory from '../components/HomeStory.astro';
 import Portfolio from '../components/Portfolio.astro';
 import FeaturedSeries from '../components/FeaturedSeries.astro';
 import VisualDirections from '../components/VisualDirections.astro';
-import Process from '../components/Process.astro';
-import HomeClosing from '../components/HomeClosing.astro';
+import Dates from '../components/Dates.astro';
 import Contact from '../components/Contact.astro';
 import '../styles/home-refresh.css';
 import '../styles/home-editorial.css';
@@ -22,7 +20,7 @@ const homepageStructuredData = [
     name: 'Phox999 photography',
     url: 'https://phox999.com/',
     description: pageDescription,
-    image: 'https://phox999.com/assets/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/_I7A0019.webp',
+    image: 'https://phox999.com/assets/hero.webp',
     serviceType: ['人像攝影', '互惠攝影', '戶外人像', '棚拍', '主題攝影'],
     areaServed: [
       { '@type': 'City', name: '台北市' },
@@ -37,19 +35,17 @@ const homepageStructuredData = [
 <BaseLayout
   title="台北人像攝影・互惠外拍｜Phox999 photography"
   description={pageDescription}
-  ogImage="/assets/portfolio/260201_%E6%A3%9A%E6%8B%8D%20RE/_I7A0019.webp"
+  ogImage="/assets/hero.webp"
   structuredData={homepageStructuredData}
   editorialHome
 >
   <Header home editorial />
   <main class="editorial-home">
     <Hero editorial />
-    <HomeStory />
-    <FeaturedSeries />
     <Portfolio editorial />
-    <VisualDirections editorial />
-    <Process editorial />
-    <HomeClosing />
+    <FeaturedSeries />
+    <VisualDirections />
+    <Dates editorial />
     <Contact editorial />
   </main>
   <footer class="editorial-footer">
@@ -57,7 +53,6 @@ const homepageStructuredData = [
     <nav aria-label="其他資訊">
       <a href="/portfolio/">全部作品</a>
       <a href="/cooperation/">合作方式</a>
-      <a href="/cooperation/#availability">開放檔期</a>
       <a href={siteConfig.aboutUrl}>關於我</a>
       <a href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer">Instagram</a>
       <a href={siteConfig.mailtoUrl}>Email</a>
