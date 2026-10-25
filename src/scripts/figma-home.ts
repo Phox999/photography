@@ -1,5 +1,5 @@
 import { createHeroShutter } from '../lib/hero-shutter';
-import { createHeroTypewriter } from '../lib/hero-typewriter';
+import { createHeroTypewriter, createTypewriter } from '../lib/hero-typewriter';
 
 // Start the focus reveal only after the photograph is decoded, including cold loads.
 const hero = document.querySelector<HTMLElement>('[data-hero-focus]');
@@ -82,6 +82,26 @@ if (hero && heroImage) {
       if (hero.dataset.heroFocus === 'waiting') hero.dataset.heroFocus = 'playing';
     });
   }).catch(finishFocus);
+}
+
+// Reveal the quotation once its text enters the viewport, using the Hero cadence.
+const quote = document.querySelector<HTMLElement>('[data-quote-copy]');
+if (quote) {
+  const typewriter = createTypewriter(quote, reducedMotion, { letterSelector: '[data-quote-letter]', stateAttribute: 'data-quote-copy' });
+  typewriter.reset();
+  if (reducedMotion.matches || !('IntersectionObserver' in window)) typewriter.finish();
+  else {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        typewriter.start();
+        observer.disconnect();
+      }
+    }, { threshold: .35, rootMargin: '0px 0px -10% 0px' });
+    observer.observe(quote);
+    reducedMotion.addEventListener('change', () => {
+      if (reducedMotion.matches) { typewriter.finish(); observer.disconnect(); }
+    });
+  }
 }
 
 // Touch screens and reduced motion retain native, keyboard-accessible scrolling.

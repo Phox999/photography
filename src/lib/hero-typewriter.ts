@@ -1,10 +1,10 @@
-// Keep the full heading in the DOM so typing never moves the surrounding layout.
-export function createHeroTypewriter(hero: HTMLElement, reducedMotion: MediaQueryList) {
-  const letters = [...hero.querySelectorAll<HTMLElement>('[data-hero-letter]')];
+// Keep the full copy in the DOM so typing never moves the surrounding layout.
+export function createTypewriter(root: HTMLElement, reducedMotion: MediaQueryList, options: { letterSelector: string; stateAttribute: string }) {
+  const letters = [...root.querySelectorAll<HTMLElement>(options.letterSelector)];
   let timer: number | undefined;
   const finish = () => {
     window.clearTimeout(timer);
-    hero.dataset.heroCopy = 'complete';
+    root.setAttribute(options.stateAttribute, 'complete');
     letters.forEach((letter) => letter.removeAttribute('data-current'));
   };
   return {
@@ -15,13 +15,13 @@ export function createHeroTypewriter(hero: HTMLElement, reducedMotion: MediaQuer
         letter.removeAttribute('data-revealed');
         letter.removeAttribute('data-current');
       });
-      hero.dataset.heroCopy = 'waiting';
+      root.setAttribute(options.stateAttribute, 'waiting');
       if (reducedMotion.matches) finish();
     },
     start() {
       if (reducedMotion.matches || !letters.length) { finish(); return; }
-      if (hero.dataset.heroCopy !== 'waiting') return;
-      hero.dataset.heroCopy = 'typing';
+      if (root.getAttribute(options.stateAttribute) !== 'waiting') return;
+      root.setAttribute(options.stateAttribute, 'typing');
       let index = 0;
       const typeNext = () => {
         letters[index - 1]?.removeAttribute('data-current');
@@ -35,4 +35,8 @@ export function createHeroTypewriter(hero: HTMLElement, reducedMotion: MediaQuer
       typeNext();
     },
   };
+}
+
+export function createHeroTypewriter(hero: HTMLElement, reducedMotion: MediaQueryList) {
+  return createTypewriter(hero, reducedMotion, { letterSelector: '[data-hero-letter]', stateAttribute: 'data-hero-copy' });
 }

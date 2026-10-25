@@ -63,15 +63,15 @@ body.editorial-shell {
 .camera-eyebrow, .camera-byline { margin: 0; font: 500 clamp(10px, .635vw, 13px)/1.385 var(--font-body); letter-spacing: .096em; }
 .camera-scroll { font-size: clamp(10px, .68vw, 14px); letter-spacing: .12em; }
 .camera-hero h1 { margin: 0; font: 400 clamp(19px, 1.514vw, 31px)/1.55 var(--font-body); letter-spacing: .031em; }
-.camera-type-line { display: block; white-space: nowrap; }
-.camera-type-letter { position: relative; display: inline-block; }
+.camera-type-line, .story-quote__line { display: block; white-space: nowrap; }
+.camera-type-letter, .story-quote__letter { position: relative; display: inline-block; }
 .camera-hero:is([data-hero-copy='waiting'], [data-hero-copy='typing']) .camera-type-letter { opacity: 0; }
 .camera-hero[data-hero-copy='typing'] .camera-type-letter[data-revealed] { opacity: 1; }
-.camera-type-letter[data-current]::after { content: ''; position: absolute; left: 100%; top: .32em; width: var(--hero-caret-width); height: 1.05em; background: currentColor; opacity: .8; pointer-events: none; animation: hero-caret-blink .7s steps(1, end) infinite; }
+:is(.camera-type-letter, .story-quote__letter)[data-current]::after { content: ''; position: absolute; left: 100%; top: .32em; width: var(--hero-caret-width); height: 1.05em; background: currentColor; opacity: .8; pointer-events: none; animation: hero-caret-blink .7s steps(1, end) infinite; }
 @keyframes hero-caret-blink { 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .camera-hero[data-hero-copy] .camera-type-letter { opacity: 1; }
-  .camera-type-letter[data-current]::after { display: none; }
+  :is(.camera-type-letter, .story-quote__letter)[data-current]::after { display: none; }
 }
 .camera-hero__controls { position: absolute; right: 4%; bottom: 5.1%; display: flex; align-items: center; gap: 0; }
 .camera-scroll { display: flex; align-items: center; gap: 12px; }
@@ -112,7 +112,6 @@ body.editorial-shell :is(#hero, #featured-series, #portfolio, #contact, #dates) 
 .story-label a { display: inline-block; font-size: clamp(10px, .684vw, 14px); }
 .story-photo { display: block; flex: 0 0 auto; height: var(--photo-height); aspect-ratio: 2731 / 4096; overflow: hidden; }
 .story-photo--wide { aspect-ratio: 4096 / 2731; }
-.story-photo--spacer { background: var(--color-text); }
 .story-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
 .story-photo:hover img { transform: scale(1.018); }
 .horizontal-story--right .story-label { margin-left: 2.7vw; padding: 0; }
@@ -134,6 +133,12 @@ body.editorial-shell :is(#hero, #featured-series, #portfolio, #contact, #dates) 
 .works-more:is(:hover, :focus-visible) .ui-icon { transform: translateX(3px); }
 .story-quote { position: relative; display: grid; place-items: center; min-height: 44.14vw; }
 .story-quote p { position: relative; font: 600 clamp(36px, 5.86vw, 120px)/1.5 var(--font-heading); text-align: center; }
+.story-quote [data-quote-copy='waiting'] .story-quote__letter,
+.story-quote [data-quote-copy='typing'] .story-quote__letter { opacity: 0; }
+.story-quote [data-quote-copy='typing'] .story-quote__letter[data-revealed] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .story-quote [data-quote-copy] .story-quote__letter { opacity: 1; }
+}
 .story-quote img { position: absolute; width: 14.65vw; height: 11.72vw; }
 .story-quote__open { left: 22.95%; top: 18%; }
 .story-quote__close { right: 22.95%; bottom: 17%; }

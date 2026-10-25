@@ -15,6 +15,7 @@ const series = [
 ];
 const workRoutes = [series[1].href, series[0].href, findRoute(['古亭河濱']), series[0].href, findRoute(['照片分享']), series[0].href, '/portfolio/', '/portfolio/'];
 const heroCopy = ['以自己的視角，', '留下每一次相遇。'];
+const quoteCopy = ['每一種你，', '都有自己的故事。'];
 ---
 <main class="figma-home">
   <section class="camera-hero" id="hero" aria-labelledby="hero-heading" data-hero-focus="waiting" data-hero-copy="waiting">
@@ -37,7 +38,6 @@ const heroCopy = ['以自己的視角，', '留下每一次相遇。'];
     {series.map((item) => <section class:list={['horizontal-story', `horizontal-story--${item.direction}`]} data-horizontal={item.direction} aria-labelledby={`series-${item.number}`}>
       <div class="horizontal-story__viewport" tabindex="0" aria-label={`精選系列 ${item.number}，可左右滑動瀏覽`}><div class="horizontal-story__track">
         {item.direction === 'left' && <header class="story-label"><p>SELECTED SERIES / {item.number}</p><h2 id={`series-${item.number}`}>{item.title}</h2><a href={item.href}>查看系列 <Icon name="arrow-up-right" /></a></header>}
-        {item.direction === 'right' && <span class="story-photo story-photo--spacer" aria-hidden="true"></span>}
         {item.images.map((image) => <a class:list={['story-photo', image.endsWith('main') && 'story-photo--wide']} href={item.href}><img src={asset(image)} width={image.endsWith('main') ? 1206 : 536} height="804" alt={`${item.title}・${image.includes('main') ? '系列主視覺' : '系列影像'}`} loading="lazy" decoding="async" /></a>)}
         {item.direction === 'right' && <header class="story-label"><p>SELECTED SERIES / {item.number}</p><h2 id={`series-${item.number}`}>{item.title}</h2><a href={item.href}>查看系列 <Icon name="arrow-up-right" /></a></header>}
       </div></div>
@@ -53,7 +53,7 @@ const heroCopy = ['以自己的視角，', '留下每一次相遇。'];
       </a>
     </div></div>
   </section>
-  <section class="story-quote" aria-label="每一種你，都有自己的故事。"><img class="story-quote__open" src="/assets/home-figma/quote-open.svg" alt="" aria-hidden="true" /><p>每一種你，<br />都有自己的故事。</p><img class="story-quote__close" src="/assets/home-figma/quote-close.svg" alt="" aria-hidden="true" /></section>
+  <section class="story-quote"><img class="story-quote__open" src="/assets/home-figma/quote-open.svg" alt="" aria-hidden="true" /><p data-quote-copy="complete" aria-label={quoteCopy.join('')}>{quoteCopy.map((line) => <span class="story-quote__line" aria-hidden="true">{Array.from(line).map((letter) => <span class="story-quote__letter" data-quote-letter>{letter}</span>)}</span>)}</p><img class="story-quote__close" src="/assets/home-figma/quote-close.svg" alt="" aria-hidden="true" /></section>
   <Contact figmaHome><Dates slot="calendar" id="dates" integrated /></Contact>
 </main>
 <noscript><style is:inline>
