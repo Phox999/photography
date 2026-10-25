@@ -10,12 +10,14 @@ if (hero && heroImage) {
   const soundStatus = document.querySelector<HTMLElement>('[data-hero-sound-status]');
   const typewriter = createHeroTypewriter(hero, reducedMotion);
   typewriter.reset();
-  const shutter = createHeroShutter();
+  const shutter = createHeroShutter(hero.dataset.heroAudio!);
   let soundEnabled = true;
   let audioUnlocked = false;
   let shutterPlayed = false;
+  let soundDeadline = performance.now() + 400;
   const playShutter = () => {
-    if (soundEnabled && !shutterPlayed && document.visibilityState === 'visible') shutterPlayed = shutter.play();
+    // Never play a stale opening sound after a late gesture or slow decoder.
+    if (soundEnabled && !shutterPlayed && performance.now() <= soundDeadline && document.visibilityState === 'visible') shutterPlayed = shutter.play();
   };
   const updateSoundButton = () => {
     soundButton?.setAttribute('aria-pressed', String(soundEnabled));
@@ -40,6 +42,7 @@ if (hero && heroImage) {
   const replayFocus = () => {
     typewriter.reset();
     shutterPlayed = false;
+    soundDeadline = performance.now() + 400;
     if (reducedMotion.matches) { finishFocus(); return; }
     hero.dataset.heroFocus = 'waiting';
     requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -55,7 +58,7 @@ if (hero && heroImage) {
   if (soundButton && 'AudioContext' in window) {
     soundButton.hidden = false;
     updateSoundButton();
-    // Try autoplay first; if blocked, the first interaction unlocks the same recording.
+    // Try autoplay first; late interactions only unlock audio for an explicit replay.
     void enableSound().catch(() => {
       if (soundStatus) soundStatus.textContent = '音效目前無法播放，可點喇叭重新啟用。';
     });

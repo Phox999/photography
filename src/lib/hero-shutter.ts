@@ -1,5 +1,5 @@
 // Decode the supplied recording once; playback may need a user gesture to unlock.
-export function createHeroShutter() {
+export function createHeroShutter(recording: string) {
   let context: AudioContext | undefined;
   let buffer: AudioBuffer | undefined;
   let loading: Promise<void> | undefined;
@@ -7,12 +7,14 @@ export function createHeroShutter() {
   let activeSource: AudioBufferSourceNode | undefined;
   return {
     async enable() {
-      context ??= new AudioContext();
-      // Do not await resume: browsers may leave it pending until a user gesture.
-      const waitForUnlock = navigator.userActivation?.isActive;
-      const resuming = context.resume().catch(() => {});
+      context ??= new AudioContext({ latencyHint: 'interactive' });
+      // Give the audio device time to start without hanging on blocked autoplay.
+      const resuming = Promise.race([
+        context.resume().catch(() => {}),
+        new Promise<void>((resolve) => window.setTimeout(resolve, 150)),
+      ]);
       loading ??= (async () => {
-        const response = await fetch('/assets/audio/kave_msri-camera-shutter-314056.mp3');
+        const response = await fetch(recording);
         if (!response.ok) throw new Error('Shutter recording unavailable');
         buffer = await context!.decodeAudioData(await response.arrayBuffer());
         output = context!.createGain();
@@ -20,7 +22,7 @@ export function createHeroShutter() {
         output.connect(context!.destination);
       })().catch((error) => { loading = undefined; throw error; });
       await loading;
-      if (waitForUnlock) await resuming;
+      await resuming;
       return context.state === 'running';
     },
     play() {

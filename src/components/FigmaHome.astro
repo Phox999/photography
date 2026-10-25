@@ -2,7 +2,11 @@
 import Icon from './Icon.astro';
 import Contact from './Contact.astro';
 import Dates from './Dates.astro';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { portfolioCatalog } from '../data/portfolioCatalog';
+// The 21 KB supplied recording travels with the page, avoiding a second request.
+const shutterAudio = `data:audio/mpeg;base64,${readFileSync(path.join(process.cwd(), 'public/assets/audio/kave_msri-camera-shutter-314056.mp3')).toString('base64')}`;
 const asset = (name: string) => `/assets/home-figma/${name}.webp`;
 const titles = ['放課後', '晴空之下', '晴日同行', '海風來信', '靜白日常', '海岸片刻', '光影之間', '綠蔭午後'];
 const findRoute = (terms: string[]) => {
@@ -18,7 +22,7 @@ const heroCopy = ['以自己的視角，', '留下每一次相遇。'];
 const quoteCopy = ['每一種你，', '都有自己的故事。'];
 ---
 <main class="figma-home">
-  <section class="camera-hero" id="hero" aria-labelledby="hero-heading" data-hero-focus="waiting" data-hero-copy="waiting">
+  <section class="camera-hero" id="hero" aria-labelledby="hero-heading" data-hero-focus="waiting" data-hero-copy="waiting" data-hero-audio={shutterAudio}>
     <div class="camera-media">
       <img class="camera-hero__image" src={asset('hero')} width="2048" height="1364" alt="海邊，女孩回身迎向陽光" fetchpriority="high" />
     </div>
