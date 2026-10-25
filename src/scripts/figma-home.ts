@@ -15,22 +15,25 @@ if (hero && heroImage) {
   let audioUnlocked = false;
   let shutterPlayed = false;
   let soundDeadline = performance.now() + 400;
-  const playShutter = () => {
+  const playShutter = (userInitiated = false) => {
     // Never play a stale opening sound after a late gesture or slow decoder.
-    if (soundEnabled && !shutterPlayed && performance.now() <= soundDeadline && document.visibilityState === 'visible') shutterPlayed = shutter.play();
+    if (soundEnabled && !shutterPlayed && (userInitiated || performance.now() <= soundDeadline) && document.visibilityState === 'visible') shutterPlayed = shutter.play();
   };
   const updateSoundButton = () => {
-    soundButton?.setAttribute('aria-pressed', String(soundEnabled));
-    const label = soundEnabled ? '關閉快門音效' : '開啟快門音效並重播對焦';
+    const active = soundEnabled && audioUnlocked;
+    soundButton?.setAttribute('aria-pressed', String(active));
+    const label = active ? '關閉快門音效' : '開啟快門音效並重播對焦';
     soundButton?.setAttribute('aria-label', label);
     soundButton?.setAttribute('title', label);
-    soundButton?.querySelector('[data-sound-on]')?.toggleAttribute('hidden', !soundEnabled);
-    soundButton?.querySelector('[data-sound-off]')?.toggleAttribute('hidden', soundEnabled);
+    soundButton?.querySelector('[data-sound-on]')?.toggleAttribute('hidden', !active);
+    soundButton?.querySelector('[data-sound-off]')?.toggleAttribute('hidden', active);
   };
-  const enableSound = async () => {
-    const ready = await shutter.enable();
+  const enableSound = async (userInitiated = false) => {
+    const ready = await shutter.enable(userInitiated);
     audioUnlocked = ready && soundEnabled;
-    if (ready && soundEnabled) playShutter();
+    if (ready && soundEnabled) playShutter(userInitiated);
+    updateSoundButton();
+    return ready;
   };
   const unlockSound = (event: Event) => {
     if (!soundEnabled || audioUnlocked || (event.target instanceof Element && event.target.closest('[data-hero-sound]'))) return;
@@ -67,8 +70,12 @@ if (hero && heroImage) {
     soundButton.addEventListener('click', async () => {
       soundButton.disabled = true;
       try {
-        if (soundEnabled) { soundEnabled = false; audioUnlocked = false; shutter.mute(); }
-        else { soundEnabled = true; replayFocus(); await enableSound(); }
+        if (soundEnabled && audioUnlocked) { soundEnabled = false; audioUnlocked = false; shutter.mute(); }
+        else {
+          soundEnabled = true;
+          replayFocus();
+          if (!await enableSound(true)) throw new Error('Audio device did not start');
+        }
         if (soundStatus) soundStatus.textContent = soundEnabled ? '快門音效已開啟。' : '快門音效已關閉。';
       } catch {
         soundEnabled = false;

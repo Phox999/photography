@@ -6,17 +6,19 @@ export function createHeroShutter(recording: string) {
   let output: GainNode | undefined;
   let activeSource: AudioBufferSourceNode | undefined;
   return {
-    async enable() {
+    async enable(userInitiated = false) {
       context ??= new AudioContext({ latencyHint: 'interactive' });
       // Give the audio device time to start without hanging on blocked autoplay.
       const resuming = Promise.race([
         context.resume().catch(() => {}),
-        new Promise<void>((resolve) => window.setTimeout(resolve, 150)),
+        new Promise<void>((resolve) => window.setTimeout(resolve, userInitiated ? 1000 : 150)),
       ]);
       loading ??= (async () => {
-        const response = await fetch(recording);
-        if (!response.ok) throw new Error('Shutter recording unavailable');
-        buffer = await context!.decodeAudioData(await response.arrayBuffer());
+        // Decode the embedded bytes directly; production connect-src excludes data:.
+        const encoded = recording.split(',')[1];
+        if (!recording.startsWith('data:audio/mpeg;base64,') || !encoded) throw new Error('Shutter recording unavailable');
+        const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+        buffer = await context!.decodeAudioData(bytes.buffer);
         output = context!.createGain();
         output.gain.value = .96;
         output.connect(context!.destination);
