@@ -1062,11 +1062,11 @@ body.motion-lab :focus-visible {
 .dev-panel > summary::after {
   margin-inline-start: auto;
   color: var(--lab-accent);
-  content: "＋";
+  content: '';
 }
 
 .dev-panel[open] > summary::after {
-  content: "−";
+  content: '';
 }
 
 .dev-panel__light {
@@ -1195,7 +1195,7 @@ body.motion-lab :focus-visible {
   position: absolute;
   inset: 0.04rem;
   color: #ffffff;
-  content: "✓";
+  content: '';
   font-size: 0.67rem;
   font-weight: 800;
   line-height: 1;

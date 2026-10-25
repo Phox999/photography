@@ -1,0 +1,13 @@
+---
+import Icon from './Icon.astro';
+import { homepageNavigation } from '../data/site';
+---
+<header class="camera-header" data-home-header>
+  <nav class="camera-nav" aria-label="主要導覽">
+    <a href="#hero" class="camera-brand" aria-label="PHOX999，回到首頁頂部">PHOX999</a>
+    <div class="camera-nav__controls">
+      <div class="camera-links">{homepageNavigation.map((link) => <a href={link.href}>{link.label}</a>)}</div>
+      <details class="camera-mobile-menu"><summary>選單 <span aria-hidden="true"><Icon name="plus" /></span></summary><div>{homepageNavigation.map((link) => <a href={link.href}>{link.label}</a>)}</div></details>
+    </div>
+  </nav>
+</header>

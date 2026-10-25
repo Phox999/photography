@@ -8,9 +8,17 @@ export const siteConfig = {
   portfolioUrl: '/portfolio/',
   aboutUrl: '/about/',
   instagramUrl: 'https://www.instagram.com/phox999_/',
+  threadsUrl: 'https://www.threads.com/@phox999_',
   email: 'chuajinglun@ymail.com',
   mailtoUrl: 'mailto:chuajinglun@ymail.com',
 };
+
+export const homepageNavigation = [
+  { label: '全部作品', href: siteConfig.portfolioUrl },
+  { label: '合作方式', href: '/cooperation/' },
+  { label: '開放檔期', href: '/cooperation/#availability' },
+  { label: '關於我', href: siteConfig.aboutUrl },
+];
 
 export const defaultHeroContent = {
   title: '第一次互惠拍攝，\n也能安心開始。',

@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { getOpenShootProjects } from '../../shared/shoot-projects.js';
 
 const projects = getOpenShootProjects().slice(0, 2);
@@ -23,7 +24,7 @@ const statusLabel = '開放申請';
               <span class="shoot-project-card__status" data-shoot-project-status>{statusLabel}</span>
               <h3>{project.title}</h3>
               <p>{project.summary}</p>
-              <span class="shoot-project-card__more">看看這個企劃 →</span>
+              <span class="shoot-project-card__more">看看這個企劃 <Icon name="arrow-right" /></span>
             </div>
           </a>
         </article>

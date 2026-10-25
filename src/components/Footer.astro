@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { siteConfig } from '../data/site';
 ---
 
@@ -37,10 +38,10 @@ import { siteConfig } from '../data/site';
       <button type="button" class="footer-privacy" data-open-analytics-preferences hidden>隱私設定</button>
       <div class="footer-contact-links">
         <a href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1" class="footer-icon__dot"/></svg>
+          <Icon name="instagram" />
         </a>
         <a href={siteConfig.mailtoUrl} aria-label="Email" title="Email">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+          <Icon name="mail" />
         </a>
       </div>
     </div>

@@ -1,0 +1,13 @@
+.ui-icon { display: inline-block; width: var(--icon-size, 1.15em); height: var(--icon-size, 1.15em); flex: 0 0 auto; vertical-align: -.18em; pointer-events: none; }
+.ui-icon use { pointer-events: none; }
+.portfolio-lightbox__close, .portfolio-lightbox__nav, .cg-icon-button, .support-close { display: inline-grid; place-items: center; }
+:is(.portfolio-lightbox__close, .portfolio-lightbox__nav, .cg-icon-button, .support-close) .ui-icon { width: 24px; height: 24px; }
+.cg-pick[aria-pressed='true'] .ui-icon { fill: currentColor; }
+.contact-style__check { display: inline-grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--color-border); border-radius: 50%; color: transparent; vertical-align: middle; }
+.contact-style[aria-pressed='true'] .contact-style__check { background: var(--color-primary); color: #fff; }
+.contact-style__check .ui-icon { width: 72%; height: 72%; }
+.guideline-card .guideline-icon { width: 30px; height: 30px; color: var(--color-primary-dark); }
+.text-link::after, .explore-tools__links a::after { content: ''; display: inline-block; width: 1em; height: 1em; margin-left: .35em; vertical-align: -.15em; background: currentColor; mask: url('/assets/icons/lucide/arrow-right.svg') center / contain no-repeat; }
+.faq-item summary::after, .dev-panel > summary::after { content: ''; width: 1.1em; height: 1.1em; flex: 0 0 auto; background: currentColor; mask: url('/assets/icons/lucide/plus.svg') center / contain no-repeat; }
+.faq-item[open] summary::after, .dev-panel[open] > summary::after { content: ''; mask-image: url('/assets/icons/lucide/minus.svg'); }
+.fx-toggle input:checked + .fx-toggle__check::after { content: ''; background: currentColor; mask: url('/assets/icons/lucide/check.svg') center / contain no-repeat; }

@@ -1,9 +1,10 @@
 ---
+import Icon from './Icon.astro';
 import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
 ---
 
 <button class="utility-button support-launcher" type="button" data-support-launcher aria-haspopup="dialog" aria-controls="support-dialog" aria-expanded="false" hidden>
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11.5c0-4 3.6-7.2 8-7.2s8 3.2 8 7.2-3.6 7.2-8 7.2c-1 0-2-.2-2.9-.5L4 20l1.2-3.3A6.8 6.8 0 0 1 4 11.5Z"/><path d="M8 10.5h8M8 14h5"/></svg>
+  <Icon name="message-circle" />
   <span>有拍攝問題嗎？</span>
 </button>
 
@@ -11,7 +12,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
   <div class="support-panel">
     <header class="support-header">
       <h2 id="support-title">合作小幫手 <span>自動回覆</span></h2>
-      <button class="support-close" type="button" data-support-close aria-label="關閉合作小幫手" autofocus>×</button>
+      <button class="support-close" type="button" data-support-close aria-label="關閉合作小幫手" autofocus><Icon name="x" /></button>
     </header>
     <div class="support-body" data-support-scroll>
       <div class="support-quick" aria-label="常見拍攝問題">
@@ -24,7 +25,7 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
       <ol class="support-messages" data-support-messages role="log" aria-label="本頁問答" aria-live="polite" aria-relevant="additions"></ol>
     </div>
     <form class="support-form" data-support-form>
-      <div class="support-input-row"><input id="support-question" name="question" type="text" maxlength="240" aria-label="輸入拍攝問題" placeholder="例如：第一次拍攝要準備什麼？" autocomplete="off" enterkeyhint="send" required /><button type="submit" aria-label="送出問題"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="m27.66 14.21-22.12-11.06a2 2 0 0 0 -2.19.26 2 2 0 0 0 -.62 2.12l2.92 9.47h10.35a1 1 0 0 1 0 2h-10.35l-2.92 9.47a2 2 0 0 0 1.91 2.59 2 2 0 0 0 .9-.21l22.12-11.06a2 2 0 0 0 0-3.58z" /></svg></button></div>
+      <div class="support-input-row"><input id="support-question" name="question" type="text" maxlength="240" aria-label="輸入拍攝問題" placeholder="例如：第一次拍攝要準備什麼？" autocomplete="off" enterkeyhint="send" required /><button type="submit" aria-label="送出問題"><Icon name="send" /></button></div>
     </form>
   </div>
 </dialog>
@@ -62,12 +63,12 @@ import { supportQuickTopics, supportTopics } from '../data/supportKnowledge';
   .support-messages :global(.support-links--only) { margin-top: 0; }
   .support-messages :global(.support-links a) { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 44px; padding: 4px 0; border: 0; border-radius: 0; background: transparent; color: #287b9c; font: 700 .95rem/1.5 var(--font-body); text-decoration: none; text-align: left; overflow-wrap: anywhere; }
   .support-messages :global(.support-links a:hover) { background: transparent; color: #1e6684; text-decoration: underline; text-underline-offset: 4px; }
-  .support-messages :global(.support-link-icon) { display: inline-block; width: 15px; height: 15px; flex: 0 0 15px; background-color: currentColor; -webkit-mask: url('/assets/icons/external-link.svg') center / contain no-repeat; mask: url('/assets/icons/external-link.svg') center / contain no-repeat; }
+  .support-messages :global(.support-link-icon) { display: inline-block; width: 15px; height: 15px; flex: 0 0 15px; background-color: currentColor; -webkit-mask: url('/assets/icons/lucide/arrow-up-right.svg') center / contain no-repeat; mask: url('/assets/icons/lucide/arrow-up-right.svg') center / contain no-repeat; }
   .support-form { padding: 14px 20px 10px; border-top: 1px solid #e5eef2; flex: 0 0 auto; background: #fff; }
   .support-input-row { --support-control-height: 52px; display: flex; align-items: center; gap: 8px; }
   .support-input-row input { min-width: 0; width: 100%; height: var(--support-control-height); padding: 10px 12px; border: 1px solid #bcd5e0; border-radius: var(--radius-pill); background: #fff; color: #111; font: 400 1rem/1.5 var(--font-body); }
   .support-input-row button { display: grid; place-items: center; width: var(--support-control-height); height: var(--support-control-height); min-width: var(--support-control-height); flex: 0 0 var(--support-control-height); padding: 0; border: 0; border-radius: 50%; background: #63badf; cursor: pointer; }
-  .support-input-row button svg { display: block; width: 22px; height: 22px; fill: currentColor; color: #fff; }
+  .support-input-row button svg { display: block; width: 22px; height: 22px; fill: none; stroke: currentColor; color: #fff; }
   .support-input-row button:hover { background: var(--color-primary-dark); }
   .support-dialog :global(:focus-visible), .support-launcher:focus-visible { outline: 3px solid #287b9c; outline-offset: 3px; }
   .support-input-row input:focus-visible { outline: none; box-shadow: inset 0 0 0 3px #287b9c; }

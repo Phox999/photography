@@ -7,6 +7,7 @@ worker-dist/
 public/assets/portfolio-thumbnails/
 public/assets/motion-lab-v2/
 .motion-dist/
+.figma-preview-build/
 
 # Cloudflare local state
 .wrangler/

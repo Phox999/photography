@@ -1,6 +1,6 @@
 ---
+import Icon from './Icon.astro';
 import { siteConfig } from '../data/site';
-import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
 
 interface Props {
   id?: string;
@@ -13,7 +13,7 @@ const { id = 'plans', detailed = false, description } = Astro.props;
 const plans = [
   {
     key: 'standard',
-    icon: '/assets/icons/plan-standard.webp',
+    icon: 'camera' as const,
     title: '一般互惠',
     subtitle: '第一次合作，或想完成一組人像作品',
     bullets: ['約 2–3 小時', '1–2 套服裝，事前確認', '交付約 40–80 張照片'],
@@ -27,7 +27,7 @@ const plans = [
   },
   {
     key: 'themed',
-    icon: '/assets/icons/plan-theme.webp',
+    icon: 'sparkles' as const,
     title: '主題企劃',
     subtitle: '已有主題、服裝或場景方向',
     bullets: ['時間與場景共同規劃', '服裝與風格拍攝前確認', '交付數量依企劃內容討論'],
@@ -41,11 +41,6 @@ const plans = [
   },
 ];
 
-const iconDimensions = new Map<string, ImageDimensions>();
-await Promise.all(plans.map(async (plan) => {
-  const dimensions = await getPublicImageDimensions(plan.icon);
-  if (dimensions) iconDimensions.set(plan.icon, dimensions);
-}));
 ---
 
 <section
@@ -62,7 +57,7 @@ await Promise.all(plans.map(async (plan) => {
   <div class="plan-grid">
     {plans.map((plan) => (
       <article class="plan-card">
-        <img class="plan-card__icon" src={plan.icon} alt="" aria-hidden="true" width={iconDimensions.get(plan.icon)?.width} height={iconDimensions.get(plan.icon)?.height} />
+        <Icon name={plan.icon} class="plan-card__icon" />
         <h3>{plan.title}</h3>
         <p class="plan-card__subtitle">{plan.subtitle}</p>
 

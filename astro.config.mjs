@@ -39,6 +39,7 @@ export default defineConfig({
           '**/public/assets/portfolio/**',
           '**/public/assets/portfolio-thumbnails/**',
           '**/.motion-dist/**',
+          '**/.figma-preview-build/**',
           '**/dist/**',
           '**/worker-dist/**',
           '**/.astro/**',

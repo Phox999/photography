@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { navItems, siteConfig } from '../data/site';
 
 interface Props { home?: boolean; editorial?: boolean; }
@@ -27,7 +28,7 @@ const currentPath = Astro.url.pathname;
   </a>
 
   <details class="mobile-nav">
-    <summary aria-label="開啟導覽選單">選單</summary>
+    <summary aria-label="開啟導覽選單">選單 <Icon name="menu" /></summary>
     <div class="mobile-nav__panel">
       {links.map((item) => <a href={item.href} aria-current={item.href === currentPath ? 'page' : undefined}>{item.label}</a>)}
       <a href={siteConfig.inquiryUrl} data-analytics-event="inquiry_click" data-analytics-placement="header-mobile">填寫合作意向</a>

@@ -1,4 +1,5 @@
 ---
+import Icon from '../../components/Icon.astro';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import '../../styles/admin-content.css';
 ---
@@ -81,7 +82,7 @@ import '../../styles/admin-content.css';
           <p class="content-section-note">最多 12 題。展開問題可編輯內容與順序；收合或切換區段不會清除輸入。</p>
           <div class="content-faq-list" id="content-faq-list"></div>
           <p class="content-empty-faq" id="faq-empty" hidden>目前沒有常見問題，發布後前台會隱藏 FAQ 區塊。</p>
-          <button class="admin-button admin-button--quiet" type="button" id="content-add-faq">＋ 新增問題</button>
+          <button class="admin-button admin-button--quiet" type="button" id="content-add-faq"><Icon name="plus" /> 新增問題</button>
           <p class="admin-status" id="faq-status" role="status" aria-live="polite"></p>
         </div>
       </section>
@@ -115,6 +116,7 @@ import '../../styles/admin-content.css';
 </AdminLayout>
 
 <script>
+  import { createIcon } from '../../lib/icons';
   import {
     requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate,
     setUnsavedChanges, AdminApiError,
@@ -273,12 +275,13 @@ import '../../styles/admin-content.css';
     answerField.append(answerLabel, answer);
     const controls = document.createElement('div');
     controls.className = 'content-faq-item__actions';
-    for (const [action, label] of [['up', '↑ 上移'], ['down', '↓ 下移'], ['remove', '移除問題']]) {
+    for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '移除問題']]) {
       const button = document.createElement('button');
       button.type = 'button'; button.dataset.faqAction = action;
       button.className = 'admin-button admin-button--quiet';
       if (action === 'remove') button.classList.add('admin-button--danger');
       button.textContent = label;
+      if (action === 'up' || action === 'down') button.prepend(createIcon(action === 'up' ? 'arrow-up' : 'arrow-down'));
       controls.append(button);
     }
     body.append(questionField, answerField, controls);
@@ -299,14 +302,15 @@ import '../../styles/admin-content.css';
         const top = document.createElement('div'); top.className = 'content-photo__top';
         const number = document.createElement('strong'); number.className = 'content-photo__number';
         const handle = document.createElement('button'); handle.type = 'button'; handle.className = 'content-photo__drag-handle'; handle.dataset.photoDragHandle = '';
-        handle.title = '抓住後拖曳以排序'; handle.textContent = '⠿ 拖曳'; top.append(number, handle);
+        handle.title = '抓住後拖曳以排序'; handle.append(createIcon('grip-vertical'), document.createTextNode(' 拖曳')); top.append(number, handle);
         const preview = document.createElement('button'); preview.type = 'button'; preview.className = 'content-photo__preview'; preview.dataset.photoPreview = '';
         const img = document.createElement('img'); img.loading = 'lazy'; img.decoding = 'async'; preview.append(img);
         const actions = document.createElement('div'); actions.className = 'content-photo__actions';
-        for (const [action, label] of [['up', '↑ 上移'], ['down', '↓ 下移'], ['remove', '移出輪播']]) {
+        for (const [action, label] of [['up', '上移'], ['down', '下移'], ['remove', '移出輪播']]) {
           const button = document.createElement('button'); button.type = 'button'; button.dataset.photoAction = action;
           button.className = 'admin-button admin-button--quiet'; if (action === 'remove') button.classList.add('admin-button--danger');
-          button.textContent = label; actions.append(button);
+          button.textContent = label;
+      if (action === 'up' || action === 'down') button.prepend(createIcon(action === 'up' ? 'arrow-up' : 'arrow-down')); actions.append(button);
         }
         card.append(top, preview, actions);
       }

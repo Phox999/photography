@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { portfolioCatalog, portfolioCategories } from '../data/portfolioCatalog';
 import { orderFeaturedPortfolio } from '../lib/featured-portfolio.js';
 import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
@@ -25,8 +26,8 @@ const countFor = (category: string) =>
     </div>
 
     <div class="portfolio-scroll-controls" role="group" aria-label="瀏覽更多作品">
-      <button type="button" aria-label="向左瀏覽作品" aria-controls="featured-portfolio" data-portfolio-prev disabled>‹</button>
-      <button type="button" aria-label="向右瀏覽作品" aria-controls="featured-portfolio" data-portfolio-next>›</button>
+      <button type="button" aria-label="向左瀏覽作品" aria-controls="featured-portfolio" data-portfolio-prev disabled><Icon name="chevron-left" /></button>
+      <button type="button" aria-label="向右瀏覽作品" aria-controls="featured-portfolio" data-portfolio-next><Icon name="chevron-right" /></button>
     </div>
   </div>
 

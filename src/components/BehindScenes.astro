@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { portfolioCatalog } from '../data/portfolioCatalog';
 import { getPublicImageDimensions, type ImageDimensions } from '../lib/image-dimensions';
 
@@ -41,7 +42,7 @@ await Promise.all(stories.map(async (story) => {
           <div class="behind-story-card__copy">
             <h3>{story.title}</h3>
             <p>{story.description}</p>
-            <span class="behind-story-card__link">看這組作品 <span aria-hidden="true">→</span></span>
+            <span class="behind-story-card__link">看這組作品 <span aria-hidden="true"><Icon name="arrow-right" /></span></span>
           </div>
         </a>
       </article>

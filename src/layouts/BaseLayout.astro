@@ -50,6 +50,7 @@ const structuredDataJson = structuredData
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    {editorialHome && <link rel="preload" href="/assets/audio/kave_msri-camera-shutter-314056.mp3" as="fetch" crossorigin="anonymous" />}
     {noindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
     {referrer && <meta name="referrer" content={referrer} />}
     <link rel="preconnect" href="https://fonts.googleapis.com" />

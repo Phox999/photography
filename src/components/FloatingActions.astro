@@ -1,12 +1,11 @@
 ---
+import Icon from './Icon.astro';
 import SupportAssistant from './SupportAssistant.astro';
 ---
 
 <div class="floating-actions" role="group" aria-label="快捷功能">
   <a class="floating-actions__top" href="#top" aria-label="回到頁首" title="回到頁首">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />
-    </svg>
+    <Icon name="arrow-up" />
   </a>
   <SupportAssistant />
 </div>

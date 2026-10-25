@@ -1,17 +1,18 @@
 ---
+import Icon from './Icon.astro';
 const steps = [
   {
-    icon: '/assets/icons/process/process-03.webp',
+    icon: 'message-circle' as const,
     title: '討論方向',
     text: '留下想法，一起確認主題、日期與地點。',
   },
   {
-    icon: '/assets/icons/process/process-04.webp',
+    icon: 'camera' as const,
     title: '自在拍攝',
     text: '事前討論服裝，現場協助動作與表情。',
   },
   {
-    icon: '/assets/icons/process/process-05.webp',
+    icon: 'circle-check' as const,
     title: '完成作品',
     text: '確認交付、公開範圍與使用方式。',
   },
@@ -27,7 +28,7 @@ const steps = [
     {steps.map((step, index) => (
       <li>
         <span class="workflow__icon" aria-hidden="true">
-          <img src={step.icon} alt="" width="40" height="40" loading="lazy" />
+          <Icon name={step.icon} />
         </span>
         <div class="workflow__body">
           <h3><span class="workflow__number" aria-hidden="true">0{index + 1}</span>{step.title}</h3>
@@ -82,7 +83,7 @@ const steps = [
     background: #eaf7fc;
   }
 
-  .workflow__icon img {
+  .workflow__icon :global(.ui-icon) {
     width: 34px;
     height: 34px;
     object-fit: contain;
@@ -133,7 +134,7 @@ const steps = [
       margin: 0;
     }
 
-    .workflow__icon img {
+    .workflow__icon :global(.ui-icon) {
       width: 28px;
       height: 28px;
     }

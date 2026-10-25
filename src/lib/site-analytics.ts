@@ -98,7 +98,7 @@ function destinationFor(rawHref: string): 'internal' | 'google_form' | 'instagra
     const host = url.hostname.toLowerCase();
     if (host === 'forms.gle' || host === 'docs.google.com') return 'google_form';
     if (host === 'instagram.com' || host.endsWith('.instagram.com')) return 'instagram';
-    if (host === 'threads.net' || host.endsWith('.threads.net')) return 'threads';
+    if (host === 'threads.com' || host.endsWith('.threads.com') || host === 'threads.net' || host.endsWith('.threads.net')) return 'threads';
     if (host === 'facebook.com' || host.endsWith('.facebook.com') || host === 'fb.com') return 'facebook';
   } catch { /* Ignore malformed links. */ }
   return 'other';

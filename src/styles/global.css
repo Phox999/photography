@@ -1,3 +1,4 @@
+@import './icons.css';
 :root {
   --color-bg: #ffffff;
   --color-surface: #ffffff;
@@ -452,29 +453,6 @@ p {
   white-space: nowrap;
 }
 
-.line-icon {
-  position: relative;
-  display: inline-grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  flex: 0 0 auto;
-  border: 2px solid currentColor;
-  color: var(--color-primary-dark);
-}
-
-.line-icon--spark {
-  border-radius: 50%;
-}
-
-.line-icon--spark::before {
-  content: '';
-  width: 8px;
-  height: 18px;
-  border-right: 2px solid currentColor;
-  transform: rotate(38deg);
-}
-
 .section {
   padding-block: var(--section-padding);
   scroll-margin-top: 88px;
@@ -522,7 +500,7 @@ p {
 }
 
 .text-link::after {
-  content: ' →';
+  content: '';
 }
 
 
@@ -959,11 +937,6 @@ p {
   padding: 12px;
 }
 
-.guideline-card .line-icon {
-  width: 34px;
-  height: 34px;
-}
-
 .guideline-card h3 {
   font-size: 1rem;
 }
@@ -1271,14 +1244,14 @@ p {
 }
 
 .faq-item summary::after {
-  content: '+';
+  content: '';
   color: var(--color-primary-dark);
   font-size: 1.45rem;
   line-height: 1;
 }
 
 .faq-item[open] summary::after {
-  content: '−';
+  content: '';
 }
 
 .faq-item p {

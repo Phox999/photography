@@ -206,6 +206,7 @@ import '../../styles/admin-analytics.css';
 </AdminLayout>
 
 <script>
+  import { createIcon } from '../../lib/icons';
   import { requireAdminSession, requestAdmin, adminErrorMessage, formatAdminDate } from '../../lib/admin-client';
 
   type Totals = { visitors: number; sessions: number; pageViews: number; inquiries: number; convertedVisitors: number; conversionRate: number | null; unattributedInquiries: number };
@@ -627,9 +628,10 @@ import '../../styles/admin-analytics.css';
     if (!active.length) return;
     host.append(textElement('span', '目前篩選：', 'analytics-filter-caption'));
     active.forEach(({ key, label }) => {
-      const button = textElement('button', label + ' ×');
+      const button = textElement('button', label + ' ');
       button.type = 'button';
       button.setAttribute('aria-label', '移除篩選：' + label);
+      button.append(createIcon('x'));
       button.dataset.removeFilter = key;
       host.append(button);
     });

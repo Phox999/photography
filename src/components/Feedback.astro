@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 type Feedback = {
   id: string;
   text?: string;
@@ -148,7 +149,7 @@ for (let i = 0; i < feedbacks.length; i += 3) {
           aria-label="上一頁回饋"
           data-feedback-prev
         >
-          ‹
+          <Icon name="chevron-left" />
         </button>
 
         <div class="feedback-window">
@@ -198,7 +199,7 @@ for (let i = 0; i < feedbacks.length; i += 3) {
           aria-label="下一頁回饋"
           data-feedback-next
         >
-          ›
+          <Icon name="chevron-right" />
         </button>
       </div>
     </div>
@@ -235,7 +236,7 @@ for (let i = 0; i < feedbacks.length; i += 3) {
     aria-label="上一則回饋"
     data-feedback-dialog-prev
   >
-    ‹
+    <Icon name="chevron-left" />
   </button>
 
   <button
@@ -244,7 +245,7 @@ for (let i = 0; i < feedbacks.length; i += 3) {
     aria-label="下一則回饋"
     data-feedback-dialog-next
   >
-    ›
+    <Icon name="chevron-right" />
   </button>
 
   <div class="feedback-dialog__inner">
@@ -254,7 +255,7 @@ for (let i = 0; i < feedbacks.length; i += 3) {
       aria-label="關閉完整回饋"
       data-feedback-close
     >
-      ×
+      <Icon name="x" />
     </button>
 
     <p class="feedback-dialog__label">完整回饋</p>

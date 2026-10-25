@@ -1,12 +1,12 @@
 ---
 import { siteConfig } from '../data/site';
 
-interface Props { id?: string; editorial?: boolean; }
-const { id = 'dates', editorial = false } = Astro.props;
+interface Props { id?: string; editorial?: boolean; integrated?: boolean; }
+const { id = 'dates', editorial = false, integrated = false } = Astro.props;
 ---
-<section class="section dates-section availability-section" id={id} aria-labelledby="dates-title" data-availability>
+<section class="section dates-section availability-section" id={id} aria-labelledby="dates-title" data-availability data-integrated={integrated ? 'true' : undefined}>
   <div class="container availability-container">
-    <div class="section-heading availability-heading"><p class="eyebrow">{editorial ? '05 / OPEN DATES' : 'OPEN DATES'}</p><h2 id="dates-title">開放檔期</h2></div>
+    <div class="section-heading availability-heading"><p class="eyebrow">{editorial ? '05 / OPEN DATES' : 'OPEN DATES'}</p><h2 id="dates-title">{integrated && <span class="figma-step">02</span>}開放檔期</h2></div>
     <div class="availability-months" role="group" aria-label="切換月份" data-calendar-months hidden>
       <button type="button" data-calendar-month="0" aria-pressed="true">本月</button>
       <button type="button" data-calendar-month="1" aria-pressed="false">下個月</button>
@@ -20,14 +20,15 @@ const { id = 'dates', editorial = false } = Astro.props;
         <button class="availability-clear" type="button" data-calendar-retry hidden>重新載入</button>
         <div class="availability-weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
         <div class="availability-calendar-grid" role="group" aria-labelledby="availability-calendar-title" data-calendar-grid></div>
-        <p class="availability-legend"><span>●：可預約</span><span>空白：不開放預約</span></p>
+        <p class="availability-legend">{integrated ? <span>●　可洽詢日期</span> : <><span>●：可預約</span><span>空白：不開放預約</span></>}</p>
         <noscript><p>請啟用 JavaScript 讀取實際檔期，或直接在合作意向中詢問時間。</p></noscript>
       </div>
       <div class="availability-preference">
-        <h3>偏好日期</h3>
+        <h3>{integrated ? '偏好日期（選填）' : '偏好日期'}</h3>
         <div data-date-picker hidden>
           <div class="availability-label-row"><label for="date-preference">日期 <span>由可洽詢日期選取</span></label><button class="availability-clear" type="button" data-date-clear disabled>清除日期</button></div>
           <input id="date-preference" type="date" readonly />
+          {integrated && <div class="availability-date-chips" data-date-chips aria-label="已選擇的偏好日期"></div>}
           <p class="availability-summary" data-date-summary aria-live="polite">尚未選擇日期，也可以在合作意向表單說明偏好時間。</p>
         </div>
         <a class="button button--primary" href={siteConfig.inquiryUrl} data-date-continue data-analytics-event="inquiry_click" data-analytics-placement="availability">填寫合作意向</a>
@@ -51,6 +52,9 @@ const { id = 'dates', editorial = false } = Astro.props;
     const retry = $<HTMLButtonElement>('[data-calendar-retry]');
     const clear = root.querySelector<HTMLButtonElement>('[data-date-clear]');
     const monthButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-calendar-month]'));
+    const integrated = root.dataset.integrated === 'true';
+    const selectedDates = new Set<string>();
+    const dateChips = root.querySelector<HTMLElement>('[data-date-chips]');
     const dateRange = calendarRangeFor(taipeiDate());
     const months = dateRange.months;
     let visibleMonth = 0;
@@ -60,14 +64,48 @@ const { id = 'dates', editorial = false } = Astro.props;
     const dateKey = (value: Date) => value.toISOString().slice(0, 10);
     function updateSummary() {
       const preferredDate = dateInput.value;
-      if (summary) summary.textContent = preferredDate
+      if (summary) summary.textContent = integrated && selectedDates.size
+        ? `已選擇 ${selectedDates.size} 個偏好日期，實際檔期仍需雙方確認。`
+        : preferredDate
         ? `已選擇 ${preferredDate.replaceAll('-', '/')}，請在合作意向表單備註日期；實際檔期仍需雙方確認。`
         : '尚未選擇日期，也可以在合作意向表單說明偏好時間。';
       continueLink.href = siteConfig.inquiryUrl;
       if (clear) clear.disabled = !dateInput.value;
+      if (dateChips) {
+        dateChips.replaceChildren();
+        [...selectedDates].sort().forEach((date) => {
+          const chip = document.createElement('button');
+          chip.type = 'button'; chip.className = 'availability-date-chip';
+          chip.textContent = date.replaceAll('-', '/');
+          chip.title = '移除這個偏好日期'; chip.setAttribute('aria-label', `移除偏好日期 ${chip.textContent}`);
+          chip.addEventListener('click', () => chooseDate(date, true));
+          dateChips.append(chip);
+        });
+      }
     }
-    function chooseDate(value = '') {
+    function chooseDate(value = '', toggle = false) {
+      const preferred = document.querySelector<HTMLInputElement>('#preferred_date');
+      if (integrated) {
+        if (preferred?.disabled) return;
+        const next = new Set(selectedDates);
+        if (!value) next.clear();
+        else if (toggle && next.has(value)) next.delete(value);
+        else next.add(value);
+        const formatted = [...next].sort().map(date => date.replaceAll('-', '/')).join('、');
+        if (preferred && preferred.maxLength >= 0 && formatted.length > preferred.maxLength) {
+          if (summary) summary.textContent = '偏好日期欄位已達字數上限，請先移除其他日期。';
+          return;
+        }
+        selectedDates.clear(); next.forEach(date => selectedDates.add(date));
+        value = [...selectedDates].sort().at(-1) ?? '';
+      }
       dateInput.value = value;
+      if (integrated) {
+        if (preferred && !preferred.disabled) {
+          preferred.value = [...selectedDates].sort().map(date => date.replaceAll('-', '/')).join('、');
+          preferred.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
       updateSummary(); renderCalendar();
     }
     function renderCalendar() {
@@ -88,7 +126,7 @@ const { id = 'dates', editorial = false } = Astro.props;
         const button = document.createElement('button'); button.type = 'button'; button.className = `availability-day availability-day--${state}`;
         button.dataset.calendarDate = date; button.textContent = String(day); button.disabled = !open.length;
         button.setAttribute('aria-label', `${date}，${date < taipeiDate() ? '已過日期' : state === 'open' ? '可洽詢日期' : state === 'unavailable' ? '當日沒有可洽詢日期' : loadState === 'error' ? '檔期無法載入' : '未公布檔期'}`);
-        button.setAttribute('aria-pressed', String(dateInput.value === date));
+        button.setAttribute('aria-pressed', String(integrated ? selectedDates.has(date) : dateInput.value === date));
         if (date === taipeiDate()) button.setAttribute('aria-current', 'date');
         grid.append(button);
       }
@@ -119,7 +157,8 @@ const { id = 'dates', editorial = false } = Astro.props;
     grid.addEventListener('click', (event) => {
       const button = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-calendar-date]') : null;
       if (!button || button.disabled || !button.dataset.calendarDate) return;
-      chooseDate(button.dataset.calendarDate); grid.querySelector<HTMLButtonElement>(`[data-calendar-date="${dateInput.value}"]`)?.focus({ preventScroll: true });
+      const clickedDate = button.dataset.calendarDate;
+      chooseDate(clickedDate, integrated); grid.querySelector<HTMLButtonElement>(`[data-calendar-date="${clickedDate}"]`)?.focus({ preventScroll: true });
     });
     clear?.addEventListener('click', () => chooseDate()); retry.addEventListener('click', loadAvailability);
     continueLink.addEventListener('click', (event) => {

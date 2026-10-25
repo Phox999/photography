@@ -150,7 +150,7 @@
 }
 
 .explore-tools__links a::after {
-  content: '→';
+  content: '';
 }
 
 .feedback-pagination {
@@ -499,7 +499,7 @@
   place-items: center;
   border: 0;
   color: #fff;
-  content: '✓';
+  content: '';
   font-size: 14px;
   font-weight: 800;
   line-height: 1;
@@ -586,20 +586,9 @@
 .contact-style-grid--text-only .contact-style[aria-pressed="true"] .contact-style__check {
   border-color: var(--color-primary);
   background: var(--color-primary);
-  color: transparent;
+  color: #fff;
 }
 
-.contact-style-grid--text-only .contact-style[aria-pressed="true"] .contact-style__check::after {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #fff;
-  content: "";
-  transform: translate(-50%, -50%);
-}
 
 .contact-style-footer {
   display: flex;
@@ -742,7 +731,7 @@
   -webkit-appearance: none;
   appearance: none;
   padding-right: 24px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23536b77' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-image: url("/assets/icons/lucide/chevron-down.svg");
   background-repeat: no-repeat;
   background-position: right 24px center;
   background-size: 16px;

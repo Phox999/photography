@@ -1,0 +1,7 @@
+---
+import type { IconName } from '../lib/icons';
+import '../styles/icons.css';
+interface Props { name: IconName; class?: string; [key: string]: unknown; }
+const { name, class: className, ...attributes } = Astro.props;
+---
+<svg {...attributes} class:list={['ui-icon', className]} data-icon={name} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><use href={`/assets/icons/sprite.svg#${name}`} /></svg>

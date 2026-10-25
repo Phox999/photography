@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import Layout from '../layouts/BaseLayout.astro';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
@@ -69,7 +70,7 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
           <li aria-current="page">{title}</li>
         </ol>
       </nav>
-      <a class="portfolio-detail__back" href="/portfolio/">← 回全部作品</a>
+      <a class="portfolio-detail__back" href="/portfolio/"><Icon name="arrow-left" /> 回全部作品</a>
       <p class="eyebrow">PORTFOLIO</p>
       <h1>{title}</h1>
       <ul class="portfolio-detail__meta" aria-label="作品資訊">
@@ -170,10 +171,10 @@ const visibleMeta = [location, category === '棚拍' ? '棚拍人像' : '戶外�
 
   <dialog class="portfolio-lightbox" data-lightbox-dialog>
     <div class="portfolio-lightbox__inner">
-      <button class="portfolio-lightbox__close" type="button" aria-label="關閉照片" data-lightbox-close>×</button>
-      <button class="portfolio-lightbox__nav portfolio-lightbox__nav--prev" type="button" aria-label="上一張照片" data-lightbox-prev>‹</button>
+      <button class="portfolio-lightbox__close" type="button" aria-label="關閉照片" data-lightbox-close><Icon name="x" /></button>
+      <button class="portfolio-lightbox__nav portfolio-lightbox__nav--prev" type="button" aria-label="上一張照片" data-lightbox-prev><Icon name="chevron-left" /></button>
       <img class="portfolio-lightbox__image" src="" alt="" data-lightbox-image />
-      <button class="portfolio-lightbox__nav portfolio-lightbox__nav--next" type="button" aria-label="下一張照片" data-lightbox-next>›</button>
+      <button class="portfolio-lightbox__nav portfolio-lightbox__nav--next" type="button" aria-label="下一張照片" data-lightbox-next><Icon name="chevron-right" /></button>
       <p class="portfolio-lightbox__count" data-lightbox-count></p>
     </div>
   </dialog>

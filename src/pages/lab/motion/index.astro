@@ -1,4 +1,5 @@
 ---
+import Icon from '../../../components/Icon.astro';
 import layers from '../../../data/motion-lab-layers.json';
 import sharp from 'sharp';
 const layerReady = layers.approved;
@@ -73,10 +74,10 @@ const sceneHref = (id: string) => `#scene-${id}`;
       </nav>
       <button class="lab-menu-toggle" type="button" data-menu-toggle aria-controls="lab-main-nav" aria-expanded="false">
         <span class="visually-hidden">開啟導覽選單</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        <Icon name="menu" />
       </button>
       <a class="quick-cta" href={contactUrl}>
-        填寫合作意向 <span aria-hidden="true">↗</span>
+        填寫合作意向 <span aria-hidden="true"><Icon name="arrow-up-right" /></span>
       </a>
     </header>
 
@@ -168,8 +169,8 @@ const sceneHref = (id: string) => `#scene-${id}`;
                 <h1 id="scene-title-opening"><span>把喜歡的自己，</span><span>好好留住。</span></h1>
                 <p class="scene-deck">用喜歡的光線，留住此刻的樣子。</p>
                 <div class="hero-actions">
-                  <a class="invite-cta magnetic-cta" data-magnetic-cta href={contactUrl}><span>填寫合作意向</span><i aria-hidden="true">↗</i></a>
-                  <a class="text-cta" href="#scene-gallery" data-jump="gallery">看看作品 <span aria-hidden="true">↓</span></a>
+                  <a class="invite-cta magnetic-cta" data-magnetic-cta href={contactUrl}><span>填寫合作意向</span><i aria-hidden="true"><Icon name="arrow-up-right" /></i></a>
+                  <a class="text-cta" href="#scene-gallery" data-jump="gallery">看看作品 <span aria-hidden="true"><Icon name="arrow-down" /></span></a>
                 </div>
                 {!layerReady && <p class="layer-status" role="status">人物分層待補・目前以完整原照呈現</p>}
               </div>
@@ -205,7 +206,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
               </div>
               <nav class="gallery-links" aria-label="六組作品的真實作品頁">
                 {projects.map((project, index) => (
-                  <a href={project.href} data-gallery-link data-project-index={index}>{project.title}<span aria-hidden="true">↗</span></a>
+                  <a href={project.href} data-gallery-link data-project-index={index}>{project.title}<span aria-hidden="true"><Icon name="arrow-up-right" /></span></a>
                 ))}
               </nav>
             </section>
@@ -251,7 +252,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
                 <h2 id="scene-title-invite">下一個畫面，<br />留給你。</h2>
                 <p class="scene-deck">有想拍的主題，就從聊聊開始。</p>
                 <a class="invite-cta magnetic-cta" data-magnetic-cta href={contactUrl}>
-                  <span>填寫合作意向</span><i aria-hidden="true">↗</i>
+                  <span>填寫合作意向</span><i aria-hidden="true"><Icon name="arrow-up-right" /></i>
                 </a>
               </div>
               <div class="aperture-ring" aria-hidden="true" data-aperture-ring></div>
@@ -276,7 +277,7 @@ const sceneHref = (id: string) => `#scene-${id}`;
 
     <footer class="lab-footer">
       <span>phox999 photography</span>
-      <a href="https://www.instagram.com/phox999_/">Instagram ↗</a>
+      <a href="https://www.instagram.com/phox999_/">Instagram <Icon name="arrow-up-right" /></a>
     </footer>
 
     <details class="dev-panel" data-dev-panel>

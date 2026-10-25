@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { siteConfig } from '../data/site';
 
 interface ShootProjectOption {
@@ -10,11 +11,12 @@ interface ShootProjectOption {
   deadlineAt: string | null;
 }
 interface Props {
+  figmaHome?: boolean;
   editorial?: boolean;
   projectApplication?: boolean;
   projectOptions?: ShootProjectOption[];
 }
-const { projectApplication = false, projectOptions = [], editorial = false } = Astro.props;
+const { projectApplication = false, projectOptions = [], editorial = false, figmaHome = false } = Astro.props;
 
 const shootStyles = [
   { id: 'jk-uniform', title: 'JK 制服' },
@@ -27,17 +29,19 @@ const shootStyles = [
   { id: 'hatsune-miku', title: '初音未來' },
   { id: 'other', title: '我想拍其他主題' },
 ];
-const showThemeImages = false;
+const themeImages = ['theme-01', 'theme-02', 'theme-03', 'theme-03', 'theme-03', 'theme-03'];
+const visibleStyles = figmaHome ? shootStyles.filter((style) => !['school-swimsuit', 'hatsune-miku'].includes(style.id)) : shootStyles;
+const showThemeImages = figmaHome;
 ---
 
-<section class:list={['section', 'contact-section', projectApplication && 'contact-section--project-application']} id="contact" aria-labelledby="contact-title">
+<section class:list={['section', 'contact-section', figmaHome && 'figma-contact', projectApplication && 'contact-section--project-application']} id="contact" aria-labelledby="contact-title">
   <div class="container contact-layout">
     <header class="contact-copy">
-      <p class="eyebrow">{editorial ? '06 / CONTACT' : 'CONTACT'}</p>
-      <h2 id="contact-title">{editorial ? '合作申請' : '一鍵申請，下一步開始拍攝'}</h2>
+      <p class="eyebrow">{figmaHome ? 'COLLABORATION' : editorial ? '06 / CONTACT' : 'CONTACT'}</p>
+      <h2 id="contact-title">{figmaHome ? '一起創作' : editorial ? '合作申請' : '一鍵申請，下一步開始拍攝'}</h2>
     </header>
 
-    <form class="contact-form" data-inquiry-form data-project-application-page={projectApplication ? 'true' : undefined}>
+    <form class="contact-form" data-inquiry-form data-figma-home={figmaHome ? 'true' : undefined} data-project-application-page={projectApplication ? 'true' : undefined}>
       <label class="hidden-field" aria-hidden="true">
         <span>網站</span>
         <input name="website" type="text" autocomplete="off" tabindex="-1" />
@@ -65,22 +69,24 @@ const showThemeImages = false;
 
       <div class="contact-editor" data-contact-editor>
         <section class="contact-form-section" aria-labelledby="contact-step-1-title">
-          <h3 id="contact-step-1-title" data-contact-step-title data-analytics-form-step="styles">1. 挑選想拍攝的風格</h3>
+          <h3 id="contact-step-1-title" data-contact-step-title data-analytics-form-step="styles">{figmaHome ? <><span class="figma-step">01</span>你想拍什麼？</> : '1. 挑選想拍攝的風格'}</h3>
           <fieldset class="contact-style-select" data-general-style-picker>
-            <legend>a.本期推薦主題 <span>可複選</span></legend>
+            <legend>{figmaHome ? '本期拍攝主題，可複選；也歡迎提出自己的想法。' : <>a.本期推薦主題 <span>可複選</span></>}</legend>
             <div class:list={['contact-style-grid', !showThemeImages && 'contact-style-grid--text-only']}>
-              {shootStyles.map((style) => (
+              {visibleStyles.map((style, index) => (
                 <button class="contact-style" type="button" aria-pressed="false" data-contact-style={style.id} data-style-title={style.title}>
-                  {showThemeImages && style.image && <img src={style.image} alt="" width="360" height="240" loading="lazy" decoding="async" />}
+                  {showThemeImages && themeImages[index] && style.id !== 'other' && <img src={`/assets/home-figma/${themeImages[index]}.webp`} alt="" width="248" height="297" loading="lazy" decoding="async" />}
                   <span>{style.title}</span>
-                  <span class="contact-style__check" aria-hidden="true">✓</span>
+                  <span class="contact-style__check" aria-hidden="true"><Icon name="check" /></span>
                 </button>
               ))}
             </div>
           </fieldset>
 
+          {figmaHome && <div class="figma-calendar-slot"><slot name="calendar" /></div>}
           <section class="contact-reference-card" aria-labelledby="reference-title">
-            <h4 id="reference-title">b. 加入自己的參考照片 / 連結 <span>選填</span></h4>
+            {figmaHome && <h3><span class="figma-step">03</span>參考與想法</h3>}
+            <h4 id="reference-title">{figmaHome ? '參考照片 / 連結' : 'b. 加入自己的參考照片 / 連結'} <span>選填</span></h4>
             <div class="contact-reference-grid">
               <div class="form-field">
                 <div class="reference-file-picker">
@@ -94,23 +100,30 @@ const showThemeImages = false;
               </div>
               <div class="form-field">
                 <label for="description">拍攝想法 <span>選填</span></label>
-                <textarea id="description" name="description" rows="5" aria-describedby="description-help description-count" placeholder="例如：想拍攝的氛圍、地點或其他想法"></textarea>
+                <textarea id="description" name="description" rows={figmaHome ? 3 : 5} aria-describedby="description-help description-count" placeholder={figmaHome ? '想拍攝的氛圍、地點，或任何浮現在腦海裡的畫面…' : '例如：想拍攝的氛圍、地點或其他想法'}></textarea>
                 <p class="field-help" id="description-help" data-description-help>可填自由文字，或選擇上方風格；兩者合計最多 2,000 字。</p>
-                <p class="field-help" data-description-count aria-live="polite">0 / 2,000 字</p>
+                <p class="field-help" id="description-count" data-description-count aria-live="polite">{figmaHome ? '最多 2,000 字 · 0 / 2,000' : '0 / 2,000 字'}</p>
+                {figmaHome ? <details class="reference-link-details">
+                  <summary>加入參考連結（選填）</summary>
+                  <label for="reference-links">參考連結</label>
+                  <textarea id="reference-links" name="reference_links" rows="3" maxlength="6146" aria-describedby="reference-links-help" placeholder="每行一個 http:// 或 https:// 網址"></textarea>
+                  <p class="field-help" id="reference-links-help">最多 3 個連結，每個最多 2,048 字。</p>
+                </details> : <>
                 <label for="reference-links">參考連結 <span>選填</span></label>
                 <textarea id="reference-links" name="reference_links" rows="3" maxlength="6146" aria-describedby="reference-links-help" placeholder="每行一個 http:// 或 https:// 網址"></textarea>
                 <p class="field-help" id="reference-links-help">最多 3 個連結，每個最多 2,048 字；後端只儲存連結文字。</p>
+                </>}
               </div>
             </div>
           </section>
         </section>
 
         <section class="contact-form-section" aria-labelledby="contact-step-2-title">
-          <h3 id="contact-step-2-title" data-analytics-form-step="details">2. 填寫合作資訊</h3>
+          <h3 id="contact-step-2-title" data-analytics-form-step="details">{figmaHome ? <><span class="figma-step">04</span>合作資訊</> : '2. 填寫合作資訊'}</h3>
           <div class="form-grid">
             <div class="form-field">
               <label for="name">姓名／暱稱</label>
-              <input id="name" name="name" type="text" autocomplete="name" maxlength="80" required aria-describedby="name-help" />
+              <input id="name" name="name" type="text" autocomplete="name" maxlength="80" required aria-describedby="name-help" placeholder={figmaHome ? '請輸入暱稱' : undefined} />
               <p class="field-help" id="name-help">必填，最多 80 字。</p>
             </div>
           </div>
@@ -123,7 +136,7 @@ const showThemeImages = false;
                 <option value="主題合作">主題企劃</option>
               </select>
             </div>
-            <div class="form-field">
+            <div class:list={['form-field', figmaHome && 'figma-preferred-field']}>
               <label for="preferred_date">偏好日期</label>
               <input id="preferred_date" name="preferred_date" type="text" autocomplete="off" maxlength="200" placeholder="選填" />
             </div>
@@ -143,14 +156,14 @@ const showThemeImages = false;
             </div>
             <div class="form-field">
               <label for="contact_account">聯絡帳號／連結</label>
-              <input id="contact_account" name="contact_account" type="text" autocomplete="off" maxlength="120" required />
+              <input id="contact_account" name="contact_account" type="text" autocomplete="off" maxlength="120" required placeholder={figmaHome ? '輸入帳號或連結' : undefined} />
             </div>
           </div>
 
           <input type="hidden" name="consent" value="on" />
 
           <div class="form-footer">
-            <button class="button button--primary" type="submit">確認合作內容</button>
+            <button class="button button--primary" type="submit">確認合作內容{figmaHome && <Icon name="arrow-up-right" />}</button>
           </div>
         </section>
       </div>
@@ -189,13 +202,13 @@ const showThemeImages = false;
       <p class="form-status" role="status" aria-live="polite" data-inquiry-status></p>
       <div class="contact-links" aria-label="其他聯絡方式">
         <a href={siteConfig.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1" class="contact-icon__dot"/></svg>
+          <Icon name="instagram" />
         </a>
         <a href={siteConfig.mailtoUrl} aria-label="Email" title="Email">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+          <Icon name="mail" />
         </a>
-        <a href={siteConfig.googleFormUrl} target="_blank" rel="noopener noreferrer" aria-label="Google 表單" title="Google 表單" data-analytics-event="inquiry_click" data-analytics-placement="contact-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg>
+        <a href={siteConfig.threadsUrl} target="_blank" rel="noopener noreferrer" aria-label="Threads" title="Threads" data-analytics-placement="contact-icon">
+          <Icon name="threads" />
         </a>
       </div>
     </form>
@@ -394,7 +407,7 @@ const showThemeImages = false;
     const updateDescriptionCount = () => {
       if (!descriptionCount) return;
       const count = readDraft().combinedDescription.length;
-      descriptionCount.textContent = `${count} / 2,000 字`;
+      descriptionCount.textContent = inquiryForm.dataset.figmaHome === 'true' ? `最多 2,000 字 · ${count} / 2,000` : `${count} / 2,000 字`;
     };
 
     const showEditor = () => {

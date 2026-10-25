@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { defaultHeroContent, siteConfig } from '../data/site';
 import { getPublicImageDimensions } from '../lib/image-dimensions';
 import heroManifest from '../data/hero-image-variants.json' with { type: 'json' };
@@ -49,7 +50,7 @@ const heroImageDimensions = await getPublicImageDimensions('/assets/hero.webp');
       填寫合作意向
     </a>
   </div>
-  {editorial && <><div class="hero-editorial-note"><span>01 / PHOTOGRAPHY</span><p>以自己的視角，<br />留下每一次相遇。</p><span>BY PHOX999</span></div><a class="hero-scroll" href="#portfolio">向下瀏覽 <span aria-hidden="true">↓</span></a><div class="hero-focus" aria-hidden="true"></div></>}
+  {editorial && <><div class="hero-editorial-note"><span>01 / PHOTOGRAPHY</span><p>以自己的視角，<br />留下每一次相遇。</p><span>BY PHOX999</span></div><a class="hero-scroll" href="#portfolio">向下瀏覽 <span aria-hidden="true"><Icon name="arrow-down" /></span></a><div class="hero-focus" aria-hidden="true"></div></>}
 </section>
 
 <script>

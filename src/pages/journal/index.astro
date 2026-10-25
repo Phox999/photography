@@ -1,4 +1,5 @@
 ---
+import Icon from '../../components/Icon.astro';
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
@@ -53,7 +54,7 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat('zh-TW', {
                   <p class="journal-card__meta"><span>{post.data.category}</span><time datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate)}</time></p>
                   <h2><a href={`/journal/${post.id}/`}>{post.data.title}</a></h2>
                   <p>{post.data.description}</p>
-                  <a class="journal-card__link" href={`/journal/${post.id}/`} aria-label={`閱讀：${post.data.title}`}>閱讀文章 <span aria-hidden="true">→</span></a>
+                  <a class="journal-card__link" href={`/journal/${post.id}/`} aria-label={`閱讀：${post.data.title}`}>閱讀文章 <span aria-hidden="true"><Icon name="arrow-right" /></span></a>
                 </div>
               </article>
             );

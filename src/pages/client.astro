@@ -1,4 +1,5 @@
 ---
+import Icon from '../components/Icon.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -23,11 +24,12 @@ import '../styles/inner-pages.css';
     </div>
   </main>
   <dialog class="cg-dialog cg-review-dialog" id="cg-review-dialog" aria-labelledby="cg-review-title"><h2 id="cg-review-title">再看一次，這些就是你的選擇。</h2><p id="cg-review-copy">送出後會鎖定清單。若需要修改，請聯繫攝影師。</p><ol id="cg-review-list"></ol><p class="cg-review-note" id="cg-review-note"></p><p role="status" id="cg-review-status"></p><div class="cg-actions"><button class="button button--secondary" type="button" id="cg-review-cancel">返回調整</button><button class="button button--primary" type="button" id="cg-confirm">確認送出選片</button></div></dialog>
-  <dialog class="cg-dialog cg-lightbox" id="cg-lightbox" aria-labelledby="cg-lightbox-title"><div class="cg-lightbox-top"><p id="cg-lightbox-title"></p><button class="cg-icon-button" type="button" id="cg-lightbox-close" aria-label="關閉照片">×</button></div><img id="cg-lightbox-image" alt="" referrerpolicy="no-referrer" /><div class="cg-lightbox-controls"><button type="button" class="cg-icon-button" id="cg-previous" aria-label="上一張照片">←</button><button type="button" class="button button--primary" id="cg-lightbox-select" aria-pressed="false">選取照片</button><button type="button" class="cg-icon-button" id="cg-next" aria-label="下一張照片">→</button></div></dialog>
+  <dialog class="cg-dialog cg-lightbox" id="cg-lightbox" aria-labelledby="cg-lightbox-title"><div class="cg-lightbox-top"><p id="cg-lightbox-title"></p><button class="cg-icon-button" type="button" id="cg-lightbox-close" aria-label="關閉照片"><Icon name="x" /></button></div><img id="cg-lightbox-image" alt="" referrerpolicy="no-referrer" /><div class="cg-lightbox-controls"><button type="button" class="cg-icon-button" id="cg-previous" aria-label="上一張照片"><Icon name="arrow-left" /></button><button type="button" class="button button--primary" id="cg-lightbox-select" aria-pressed="false">選取照片</button><button type="button" class="cg-icon-button" id="cg-next" aria-label="下一張照片"><Icon name="arrow-right" /></button></div></dialog>
   <Footer />
 </BaseLayout>
 
 <script>
+  import { createIcon } from '../lib/icons';
   import { ClientGalleryError, invitationFromFragment, requestClientGallery, safePhotoUrl, requestGalleryArchive, DraftSaver, type ClientDraft, type ClientGallery, type ClientPhoto, type ClientSelection } from '../lib/client-gallery-client';
   const $ = <T extends Element = HTMLElement>(id: string) => document.getElementById(id) as T;
   const hasInvitation = new URLSearchParams(location.hash.replace(/^#/, '')).has('token');
@@ -99,7 +101,7 @@ import '../styles/inner-pages.css';
       const img = make('img'); img.src = safePhotoUrl(photo.previewUrl, location.origin); img.alt = photo.title; img.loading = 'lazy'; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
       img.addEventListener('error', () => { open.setAttribute('aria-label', `${photo.title} 圖片未能載入，請更新照片連結`); img.alt = `${photo.title}｜圖片未能載入，請更新照片連結`; });
       open.append(img); open.addEventListener('click', () => openPhoto(photo.id));
-      const pick = make('button', 'cg-pick', selected.includes(photo.id) ? '♥' : '♡'); pick.type = 'button'; pick.dataset.photoId = photo.id; pick.setAttribute('aria-label', `選取 ${photo.title}`); pick.setAttribute('aria-pressed', String(selected.includes(photo.id))); pick.disabled = busy || locked(); pick.addEventListener('click', () => toggle(photo.id));
+      const pick = make('button', 'cg-pick'); pick.append(createIcon('heart')); pick.type = 'button'; pick.dataset.photoId = photo.id; pick.setAttribute('aria-label', `選取 ${photo.title}`); pick.setAttribute('aria-pressed', String(selected.includes(photo.id))); pick.disabled = busy || locked(); pick.addEventListener('click', () => toggle(photo.id));
       media.append(open, pick); article.append(media, make('h3', '', photo.title));
       if (selected.includes(photo.id)) {
         const label = make('label', 'cg-photo-note-label', '這張照片的備註（最多 500 字）'); label.htmlFor = `note-${photo.id}`;
@@ -107,7 +109,7 @@ import '../styles/inner-pages.css';
         input.addEventListener('input', () => { photoNotes[photo.id] = input.value; queueSave(); }); article.append(label, input);
       }
       if (data.gallery.status === 'delivered' && data.gallery.allowDownloads && photo.downloadable) {
-        const download = make('button', 'cg-text-button', '下載成品 ↓'); download.type = 'button'; download.disabled = busy; download.addEventListener('click', () => void downloadPhoto(photo, download)); article.append(download);
+        const download = make('button', 'cg-text-button', '下載成品 '); download.append(createIcon('download')); download.type = 'button'; download.disabled = busy; download.addEventListener('click', () => void downloadPhoto(photo, download)); article.append(download);
       }
       grid.append(article);
     }
@@ -127,7 +129,7 @@ import '../styles/inner-pages.css';
     const photo = data?.photos.find(value => value.id === lightboxId); if (!photo) return;
     $('cg-lightbox-title').textContent = photo.title;
     const img = $<HTMLImageElement>('cg-lightbox-image'); img.src = safePhotoUrl(photo.previewUrl, location.origin); img.alt = photo.title;
-    const pick = $<HTMLButtonElement>('cg-lightbox-select'); pick.disabled = busy || locked(); pick.textContent = selected.includes(photo.id) ? '♥ 已選取' : '♡ 選取照片'; pick.setAttribute('aria-pressed', String(selected.includes(photo.id)));
+    const pick = $<HTMLButtonElement>('cg-lightbox-select'); pick.disabled = busy || locked(); pick.replaceChildren(createIcon('heart'), document.createTextNode(selected.includes(photo.id) ? ' 已選取' : ' 選取照片')); pick.setAttribute('aria-pressed', String(selected.includes(photo.id)));
   }
   function openPhoto(id: string) { lightboxId = id; renderLightbox(); lightbox.showModal(); window.dispatchEvent(new CustomEvent('phox999:lightbox-open')); }
   function stepPhoto(direction: number) { if (!data?.photos.length) return; const index = data.photos.findIndex(value => value.id === lightboxId); lightboxId = data.photos[(index + direction + data.photos.length) % data.photos.length].id; renderLightbox(); }

@@ -1,0 +1,67 @@
+---
+import Icon from './Icon.astro';
+import Contact from './Contact.astro';
+import Dates from './Dates.astro';
+import { portfolioCatalog } from '../data/portfolioCatalog';
+const asset = (name: string) => `/assets/home-figma/${name}.webp`;
+const titles = ['放課後', '晴空之下', '晴日同行', '海風來信', '靜白日常', '海岸片刻', '光影之間', '綠蔭午後'];
+const findRoute = (terms: string[]) => {
+  const match = portfolioCatalog.find((item) => terms.some((term) => `${item.title} ${item.slug}`.includes(term)));
+  return match?.href ?? '/portfolio/';
+};
+const series = [
+  { direction: 'left', number: '01', title: '晴空之下', href: findRoute(['6-20海邊jk_']), images: ['series-01-main', 'series-01-detail-a', 'series-01-detail-b', 'series-01-detail-c', 'series-01-detail-d', 'series-01-detail-e'] },
+  { direction: 'right', number: '02', title: '放課後', href: '/portfolio/', images: ['series-02-detail-c', 'series-02-detail-d', 'series-02-detail-e', 'series-02-detail-a', 'series-02-detail-b', 'series-02-main'] },
+];
+const workRoutes = [series[1].href, series[0].href, findRoute(['古亭河濱']), series[0].href, findRoute(['照片分享']), series[0].href, '/portfolio/', '/portfolio/'];
+const heroCopy = ['以自己的視角，', '留下每一次相遇。'];
+---
+<main class="figma-home">
+  <section class="camera-hero" id="hero" aria-labelledby="hero-heading" data-hero-focus="waiting" data-hero-copy="waiting">
+    <div class="camera-media">
+      <img class="camera-hero__image" src={asset('hero')} width="2048" height="1364" alt="海邊，女孩回身迎向陽光" fetchpriority="high" />
+    </div>
+    <div class="camera-hero__shade" aria-hidden="true"></div>
+    <div class="camera-reticle" aria-hidden="true">
+      <div class="camera-viewfinder"><img src="/assets/home-figma/viewfinder.svg" alt="" /></div>
+      <span class="camera-cross"><Icon name="plus" /></span>
+    </div>
+    <div class="camera-hero__copy"><p class="camera-eyebrow">01/ PHOTOGRAPHY</p><h1 id="hero-heading" aria-label={heroCopy.join('')}>{heroCopy.map((line) => <span class="camera-type-line" aria-hidden="true">{Array.from(line).map((letter) => <span class="camera-type-letter" data-hero-letter>{letter}</span>)}</span>)}</h1><p class="camera-byline">PHOX999</p></div>
+    <div class="camera-hero__controls">
+      <button class="camera-sound" type="button" data-hero-sound aria-pressed="true" aria-label="關閉快門音效" title="關閉快門音效" hidden><Icon name="volume-2" data-sound-on /><Icon name="volume-x" data-sound-off hidden /></button>
+      <a class="camera-scroll" href="#featured-series">向下瀏覽 <span aria-hidden="true"><Icon name="arrow-down" /></span></a>
+    </div>
+    <span class="camera-sound-status" role="status" data-hero-sound-status></span>
+  </section>
+  <div id="featured-series">
+    {series.map((item) => <section class:list={['horizontal-story', `horizontal-story--${item.direction}`]} data-horizontal={item.direction} aria-labelledby={`series-${item.number}`}>
+      <div class="horizontal-story__viewport" tabindex="0" aria-label={`精選系列 ${item.number}，可左右滑動瀏覽`}><div class="horizontal-story__track">
+        {item.direction === 'left' && <header class="story-label"><p>SELECTED SERIES / {item.number}</p><h2 id={`series-${item.number}`}>{item.title}</h2><a href={item.href}>查看系列 <Icon name="arrow-up-right" /></a></header>}
+        {item.direction === 'right' && <span class="story-photo story-photo--spacer" aria-hidden="true"></span>}
+        {item.images.map((image) => <a class:list={['story-photo', image.endsWith('main') && 'story-photo--wide']} href={item.href}><img src={asset(image)} width={image.endsWith('main') ? 1206 : 536} height="804" alt={`${item.title}・${image.includes('main') ? '系列主視覺' : '系列影像'}`} loading="lazy" decoding="async" /></a>)}
+        {item.direction === 'right' && <header class="story-label"><p>SELECTED SERIES / {item.number}</p><h2 id={`series-${item.number}`}>{item.title}</h2><a href={item.href}>查看系列 <Icon name="arrow-up-right" /></a></header>}
+      </div></div>
+    </section>)}
+  </div>
+  <section class="horizontal-story horizontal-story--works" data-horizontal="left" id="portfolio" aria-labelledby="works-heading">
+    <div class="horizontal-story__viewport" tabindex="0" aria-label="精選作品，可左右滑動瀏覽"><div class="horizontal-story__track">
+      <header class="story-label"><p>PORTFOLIO / SELECTED WORKS</p><h2 id="works-heading">精選作品</h2></header>
+      {titles.map((title, i) => <a class="work-card" href={workRoutes[i]}><img src={asset(`work-0${i + 1}`)} alt={title} width="326" height="435" loading="lazy" decoding="async" /><span class="work-card__number">0{i + 1}</span><h3>{title}</h3></a>)}
+      <a class="works-more" href="/portfolio/" aria-label="查看更多作品">
+        <span class="works-more__copy"><span class="works-more__eyebrow" aria-hidden="true">THE FULL COLLECTION</span><span class="works-more__title">查看更多作品</span></span>
+        <span class="works-more__arrow" aria-hidden="true"><Icon name="arrow-right" /></span>
+      </a>
+    </div></div>
+  </section>
+  <section class="story-quote" aria-label="每一種你，都有自己的故事。"><img class="story-quote__open" src="/assets/home-figma/quote-open.svg" alt="" aria-hidden="true" /><p>每一種你，<br />都有自己的故事。</p><img class="story-quote__close" src="/assets/home-figma/quote-close.svg" alt="" aria-hidden="true" /></section>
+  <Contact figmaHome><Dates slot="calendar" id="dates" integrated /></Contact>
+</main>
+<noscript><style is:inline>
+  .camera-hero[data-hero-focus] .camera-hero__image { filter: none; transform: none; }
+  .camera-hero[data-hero-focus] :is(.camera-viewfinder, .camera-cross) { opacity: 0; }
+  .camera-hero[data-hero-copy] .camera-type-letter { opacity: 1; }
+  .horizontal-story--right .horizontal-story__track { flex-direction: row-reverse; }
+</style></noscript>
+<script>
+  import '../scripts/figma-home';
+</script>

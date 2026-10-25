@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev:figma": "astro dev --config astro.figma-preview.config.mjs --host 127.0.0.1 --port 4355",
+    "build:figma": "astro build --config astro.figma-preview.config.mjs",
     "dev": "node scripts/generate-portfolio-thumbnails.mjs && node scripts/motion-lab-assets.mjs && astro dev",
     "build": "node scripts/generate-portfolio-thumbnails.mjs && node scripts/motion-lab-assets.mjs && astro build",
     "build:worker": "npm run build && node scripts/prepare-worker-assets.mjs",

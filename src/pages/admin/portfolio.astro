@@ -1,4 +1,5 @@
 ---
+import Icon from '../../components/Icon.astro';
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { portfolioAdminCatalog } from '../../data/portfolioCatalog';
 
@@ -31,10 +32,10 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     <section class="portfolio-workbench" id="portfolio-editor" aria-label="作品集管理工作台" hidden>
       <aside class="portfolio-sidebar" id="portfolio-sidebar" aria-label="作品系列清單">
         <div class="portfolio-sidebar__top">
-          <div class="portfolio-sidebar__heading"><span aria-hidden="true">≡</span><h2>作品系列</h2><span class="portfolio-count" id="portfolio-count"></span></div>
-          <button class="portfolio-icon-button" type="button" id="portfolio-sidebar-toggle" aria-label="收合作品系列側欄" aria-controls="portfolio-sidebar" aria-expanded="true" title="收合／展開作品系列">‹</button>
+          <div class="portfolio-sidebar__heading"><span aria-hidden="true"><Icon name="menu" /></span><h2>作品系列</h2><span class="portfolio-count" id="portfolio-count"></span></div>
+          <button class="portfolio-icon-button" type="button" id="portfolio-sidebar-toggle" aria-label="收合作品系列側欄" aria-controls="portfolio-sidebar" aria-expanded="true" title="收合／展開作品系列"><Icon name="chevron-left" /></button>
         </div>
-        <button class="admin-button portfolio-add-button" type="button" id="portfolio-add"><span aria-hidden="true">＋</span> 新增作品</button>
+        <button class="admin-button portfolio-add-button" type="button" id="portfolio-add"><span aria-hidden="true"><Icon name="plus" /></span> 新增作品</button>
         <div class="portfolio-list-filters">
           <label class="portfolio-visually-hidden" for="portfolio-search">搜尋作品系列</label>
           <input id="portfolio-search" type="search" placeholder="搜尋作品" autocomplete="off" />
@@ -51,7 +52,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
 
       <main class="portfolio-stage">
         <header class="portfolio-stage__toolbar">
-          <button class="portfolio-icon-button portfolio-mobile-sidebar-toggle" type="button" id="portfolio-mobile-sidebar-toggle" aria-controls="portfolio-sidebar" aria-expanded="false" aria-label="開啟作品系列清單">☰</button>
+          <button class="portfolio-icon-button portfolio-mobile-sidebar-toggle" type="button" id="portfolio-mobile-sidebar-toggle" aria-controls="portfolio-sidebar" aria-expanded="false" aria-label="開啟作品系列清單"><Icon name="menu" /></button>
           <div class="portfolio-stage__collection">
             <h2 id="portfolio-detail-heading">選擇作品系列</h2>
             <p id="portfolio-detail-count" class="admin-meta"></p>
@@ -74,7 +75,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
         <input class="portfolio-visually-hidden" id="portfolio-image-input" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="portfolio-upload-help" />
         <section class="portfolio-upload-panel" id="portfolio-upload-panel" aria-label="加入作品照片">
           <label class="portfolio-dropzone" id="portfolio-dropzone" for="portfolio-image-input">
-            <span class="portfolio-dropzone__icon" aria-hidden="true">↑</span>
+            <span class="portfolio-dropzone__icon" aria-hidden="true"><Icon name="arrow-up" /></span>
             <span><strong>拖曳照片至此，或選擇照片</strong><small id="portfolio-upload-help">JPG/JPEG 會以品質 0.88 轉成 WebP；PNG 與 WebP 保持原格式。單張上傳檔案上限 8 MiB。</small></span>
           </label>
           <div class="portfolio-upload-queue" id="portfolio-upload-queue" hidden>
@@ -101,7 +102,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
         </div>
 
         <aside class="portfolio-info-drawer" id="portfolio-info-drawer" aria-label="作品資訊" aria-hidden="true" hidden>
-          <div class="portfolio-info-drawer__heading"><div><span class="admin-eyebrow">作品設定</span><h2>作品資訊</h2></div><button class="portfolio-icon-button" type="button" id="portfolio-info-close" aria-label="關閉作品資訊">×</button></div>
+          <div class="portfolio-info-drawer__heading"><div><span class="admin-eyebrow">作品設定</span><h2>作品資訊</h2></div><button class="portfolio-icon-button" type="button" id="portfolio-info-close" aria-label="關閉作品資訊"><Icon name="x" /></button></div>
           <form id="portfolio-detail-form">
             <div class="admin-field"><label for="portfolio-title">作品名稱</label><input id="portfolio-title" maxlength="120" required /></div>
             <div class="admin-field"><label for="portfolio-category">作品分類</label><select id="portfolio-category"><option value="外拍">外拍</option><option value="棚拍">棚拍</option></select></div>
@@ -120,7 +121,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     <p class="portfolio-announcement portfolio-visually-hidden" id="portfolio-announcement" aria-live="polite"></p>
 
     <dialog class="portfolio-dialog" id="portfolio-move-dialog" aria-labelledby="portfolio-move-title">
-      <div class="portfolio-dialog__header"><div><span class="admin-eyebrow">批次移動</span><h2 id="portfolio-move-title">移動照片到其他作品系列</h2></div><button class="portfolio-icon-button" type="button" data-close-move aria-label="關閉移動視窗">×</button></div>
+      <div class="portfolio-dialog__header"><div><span class="admin-eyebrow">批次移動</span><h2 id="portfolio-move-title">移動照片到其他作品系列</h2></div><button class="portfolio-icon-button" type="button" data-close-move aria-label="關閉移動視窗"><Icon name="x" /></button></div>
       <p class="portfolio-dialog__source" id="portfolio-move-source"></p>
       <label class="admin-field"><span>搜尋目的地</span><input type="search" id="portfolio-destination-search" placeholder="輸入作品名稱" autocomplete="off" /></label>
       <label class="admin-field" for="portfolio-destination"><span>目的地作品系列</span><select id="portfolio-destination"><option value="">請選擇目的地</option></select></label>
@@ -136,10 +137,10 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     </dialog>
 
     <dialog class="portfolio-preview-dialog" id="portfolio-preview-dialog" aria-label="照片預覽">
-      <button class="portfolio-preview-dialog__close" type="button" id="portfolio-preview-close" aria-label="關閉照片預覽">×</button>
-      <button class="portfolio-preview-dialog__nav portfolio-preview-dialog__nav--previous" type="button" id="portfolio-preview-previous" aria-label="上一張照片">‹</button>
+      <button class="portfolio-preview-dialog__close" type="button" id="portfolio-preview-close" aria-label="關閉照片預覽"><Icon name="x" /></button>
+      <button class="portfolio-preview-dialog__nav portfolio-preview-dialog__nav--previous" type="button" id="portfolio-preview-previous" aria-label="上一張照片"><Icon name="chevron-left" /></button>
       <img id="portfolio-preview-image" alt="" />
-      <button class="portfolio-preview-dialog__nav portfolio-preview-dialog__nav--next" type="button" id="portfolio-preview-next" aria-label="下一張照片">›</button>
+      <button class="portfolio-preview-dialog__nav portfolio-preview-dialog__nav--next" type="button" id="portfolio-preview-next" aria-label="下一張照片"><Icon name="chevron-right" /></button>
       <p id="portfolio-preview-caption" aria-live="polite"></p>
     </dialog>
 
@@ -148,6 +149,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
 </AdminLayout>
 
 <script>
+  import { createIcon } from '../../lib/icons';
   import { AdminApiError, adminErrorMessage, requestAdmin, requireAdminSession, setUnsavedChanges } from '../../lib/admin-client';
   import { portfolioChangeSet } from '../../lib/portfolio-changes.js';
   import { portfolioDraftIssues } from '../../lib/portfolio-validation.js';
@@ -434,7 +436,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       row.classList.toggle('is-sortable', collectionSortMode && !isListFiltered());
       const handle = document.createElement('button'); handle.type = 'button'; handle.className = 'portfolio-drag-handle';
       handle.draggable = collectionSortMode && !isListFiltered() && !busy && !uploading;
-      handle.dataset.collectionDragHandle = ''; handle.setAttribute('aria-label', `拖曳調整「${collection.title || '未命名作品'}」順序`); handle.textContent = '⠿';
+      handle.dataset.collectionDragHandle = ''; handle.setAttribute('aria-label', `拖曳調整「${collection.title || '未命名作品'}」順序`); handle.append(createIcon('grip-vertical'));
       handle.hidden = !collectionSortMode || isListFiltered();
       const select = document.createElement('button'); select.type = 'button'; select.className = 'portfolio-collection-select'; select.dataset.collectionSelect = collection.slug;
       select.title = collection.title.trim() || '未命名作品';
@@ -447,17 +449,17 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       const actions = document.createElement('div'); actions.className = 'portfolio-collection-actions';
       if (collectionSortMode) {
         for (const [action, text, label, disabled] of [
-          ['up', '↑', '上移', index === 0], ['down', '↓', '下移', index === collections.length - 1],
+          ['up', 'arrow-up', '上移', index === 0], ['down', 'arrow-down', '下移', index === collections.length - 1],
         ] as const) {
           const button = document.createElement('button'); button.type = 'button'; button.className = 'portfolio-icon-button';
           button.dataset.collectionReorder = action; button.dataset.collectionSlug = collection.slug; button.dataset.sortDisabled = String(disabled || isListFiltered());
-          button.disabled = disabled || isListFiltered(); button.setAttribute('aria-label', `將「${collection.title || '未命名作品'}」${label}`); button.textContent = text; actions.append(button);
+          button.disabled = disabled || isListFiltered(); button.setAttribute('aria-label', `將「${collection.title || '未命名作品'}」${label}`); button.append(createIcon(text)); actions.append(button);
         }
       }
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'portfolio-icon-button portfolio-collection-remove';
       remove.dataset.collectionAction = 'remove'; remove.dataset.collectionSlug = collection.slug; remove.dataset.sortDisabled = String(collections.length <= 1 || uploadItems.some((item) => item.targetSlug === collection.slug && item.status !== 'added'));
       remove.disabled = collections.length <= 1 || uploadItems.some((item) => item.targetSlug === collection.slug && item.status !== 'added');
-      remove.setAttribute('aria-label', `移除「${collection.title || '未命名作品'}」系列`); remove.title = '從公開作品集移除系列'; remove.textContent = '×'; actions.append(remove);
+      remove.setAttribute('aria-label', `移除「${collection.title || '未命名作品'}」系列`); remove.title = '從公開作品集移除系列'; remove.append(createIcon('x')); actions.append(remove);
       row.append(handle, select, actions); list.append(row);
     });
     const count = $('portfolio-count'); count.textContent = isListFiltered() ? `${visible.length} / ${collections.length}` : `${collections.length} 組`;
@@ -554,12 +556,14 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
       card.querySelector('img')!.alt = `${collection.title || '作品'}第 ${index + 1} 張照片`;
       card.querySelector('[data-photo-retry]')!.setAttribute('aria-label', `重新載入第 ${index + 1} 張照片`);
       for (const [action, label, text, disabled] of [
-        ['up', '往前移一張', '↑', index === 0], ['down', '往後移一張', '↓', index === collection.images.length - 1],
+        ['up', '往前移一張', 'arrow-up', index === 0], ['down', '往後移一張', 'arrow-down', index === collection.images.length - 1],
         ['cover', '設為封面', collection.cover === photo.path ? '封面' : '設為封面', collection.cover === photo.path],
         ['remove', '從作品移除這張照片', '移除', collection.images.length <= 1],
       ] as const) {
         const button = card.querySelector<HTMLButtonElement>(`[data-photo-action="${action}"]`)!;
-        button.textContent = text; button.disabled = disabled || busy || uploading;
+        if (action === 'up' || action === 'down') button.replaceChildren(createIcon(action === 'up' ? 'arrow-up' : 'arrow-down'));
+        else button.textContent = text;
+        button.disabled = disabled || busy || uploading;
         button.dataset.actionDisabled = String(disabled);
         button.setAttribute('aria-label', `${label}（第 ${index + 1} 張）`);
       }
@@ -852,7 +856,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
     try { sessionStorage.setItem('phox999.admin.portfolio.sidebar-collapsed', String(sidebarCollapsed)); } catch { /* storage may be unavailable */ }
     $<HTMLButtonElement>('portfolio-sidebar-toggle').setAttribute('aria-expanded', String(!sidebarCollapsed));
     $<HTMLButtonElement>('portfolio-sidebar-toggle').setAttribute('aria-label', sidebarCollapsed ? '展開作品系列側欄' : '收合作品系列側欄');
-    $<HTMLButtonElement>('portfolio-sidebar-toggle').textContent = sidebarCollapsed ? '›' : '‹';
+    $<HTMLButtonElement>('portfolio-sidebar-toggle').replaceChildren(createIcon(sidebarCollapsed ? 'chevron-right' : 'chevron-left'));
   }
   function syncSidebarAccessibility() {
     const mobile = window.matchMedia('(max-width: 1199px)').matches;
@@ -1342,7 +1346,7 @@ const portfolioSeedJson = JSON.stringify(portfolioSeed).replaceAll('<', '\\u003c
   try { sidebarCollapsed = sessionStorage.getItem('phox999.admin.portfolio.sidebar-collapsed') === 'true' && !mobileSidebar.matches; } catch { sidebarCollapsed = false; }
   editor.classList.toggle('is-sidebar-collapsed', sidebarCollapsed);
   $<HTMLButtonElement>('portfolio-sidebar-toggle').setAttribute('aria-expanded', String(!sidebarCollapsed));
-  $<HTMLButtonElement>('portfolio-sidebar-toggle').textContent = sidebarCollapsed ? '›' : '‹';
+  $<HTMLButtonElement>('portfolio-sidebar-toggle').replaceChildren(createIcon(sidebarCollapsed ? 'chevron-right' : 'chevron-left'));
   mobileSidebar.addEventListener('change', () => { editor.classList.remove('is-sidebar-open'); syncSidebarAccessibility(); });
   syncSidebarAccessibility();
   requireAdminSession().then(loadPortfolio).catch((error) => { $('portfolio-load-status').textContent = adminErrorMessage(error); });

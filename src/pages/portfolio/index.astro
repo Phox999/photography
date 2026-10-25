@@ -1,4 +1,5 @@
 ---
+import Icon from '../../components/Icon.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
@@ -117,7 +118,7 @@ const getShootDate = (slug: string) => {
           </div>
 
           <section class="portfolio-live-detail" data-portfolio-detail hidden aria-labelledby="portfolio-live-title">
-            <a class="portfolio-detail-back" href="/portfolio/" data-portfolio-detail-back>← 回全部作品</a>
+            <a class="portfolio-detail-back" href="/portfolio/" data-portfolio-detail-back><Icon name="arrow-left" /> 回全部作品</a>
             <p class="eyebrow" data-portfolio-detail-category></p>
             <h2 id="portfolio-live-title" data-portfolio-detail-title></h2>
             <p class="portfolio-live-detail__description" data-portfolio-detail-description></p>
@@ -126,10 +127,10 @@ const getShootDate = (slug: string) => {
 
           <dialog class="portfolio-lightbox" data-lightbox-dialog aria-label="照片放大檢視">
             <div class="portfolio-lightbox__inner">
-              <button class="portfolio-lightbox__close" type="button" aria-label="關閉照片" data-lightbox-close>×</button>
-              <button class="portfolio-lightbox__nav portfolio-lightbox__nav--prev" type="button" aria-label="上一張照片" data-lightbox-prev>‹</button>
+              <button class="portfolio-lightbox__close" type="button" aria-label="關閉照片" data-lightbox-close><Icon name="x" /></button>
+              <button class="portfolio-lightbox__nav portfolio-lightbox__nav--prev" type="button" aria-label="上一張照片" data-lightbox-prev><Icon name="chevron-left" /></button>
               <img class="portfolio-lightbox__image" src="" alt="" data-lightbox-image />
-              <button class="portfolio-lightbox__nav portfolio-lightbox__nav--next" type="button" aria-label="下一張照片" data-lightbox-next>›</button>
+              <button class="portfolio-lightbox__nav portfolio-lightbox__nav--next" type="button" aria-label="下一張照片" data-lightbox-next><Icon name="chevron-right" /></button>
               <p class="portfolio-lightbox__count" aria-live="polite" data-lightbox-count></p>
             </div>
           </dialog>
