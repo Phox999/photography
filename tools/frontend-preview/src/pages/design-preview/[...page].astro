@@ -1,0 +1,20 @@
+---
+import Layout from '../../../../../src/layouts/DesignPreview.astro';
+import Gallery from '../../../../../src/components/design-preview/Gallery.astro';
+import Lightbox from '../../../../../src/components/design-preview/Lightbox.astro';
+import CooperationForm from '../../../../../src/components/design-preview/CooperationForm.astro';
+import {asset,photos,collections,steps} from '../../../../../src/data/design-preview';
+export function getStaticPaths(){return [undefined,'portfolio','cooperation','about',...Array.from({length:20},(_,i)=>'series/'+i)].map(page=>({params:{page}}));}
+const page=Astro.params.page||'home';
+const seriesId=Number(page.split('/')[1]||8),collection=collections[seriesId]||collections[8];
+const title=page==='portfolio'?'全部作品':page==='cooperation'?'一起創作':page==='about'?'關於我':page.startsWith('series/')?collection.title:'PHOX999';
+const seriesImages=collection.photos;
+---
+<Layout title={title} home={page==='home'}>
+<main id="main-content">
+{page==='home'&&<><section class="home-hero"><img src={asset('f8a43.png')} alt="PHOX999 攝影作品" fetchpriority="high"/><div><small>PHOX999 / PORTRAIT PHOTOGRAPHY</small><h1>一些相遇，<br/>一些故事。</h1><a href="/design-preview/portfolio/">探索全部作品</a></div><span class="hero-scroll">SCROLL TO EXPLORE</span></section><section class="featured-stories">{['370bf.png','0a2f8.png','c0188.png'].map((image,i)=><a href="/design-preview/series/8/"><img src={asset(image)} alt={'精選影像 '+(i+1)} loading="lazy"/><span>0{i+1} / FEATURED SERIES</span></a>)}</section><section class="page-space"><div class="section-heading"><div><small>PORTFOLIO / SELECTED WORKS</small><h2>精選作品</h2></div><a href="/design-preview/portfolio/">查看全部作品</a></div><Gallery items={collections.slice(0,8)}/></section><section class="page-space home-cooperation"><small>COLLABORATION</small><h2>一起創作</h2><CooperationForm/></section></>}
+{page==='portfolio'&&<><section class="page-intro"><small>PHOX999 / SELECTED STORIES</small><div class="section-heading"><h1>一些相遇，一些故事。</h1><small>全部作品 / 20 SERIES</small></div></section><section class="page-space gallery-section"><Gallery items={collections}/></section></>}
+{page.startsWith('series/')&&<><section class="page-intro"><a href="/design-preview/portfolio/">全部作品 / SERIES {String(seriesId+1).padStart(2,'0')}</a><div class="section-heading"><h1>{collection.title}</h1><p>{seriesImages.length} PHOTOGRAPHS / PHOX999</p></div></section><section class="page-space gallery-section"><Gallery items={seriesImages.map((image,index)=>({image,index}))} detail title={collection.title}/></section><section class="page-space series-next"><a href="/design-preview/portfolio/">返回全部作品</a><h2>繼續看見，不同的故事。</h2></section><Lightbox images={seriesImages}/></>}
+{page==='cooperation'&&<><section class="page-intro"><small>COLLABORATION / PHOX999</small><h1>一起創作</h1><p>先留下想法，我們再一起確認怎麼拍。</p></section><figure class="cooperation-photo"><img src={asset('68a98.png')} alt="海邊人像攝影作品"/></figure><section class="page-space process-section"><h2>從想法，到一起完成。</h2><ol class="process-cards">{steps.map((step,i)=><li><article><small>{step[0]}</small><h3>{step[1]}</h3><p>{step[2]}</p><p>{step[3]}</p></article>{i<3&&<img class="process-arrow" src={asset('64536.svg')} width="21" height="21" alt="下一步"/>}</li>)}</ol></section><section class="page-space"><CooperationForm/></section></>}
+{page==='about'&&<><section class="page-intro"><small>ABOUT PHOX999</small><h1>嗨，我是小蔡。</h1></section><section class="page-space about-profile"><div class="portrait-placeholder"><h2>個人照</h2><p>待替換正式個人照片</p></div><div><h2>小蔡 / PHOX999</h2><p>以台北為主要活動範圍，拍攝互惠人像、戶外人像、棚拍與主題攝影。</p><p>我喜歡自然、有故事的畫面。從事前討論到現場引導，一起找到舒服的拍攝節奏。</p><p class="muted">設計背景 / 畫面企劃與構成<br/>活動地區 / 台北・新北</p><div class="social-icons"><a href="https://www.instagram.com/phox999_/" aria-label="Instagram" target="_blank" rel="noreferrer"><img src={asset('4fa21.svg')} width="24" height="24" alt=""/></a><a href="mailto:chuajinglun@ymail.com" aria-label="Email"><img src={asset('f50cb.svg')} width="24" height="24" alt=""/></a></div><a class="pill" href="/design-preview/cooperation/">了解合作方式</a></div></section></>}
+</main></Layout>

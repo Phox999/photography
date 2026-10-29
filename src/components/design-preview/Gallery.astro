@@ -1,0 +1,17 @@
+---
+import {asset} from '../../data/design-preview';
+import imageDimensions from '../../data/design-preview-images.json';
+const {items,detail=false,title='作品'}=Astro.props;
+const rhythm=detail?[2,3,2,3,2,3,2,3]:[2,3,3,2,3,3,2,2];let cursor=0;
+const rows=[];
+while(cursor<items.length){
+ const row=rows.length,count=rhythm[row%rhythm.length];
+ const group=items.slice(cursor,cursor+=count);
+ const ratios=group.map(item=>{const dimensions=imageDimensions[item.image];return dimensions?dimensions.width/dimensions.height:2/3;});
+ rows.push({row,items:group,ratios});
+}
+const dimensions=(image)=>imageDimensions[image]||{};
+---
+<div class:list={['editorial-gallery',{'detail-gallery':detail}]}>{rows.map(({row,items:group,ratios})=><div class:list={['gallery-row',{'two':group.length===2,'three':group.length===3,'reverse':row%3===2}]} style={detail?{'--photo-columns':ratios.map(r=>r+'fr').join(' '),'--row-ratio':ratios.reduce((sum,r)=>sum+r,0)}:undefined}>{group.map((item)=>
+detail?<button type="button" class="photograph" data-photo={item.index} aria-label={'放大第 '+(item.index+1)+' 張照片'}><img src={asset(item.image)} {...dimensions(item.image)} alt={title+'，照片 '+(item.index+1)} loading={item.index<2?'eager':'lazy'}/></button>:
+<a class="image-tile" href={'/design-preview/series/'+item.id+'/'}><img src={asset(item.image)} {...dimensions(item.image)} alt={item.title} loading={item.id<2?'eager':'lazy'}/><span class="tile-caption"><small>{String(item.id+1).padStart(2,'0')} / PORTRAITS</small><span>{item.title}</span></span></a>)}</div>)}</div>

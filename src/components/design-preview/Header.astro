@@ -1,0 +1,5 @@
+---
+const links=[['全部作品','portfolio/'],['一起創作','cooperation/'],['關於我','about/']];
+const {overlay=false}=Astro.props;
+---
+<header class:list={['preview-header',{overlay}]}><a class="brand" href="/design-preview/">PHOX999</a><nav aria-label="主要導覽">{links.map(([label,path])=><a href={'/design-preview/'+path} aria-current={Astro.url.pathname.endsWith(path)?'page':undefined}>{label}</a>)}</nav></header>

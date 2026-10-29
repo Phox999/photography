@@ -1,0 +1,5 @@
+---
+import {asset} from '../../data/design-preview';
+const {images}=Astro.props;
+---
+<dialog class="lightbox" aria-label="照片檢視器"><div class="lightbox-top"><span data-photo-count aria-live="polite"></span><button type="button" data-close aria-label="關閉照片"><img src={asset('x.svg')} width="24" height="24" alt=""/></button></div><div class="lightbox-stage"><button type="button" data-prev aria-label="上一張"><img src={asset('chevron-left.svg')} width="24" height="24" alt=""/></button><img class="lightbox-photo" alt="" data-full-photo/><button type="button" data-next aria-label="下一張"><img src={asset('chevron-right.svg')} width="24" height="24" alt=""/></button></div><div class="lightbox-thumbs">{images.map((image,i)=><button type="button" data-thumb={i} aria-label={'查看第 '+(i+1)+' 張'}><img src={asset(image)} alt="" loading="lazy"/></button>)}</div></dialog>

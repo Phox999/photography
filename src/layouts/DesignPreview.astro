@@ -1,0 +1,7 @@
+---
+import Header from '../components/design-preview/Header.astro';
+import Footer from '../components/design-preview/Footer.astro';
+import '../styles/design-preview.css';
+const {title='PHOX999',home=false}=Astro.props;
+---
+<!doctype html><html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex,nofollow"/><title>{title + '｜PHOX999 設計預覽'}</title></head><body><a class="skip-link" href="#main-content">跳至主要內容</a><Header overlay={home}/><slot/><Footer/><script src="../scripts/design-preview.js"></script></body></html>
