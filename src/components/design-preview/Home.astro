@@ -30,12 +30,14 @@ const stories = [
 <script>
  const preference=matchMedia('(prefers-reduced-motion: reduce)');
  const desktop=matchMedia('(min-width: 1024px) and (pointer: fine)');
+ const mobile=matchMedia('(max-width: 1023px)');
  const stories=[...document.querySelectorAll<HTMLElement>('.home-story,.home-selected')];
  let pending=false;
  function update(){
   pending=false;
-  if(preference.matches)return;
+  if(preference.matches||(!desktop.matches&&!mobile.matches))return;
   for(const section of stories){
+   if(!mobile.matches&&section.classList.contains('home-selected'))continue;
    const rail=section.querySelector<HTMLElement>('.story-rail,.selected-rail');
    if(!rail||section.contains(document.activeElement)||(desktop.matches&&rail.matches(':hover')))continue;
    const rect=section.getBoundingClientRect();
@@ -49,11 +51,15 @@ const stories = [
  addEventListener('resize',schedule,{passive:true});
  desktop.addEventListener('change',schedule);
   function syncMotionPreference(){
-  document.querySelector('.home-editorial')?.classList.toggle('scroll-motion',!preference.matches);
+  document.querySelector('.home-editorial')?.classList.toggle('scroll-motion',mobile.matches&&!preference.matches);
   if(preference.matches)stories.forEach(s=>s.querySelector('.story-rail,.selected-rail')?.scrollTo(0,0));
   else schedule();
  }
  preference.addEventListener('change',syncMotionPreference);
+ mobile.addEventListener('change',()=>{
+  if(!mobile.matches)document.querySelector('.selected-rail')?.scrollTo(0,0);
+  syncMotionPreference();
+ });
  // Intrinsic image dimensions stabilize the rails; recalculate after late image loads.
  document.querySelectorAll('.home-editorial img').forEach(img=>img.addEventListener('load',schedule,{once:true}));
  syncMotionPreference();
