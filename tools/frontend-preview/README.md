@@ -51,3 +51,9 @@ node node_modules/wrangler/bin/wrangler.js versions upload --config tools/fronte
 
 僅使用 versions upload 更新 Dev alias；不要執行 versions deploy 或一般 deploy。
 發布素材僅包含前台頁面、後台模擬與 design-preview WebP/SVG，不上傳原始照片庫。
+
+2026-10-31 首頁保留規則：
+- 使用者確認首頁及 Header 以固定版本 193ebb30 為準。
+- dev-worker.mjs 僅代理該版本首頁及缺少的靜態素材；內頁仍由本地 preview assets 提供。
+- 不要再將 / 或 /design-preview/ 改寫到簡化版首頁。
+- 此為 Dev 整合過渡方案，依賴該固定版本；合併正式程式時需移植其原始首頁元件。

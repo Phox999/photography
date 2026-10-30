@@ -1,13 +1,31 @@
 import existingWorker from './.release-server/worker.js';
 
+// Pin the approved homepage instead of replacing it when publishing inner pages.
+const approvedHome = 'https://193ebb30-photography.andrewtan088.workers.dev';
+
 // The dev alias serves the review UI while preserving the existing API handlers.
 export default {
   ...existingWorker,
   async fetch(request, env, context) {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/api/')) return existingWorker.fetch(request, env, context);
+    const isHome = ['/', '/design-preview', '/design-preview/'].includes(url.pathname);
+    if (isHome) {
+      const response = await fetch(approvedHome + '/', { method: request.method === 'HEAD' ? 'HEAD' : 'GET' });
+      const headers = new Headers(response.headers);
+      headers.delete('content-length');
+      headers.delete('etag');
+      headers.set('Cache-Control', 'no-store');
+      headers.set('X-PHOX999-Preview', 'approved-home-193ebb30');
+      headers.set('X-Robots-Tag', 'noindex, nofollow');
+      return new Response(response.body, {status: response.status, headers});
+    }
+    // Homepage series links (including dynamically loaded cards) enter the new UI.
+    if (url.pathname.startsWith('/portfolio/') && url.pathname !== '/portfolio/') {
+      const target = url.pathname.includes('6-20') ? '/design-preview/series/0/' : '/design-preview/portfolio/';
+      return Response.redirect(new URL(target, url), 302);
+    }
     const routes = {
-      '/': '/design-preview/',
       '/portfolio': '/design-preview/portfolio/',
       '/portfolio/': '/design-preview/portfolio/',
       '/cooperation': '/design-preview/cooperation/',
@@ -18,7 +36,11 @@ export default {
       '/admin/': '/admin-preview/',
     };
     if (routes[url.pathname]) url.pathname = routes[url.pathname];
-    const response = await env.ASSETS.fetch(new Request(url, request));
+    let response = await env.ASSETS.fetch(new Request(url, request));
+    // The approved homepage's hashed CSS/JS, images and SVG stay on its pinned version.
+    if (response.status === 404 && (url.pathname.startsWith('/_astro/') || url.pathname.startsWith('/assets/') || url.pathname === '/favicon.svg')) {
+      response = await fetch(approvedHome + url.pathname + url.search, {method: request.method === 'HEAD' ? 'HEAD' : 'GET'});
+    }
     const headers = new Headers(response.headers);
     headers.set('X-PHOX999-Preview', 'frontend-admin-20261030');
     headers.set('X-Robots-Tag', 'noindex, nofollow');
