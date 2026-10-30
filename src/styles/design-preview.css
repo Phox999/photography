@@ -9,3 +9,19 @@
 .detail-gallery .photograph{min-height:0}
 .wordmark{font-size:18.8vw;letter-spacing:-.055em}
 @media(max-width:600px){.detail-gallery .gallery-row{grid-template-columns:1fr;aspect-ratio:auto}.wordmark{font-size:18.8vw}}
+
+/* Cooperation form: readable at wide desktop widths and consistent on touch. */
+.cooperation-form{max-width:1714px;margin-inline:auto}
+.calendar-days button{width:44px;height:44px;min-height:44px;aspect-ratio:auto;justify-self:center}
+.topic-card input,.other-topic input{appearance:none;border:1px solid #fff;border-radius:50%;background:transparent;position:relative}
+.topic-card input:checked,.other-topic input:checked{background:#fff}
+.topic-card input:checked:after,.other-topic input:checked:after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--forest)}
+.form-details input[type=file]::file-selector-button{border:0;background:var(--forest);color:#fff;padding:10px 16px;margin-right:12px;cursor:pointer;font:inherit}
+@media(max-width:600px){.calendar-days button{width:40px;height:40px;min-height:40px}.form-details input[type=file]::file-selector-button{margin-bottom:4px}}
+/* Match the homepage calendar: four month tabs and compact date cells. */
+.month-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #d8deda;margin:24px 0;gap:4px}
+.month-tabs button{border:0;background:transparent;color:var(--ink);min-height:44px;padding:8px}
+.month-tabs button[aria-pressed=true]{background:var(--forest);color:white}
+.calendar-title{font:600 18px var(--serif);margin:0 0 20px}
+.calendar-week,.calendar-days{gap:6px 4px}
+.calendar-days button:disabled{opacity:.35}

@@ -54,10 +54,10 @@ export default {
     if (headers.get('content-type')?.includes('text/html') && url.pathname.startsWith('/design-preview/')) {
       const active = url.pathname.includes('/portfolio/') || url.pathname.includes('/series/') ? '/portfolio/'
         : url.pathname.includes('/cooperation/') ? '/cooperation/' : '/about/';
-      const sharedHeader = headerHTML.replaceAll(`href="${active}"`, `href="${active}" aria-current="page"`);
+      const sharedHeader = headerHTML.replaceAll(`href="${active}"`, `href="${active}" aria-current="page"`).replace('href="#hero"', 'href="/"');
       return new HTMLRewriter()
         .on('header.preview-header', { element(el) { el.replace(sharedHeader, {html:true}); } })
-        .on('head', { element(el) { el.append(`<style>${headerCSS} .camera-header{position:relative;inset:auto;background:#fff;color:#202624}.camera-header .camera-brand{color:#202624}</style>`, {html:true}); } })
+        .on('head', { element(el) { el.append(`<style>${headerCSS} .camera-header{position:relative;inset:auto;background:#fff;color:#202624}.camera-header .camera-brand{color:#202624}.camera-header .camera-links a[aria-current=page],.camera-header .camera-mobile-menu a[aria-current=page]{background:transparent;color:inherit}</style>`, {html:true}); } })
         .on('.cooperation-form', { element(el) { el.setAttribute('id', 'availability'); } })
         .transform(result);
     }
