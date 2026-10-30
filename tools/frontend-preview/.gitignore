@@ -1,0 +1,6 @@
+.release-server/
+.dev-assets/
+.wrangler/
+dist/
+.astro/
+node_modules/
