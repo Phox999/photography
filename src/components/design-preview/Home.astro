@@ -16,7 +16,7 @@ const stories = [
  </section>
  <div id="home-stories">
  {stories.map((story,i)=><section class:list={['home-story',{'home-story-reverse':i===1}]}>
-  <div class="story-label"><small>SELECTED SERIES / 0{i+1}</small><h2>{story.title}</h2><a href={'/design-preview/series/'+story.id+'/'}>查看系列 ↗</a><small class="swipe-hint">滑動看照片 →</small></div>
+  <div class="story-label"><small>SELECTED SERIES / 0{i+1}</small><h2>{story.title}</h2><a href={'/design-preview/series/'+story.id+'/'}>查看系列 ↗</a><small class="swipe-hint">往下探索 ↓</small></div>
   <div class="story-rail" tabindex="0" role="region" aria-label={story.title+'，可橫向捲動照片'}>{story.images.map((file,index)=>{const size=dimensions[file];return <img src={asset(file)} width={size.width} height={size.height} alt={story.title+' / '+String(index+1).padStart(2,'0')} loading="lazy"/>;})}</div>
  </section>)}
  </div>
@@ -30,14 +30,14 @@ const stories = [
 <script>
  const preference=matchMedia('(prefers-reduced-motion: reduce)');
  const desktop=matchMedia('(min-width: 1024px) and (pointer: fine)');
- const stories=[...document.querySelectorAll<HTMLElement>('.home-story')];
+ const stories=[...document.querySelectorAll<HTMLElement>('.home-story,.home-selected')];
  let pending=false;
  function update(){
   pending=false;
-  if(preference.matches||!desktop.matches)return;
+  if(preference.matches)return;
   for(const section of stories){
-   const rail=section.querySelector<HTMLElement>('.story-rail');
-   if(!rail||section.contains(document.activeElement)||rail.matches(':hover'))continue;
+   const rail=section.querySelector<HTMLElement>('.story-rail,.selected-rail');
+   if(!rail||section.contains(document.activeElement)||(desktop.matches&&rail.matches(':hover')))continue;
    const rect=section.getBoundingClientRect();
    const progress=Math.max(0,Math.min(1,(innerHeight-rect.top)/(innerHeight+rect.height)));
    const direction=section.classList.contains('home-story-reverse')?1-progress:progress;
@@ -48,6 +48,14 @@ const stories = [
  addEventListener('scroll',schedule,{passive:true});
  addEventListener('resize',schedule,{passive:true});
  desktop.addEventListener('change',schedule);
- preference.addEventListener('change',()=>{if(preference.matches)stories.forEach(s=>s.querySelector('.story-rail')?.scrollTo(0,0));else schedule();});
+  function syncMotionPreference(){
+  document.querySelector('.home-editorial')?.classList.toggle('scroll-motion',!preference.matches);
+  if(preference.matches)stories.forEach(s=>s.querySelector('.story-rail,.selected-rail')?.scrollTo(0,0));
+  else schedule();
+ }
+ preference.addEventListener('change',syncMotionPreference);
+ // Intrinsic image dimensions stabilize the rails; recalculate after late image loads.
+ document.querySelectorAll('.home-editorial img').forEach(img=>img.addEventListener('load',schedule,{once:true}));
+ syncMotionPreference();
  schedule();
 </script>

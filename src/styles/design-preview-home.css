@@ -22,3 +22,8 @@ body:has(.home-editorial) .preview-header.overlay{color:var(--ink)}
 }
 @supports(animation-timeline:view()){@media(prefers-reduced-motion:no-preference){.home-manifesto h2{animation:home-reveal linear both;animation-timeline:view();animation-range:entry 0% entry 80%}@keyframes home-reveal{from{opacity:.35;transform:translateY(16px)}to{opacity:1;transform:none}}}}
 @media(prefers-reduced-motion:reduce){.home-editorial *{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+/* Scroll-linked rails must not snap or smooth-scroll against per-frame updates.
+   Without JS or with reduced motion, native horizontal browsing remains available. */
+.scroll-motion .story-rail,.scroll-motion .selected-rail{scroll-snap-type:none;scroll-behavior:auto;scrollbar-width:none}
+.scroll-motion .story-rail::-webkit-scrollbar,.scroll-motion .selected-rail::-webkit-scrollbar{display:none}
+.home-editorial:not(.scroll-motion) .swipe-hint{display:none}
