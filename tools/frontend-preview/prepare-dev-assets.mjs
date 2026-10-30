@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collections, asset } from '../../src/data/design-preview.ts';
@@ -8,6 +8,8 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const project = path.resolve(root, '../..');
 const output = path.join(root, '.dev-assets');
 await mkdir(output, { recursive: true });
+// The approved homepage is served by dev-worker; never ship its retired duplicate.
+await rm(path.join(output, 'design-preview/index.html'), { force: true });
 for (const directory of ['_astro', 'design-preview']) {
   await cp(path.join(root, 'dist', directory), path.join(output, directory), { recursive: true });
 }

@@ -58,3 +58,10 @@ node node_modules/wrangler/bin/wrangler.js versions upload --config tools/fronte
 - 不要再將 / 或 /design-preview/ 改寫到簡化版首頁。
 - 此為 Dev 整合過渡方案，依賴該固定版本；合併正式程式時需移植其原始首頁元件。
 內頁 Header 由 approved-header.mjs 保存的原版標記與響應式樣式共用；由 dev-worker.mjs 注入並設定目前頁面與檔期定位。
+
+2026-10-31 重複頁面清理：
+- 移除舊版 src/pages/about.astro、cooperation.astro、portfolio/index.astro、portfolio/[slug].astro；Dev 公開入口由 dev-worker 交給新版設計預覽處理。
+- 移除簡化版 Home.astro 與其專用 CSS，預覽建置只產生 23 個內頁，不再產生第二個首頁。
+- 保留首頁、花絮、拍攝筆記、動效實驗室、企劃申請、客戶頁、申請查詢及全部後台來源；花絮與筆記在 Dev 從保留版本提供。
+- 本次只調整 Dev；主站來源與部署不從此清理版本直接發布。正式整合仍需將保留首頁及預覽內頁搬入單一 Astro 路由樹。
+- 被刪除檔案若有本地差異，已保存在 .page-cleanup-backup-20261031/，不納入 Git。

@@ -38,6 +38,10 @@ export default {
     };
     if (routes[url.pathname]) url.pathname = routes[url.pathname];
     let response = await env.ASSETS.fetch(new Request(url, request));
+    // These are distinct content pages, retained at the user's request.
+    if (response.status === 404 && /^\/(behind-scenes|journal)(\/|$)/.test(url.pathname)) {
+      response = await fetch(approvedHome + url.pathname + url.search, {method: request.method === 'HEAD' ? 'HEAD' : 'GET'});
+    }
     // The approved homepage's hashed CSS/JS, images and SVG stay on its pinned version.
     if (response.status === 404 && (url.pathname.startsWith('/_astro/') || url.pathname.startsWith('/assets/') || url.pathname === '/favicon.svg')) {
       response = await fetch(approvedHome + url.pathname + url.search, {method: request.method === 'HEAD' ? 'HEAD' : 'GET'});
