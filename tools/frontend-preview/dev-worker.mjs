@@ -1,4 +1,5 @@
 import existingWorker from './.release-server/worker.js';
+import {headerHTML, headerCSS} from './approved-header.mjs';
 
 // Pin the approved homepage instead of replacing it when publishing inner pages.
 const approvedHome = 'https://193ebb30-photography.andrewtan088.workers.dev';
@@ -45,6 +46,17 @@ export default {
     headers.set('X-PHOX999-Preview', 'frontend-admin-20261030');
     headers.set('X-Robots-Tag', 'noindex, nofollow');
     if (headers.get('content-type')?.includes('text/html')) headers.set('Cache-Control', 'no-store');
-    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+    const result = new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+    if (headers.get('content-type')?.includes('text/html') && url.pathname.startsWith('/design-preview/')) {
+      const active = url.pathname.includes('/portfolio/') || url.pathname.includes('/series/') ? '/portfolio/'
+        : url.pathname.includes('/cooperation/') ? '/cooperation/' : '/about/';
+      const sharedHeader = headerHTML.replaceAll(`href="${active}"`, `href="${active}" aria-current="page"`);
+      return new HTMLRewriter()
+        .on('header.preview-header', { element(el) { el.replace(sharedHeader, {html:true}); } })
+        .on('head', { element(el) { el.append(`<style>${headerCSS} .camera-header{position:relative;inset:auto;background:#fff;color:#202624}.camera-header .camera-brand{color:#202624}</style>`, {html:true}); } })
+        .on('.cooperation-form', { element(el) { el.setAttribute('id', 'availability'); } })
+        .transform(result);
+    }
+    return result;
   },
 };

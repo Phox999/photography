@@ -57,3 +57,4 @@ node node_modules/wrangler/bin/wrangler.js versions upload --config tools/fronte
 - dev-worker.mjs 僅代理該版本首頁及缺少的靜態素材；內頁仍由本地 preview assets 提供。
 - 不要再將 / 或 /design-preview/ 改寫到簡化版首頁。
 - 此為 Dev 整合過渡方案，依賴該固定版本；合併正式程式時需移植其原始首頁元件。
+內頁 Header 由 approved-header.mjs 保存的原版標記與響應式樣式共用；由 dev-worker.mjs 注入並設定目前頁面與檔期定位。
