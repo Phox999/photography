@@ -25,3 +25,176 @@
 .calendar-title{font:600 18px var(--serif);margin:0 0 20px}
 .calendar-week,.calendar-days{gap:6px 4px}
 .calendar-days button:disabled{opacity:.35}
+
+/* ==========================================================================
+   Figma 2026-10-31 對齊（攝影網站設計 Ra3AgXrE0xaHhvDKdTcp0d）
+   D05/M05 一起創作、D07/M07 關於我、D01/D02 v2 標題、首頁 v2 表單、
+   Site/Footer/Mobile｜v2。數值取自 Figma 節點，桌機以 1440、手機以 393 為準。
+   ========================================================================== */
+:root{--muted:#65716d;--hint:#93a09c;--border:#cbd2cd;--sage:#d8deda;--surface:#f5f7f4;--body:"Noto Sans TC","Microsoft JhengHei",sans-serif;--brand:"Outfit","Noto Sans TC",sans-serif}
+body{font-family:var(--body)}
+.eyebrow{display:block;font:500 12px/1.2 var(--body);letter-spacing:1.8px;color:var(--muted)}
+
+/* D01 / D02 v2：作品集與系列標題 */
+.editorial-intro{padding:80px var(--page-pad) 48px;gap:20px}
+.editorial-intro .section-heading{align-items:flex-end;margin-bottom:0}
+.editorial-intro .section-heading h1,.page-intro.editorial-intro .section-heading h1{font-size:56px;line-height:1.25}
+.intro-meta{font-size:13px;line-height:22px;letter-spacing:1.2px;color:var(--muted);white-space:nowrap}
+
+/* D05 / M05：滿版主視覺 */
+.cooperation-hero{position:relative;height:clamp(520px,52.78vw,960px);overflow:hidden;color:#fff}
+.cooperation-hero picture,.cooperation-hero img{display:block;width:100%;height:100%}
+.cooperation-hero img{object-fit:cover}
+.cooperation-hero:after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(32,38,36,0) 35%,rgba(32,38,36,.72))}
+.cooperation-hero__text{position:absolute;left:var(--page-pad);right:var(--page-pad);bottom:64px;z-index:1;display:grid;gap:18px}
+.cooperation-hero__text .eyebrow{color:#fff;letter-spacing:2px}
+.cooperation-hero h1{font-size:80px;line-height:1.2}
+.cooperation-hero p{font-size:20px;line-height:34px;letter-spacing:.8px}
+
+/* 流程：細線卡片、無底色、無箭頭 */
+.process-section{padding-top:128px;margin-bottom:112px}
+.process-section h2{font-size:48px;line-height:1.3;margin:16px 0 56px}
+.process-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px}
+.process-cards li,.process-cards li:last-child{display:block;flex:none}
+.process-cards article{background:none;color:var(--ink);min-height:0;padding:28px 0 0;border-top:1px solid var(--ink);gap:14px}
+.process-cards small{font:500 12px/1.6 var(--body);letter-spacing:1.6px;color:var(--muted)}
+.process-cards h3{font-size:30px;line-height:1.4}
+.process-cards p{font-size:15px;line-height:1.75;color:var(--muted)}
+.process-arrow{display:none!important}
+.cooperation-form-section{margin-bottom:128px}
+
+/* 合作表單：首頁 v2 樣式 */
+.cooperation-form{max-width:1344px;gap:48px}
+.cooperation-form legend{display:flex;align-items:baseline;gap:12px;font:600 24px/1.25 var(--serif);margin-bottom:15px}
+.cooperation-form legend small{font:500 13px/1.5 var(--body);letter-spacing:.8px;color:var(--muted);margin:0}
+.cooperation-form .muted{font-size:13px;line-height:1.5;margin-bottom:31px}
+.topic-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}
+.topic-card{background:none;color:var(--ink);padding:0;display:grid;gap:11px}
+.topic-card>img{aspect-ratio:3/4}
+.topic-card>span{padding:0;font-weight:700;font-size:15px}
+.topic-card:has(input:checked){outline:0}
+.topic-card input,.other-topic input{appearance:none;width:18px;height:18px;border:1.2px solid var(--border);border-radius:50%;background:transparent;margin:0}
+.topic-card input:checked,.other-topic input:checked{background:var(--ink);border-color:var(--ink)}
+.topic-card input:checked:after,.other-topic input:checked:after{inset:4px 3px 5px;border-radius:0;background:none;border:solid #fff;border-width:0 0 1.6px 1.6px;transform:rotate(-45deg) scale(.85)}
+.other-topic{background:none;color:var(--ink);border:1px solid var(--border);padding:12px 14px;margin-top:12px;font-weight:500;font-size:15px;align-items:center}
+.form-columns{grid-template-columns:minmax(0,460px) minmax(0,1fr);gap:53px}
+.month-tabs{gap:0;border-bottom:1px solid var(--border);margin:8px 0 20px}
+.month-tabs button{font:500 15px var(--body);color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.month-tabs button[aria-pressed=true]{background:none;color:var(--ink);border-bottom-color:var(--ink)}
+.calendar-title{font:600 22px/1.5 var(--serif);margin:0 0 16px}
+.calendar-week{font-size:14px}
+.calendar-days button{font-size:16px;color:var(--ink);width:40px;height:40px;min-height:40px}
+.calendar-days button[aria-pressed=true]{background:var(--forest);color:#fff;font-weight:500}
+.calendar-note{font-size:12px;color:var(--muted);margin:16px 0 0;padding-bottom:20px;border-bottom:1px solid var(--sage)}
+.date-summary{background:var(--surface);padding:20px;margin-top:20px;display:grid;gap:12px}
+.date-summary__label{font:500 13px var(--body);color:var(--muted)}
+.date-chips{display:flex;flex-wrap:wrap;gap:8px}
+.date-chips__empty{font-size:13px;color:var(--hint)}
+.date-chip{border:1px solid var(--border);background:#fff;color:var(--ink);padding:8px 12px;font-size:15px;line-height:1.3}
+.form-details{gap:40px}
+.form-details fieldset{gap:12px}
+.form-details .field{display:grid;gap:10px}
+.field-label{font:500 14px var(--body);color:var(--ink)}
+.field-label em{font-style:normal;font-weight:400;font-size:11px;color:var(--hint);margin-left:8px}
+.upload-box{display:block;border:1px solid var(--border);border-radius:1px;padding:10px;font-size:13px;color:var(--muted)}
+.upload-box input[type=file]{border:0!important;padding:0!important;width:100%}
+.form-details input[type=file]::file-selector-button{font:500 13px var(--body);padding:8px 16px;border-radius:1px}
+.form-details small{font-size:11px;color:var(--hint)}
+.form-details label{font:500 13px var(--body);color:var(--ink)}
+.form-details input:not([type=checkbox]):not([type=file]),.form-details select,.form-details textarea{font:400 13px var(--body);padding:12px 14px;border-radius:1px}
+.form-details ::placeholder{color:var(--hint)}
+.submit-button{font:500 15px var(--body);min-height:64px;padding:20px 24px;border-radius:1px;margin-top:8px}
+.form-note{font-size:11px}
+
+/* D07 / M07：關於我 */
+.about-profile{display:grid;grid-template-columns:600px minmax(0,1fr);gap:96px;align-items:center;padding:96px var(--page-pad) 144px;margin:0}
+.portrait-placeholder{aspect-ratio:4/5;background:var(--surface);padding:24px;justify-content:center;gap:16px}
+.portrait-placeholder h2{font-size:20px;color:var(--muted)}
+.portrait-placeholder p{font-size:13px;line-height:1.65;color:var(--hint)}
+.about-profile .about-narrative{display:grid;gap:24px;align-content:center}
+.about-narrative h1{font-size:64px;line-height:1.25}
+.about-role{margin-top:16px}
+.about-copy{font-size:18px;line-height:34px;letter-spacing:.4px}
+.about-narrative .social-icons{gap:12px}
+.about-narrative .pill{justify-self:start;font-size:13px}
+
+/* 頁尾：桌機維持舊版，手機改為 Site/Footer/Mobile｜v2 */
+.preview-footer{display:flex;flex-direction:column}
+.footer-top{order:0}.wordmark-frame{order:1}.footer-meta{order:2}
+.footer-top p{font-family:var(--serif)}
+.footer-cta,.footer-col--mobile,.footer-col__title,.footer-meta__mobile{display:none}
+.footer-links{display:block}
+.footer-top nav{font-weight:500}
+.wordmark{font-family:var(--brand);font-weight:700;letter-spacing:-.02em;font-size:calc((100vw - 2 * var(--page-pad)) / 4.44)}
+
+@media(max-width:900px){
+ .process-cards{grid-template-columns:1fr 1fr;gap:32px 24px}
+ .topic-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .form-columns{grid-template-columns:1fr}
+ .about-profile{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px}
+ .about-narrative h1{font-size:44px}
+}
+@media(max-width:600px){
+ .eyebrow{font-size:11px}
+ .editorial-intro{padding:44px 20px 32px;gap:12px}
+ .editorial-intro .section-heading{display:grid;gap:12px;align-items:start}
+ .editorial-intro .section-heading h1,.page-intro.editorial-intro .section-heading h1{font-size:34px}
+ .cooperation-hero{height:min(137.4vw,640px)}
+ .cooperation-hero:after{background:linear-gradient(to bottom,rgba(32,38,36,0) 40%,rgba(32,38,36,.75))}
+ .cooperation-hero__text{left:20px;right:20px;bottom:36px;gap:12px}
+ .cooperation-hero__text .eyebrow{letter-spacing:1.8px}
+ .cooperation-hero h1{font-size:48px}
+ .cooperation-hero p{font-size:15px;line-height:26px;letter-spacing:0}
+ .process-section{padding-top:80px;margin-bottom:40px}
+ .process-section h2{font-size:32px;line-height:1.35;margin:12px 0 36px}
+ .process-cards{grid-template-columns:1fr;gap:0}
+ .process-cards li{display:block}
+ .process-cards article{padding:24px 0 32px;gap:12px;min-height:0}
+ .process-cards small{font-size:11px}
+ .process-cards h3{font-size:24px}
+ .process-cards p{font-size:14px}
+ .cooperation-form-section{margin-bottom:80px}
+ .cooperation-form{gap:56px}
+ .cooperation-form legend{font-size:22px;line-height:1.4;gap:10px}
+ .cooperation-form legend small{font-size:11px;letter-spacing:1px}
+ .cooperation-form .muted{margin-bottom:20px;line-height:1.7}
+ .topic-grid{grid-template-columns:1fr 1fr;gap:24px 12px}
+ .topic-card{padding:0;gap:10px}
+ .topic-card>span{font-weight:500;font-size:14px}
+ .other-topic{margin-top:20px;padding:14px;font-size:14px}
+ .month-tabs button{font-size:14px;min-height:40px;padding:10px 0}
+ .calendar-title{font-size:20px}
+ .calendar-week{font-size:12px}
+ .calendar-days{gap:8px 0}
+ .calendar-days button{font-size:14px;width:32px;height:32px;min-height:32px}
+ .date-summary{padding:16px}
+ .date-summary__label{font-size:12px}
+ .date-chip{font-size:13px}
+ .form-details{gap:56px}
+ .field-label,.form-details label{font-size:14px}
+ .form-details input:not([type=checkbox]):not([type=file]),.form-details select,.form-details textarea{font-size:14px;padding:14px}
+ .submit-button{padding:18px 20px;min-height:0}
+ .about-profile{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:48px 20px 72px}
+ .about-profile>div.about-narrative{display:contents}
+ .about-narrative>.eyebrow:first-child{order:1;margin-bottom:12px}
+ .about-narrative h1{order:2;font-size:40px;margin-bottom:32px}
+ .portrait-placeholder{order:3;margin-bottom:36px}
+ .about-role,.about-copy,.about-narrative .social-icons,.about-narrative .pill{order:4}
+ .about-role{margin:0 0 20px}
+ .about-copy{font-size:16px;line-height:30px;margin-bottom:20px}
+ .about-narrative .social-icons{margin-bottom:16px}
+ .about-narrative .pill{align-self:flex-start}
+ .preview-footer{padding:72px 24px 0;min-height:0}
+ .footer-top{display:block;margin:0}
+ .footer-invite small,.footer-col__title{display:block;font:500 11px var(--body);letter-spacing:2px;color:rgba(255,255,255,.78)}
+ .footer-top p{font-size:40px;line-height:1.28;margin-top:18px}
+ .footer-cta{display:inline-flex;align-items:center;gap:12px;margin-top:24px;padding:14px 24px;border:1px solid #fff;border-radius:999px;font:500 15px var(--body);letter-spacing:1px}
+ .footer-links{display:grid;grid-template-columns:1fr 1fr;gap:36px 24px;margin-top:56px}
+ .footer-col,.footer-top nav.footer-col,.footer-col--mobile{display:grid;align-content:start;gap:14px;margin:0;font:500 16px var(--body)}
+ .footer-meta{display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch;gap:8px;margin-top:56px;padding:20px 0;font-size:12px;letter-spacing:.8px;color:rgba(255,255,255,.78)}
+ .footer-meta .footer-meta__desktop{display:none}
+ .footer-meta .footer-meta__mobile{display:block;justify-self:stretch;text-align:right;margin-top:8px}
+ .footer-top{order:0}.footer-meta{order:1}.wordmark-frame{order:2}
+ .wordmark-frame{overflow:hidden;height:calc((100vw - 48px) / 4.44 * .86)}
+ .wordmark{font-size:calc((100vw - 48px) / 4.44);line-height:1;margin-top:.02em}
+}
